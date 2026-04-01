@@ -4,14 +4,14 @@ Set-Location ..
 
 # Script Tanque v7 (Anti-Choque)
 git add .
-$msg = "Human Push (POS) $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+$msg = "Human Push $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 git commit -m "$msg" 2>$null
 
-Write-Host "🚀 Intentando sincronizar y subir cambios a pos.batidospitaya..." -ForegroundColor Cyan
+Write-Host "🚀 Intentando sincronizar y subir cambios..." -ForegroundColor Cyan
 git pull origin main --rebase
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "⚠️ Conflicto detectado. Aplicando reparación de Hierro..." -ForegroundColor Yellow
+    Write-Host "⚠️ Conflicto con el Bot detectado. Aplicando reparación de Hierro..." -ForegroundColor Yellow
     git rebase --abort 2>$null
     git pull origin main --no-rebase -X ours
     git add .
@@ -19,4 +19,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 git push origin main
-Write-Host "✅ ¡pos.batidospitaya actualizado con éxito!" -ForegroundColor Green
+Write-Host "✅ ¡Subida completada con éxito!" -ForegroundColor Green

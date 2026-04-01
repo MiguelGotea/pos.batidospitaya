@@ -17,74 +17,45 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
         
-    - name: 📤 Sincronizar Módulos POS
+    - name: 📤 Sincronizar archivos (rsync)
       run: |
-        # Sincronizar todos los módulos que existan en modulos/
-        if [ -d "./modulos" ] && [ "$(ls -A ./modulos 2>/dev/null)" ]; then
-          for MODULE in ./modulos/*/; do
-            MODULE_NAME=$(basename "$MODULE")
-            echo "🔄 Sincronizando modulos/$MODULE_NAME/"
-            
-            ssh -o StrictHostKeyChecking=no -p 65002 ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} \
-              "mkdir -p ${{ secrets.HOSTINGER_PATH_POS }}/modulos/$MODULE_NAME && \
-               mkdir -p ${{ secrets.HOSTINGER_PATH_POS }}/modulos/$MODULE_NAME/uploads"
-            
-            rsync -avz --delete \
-              --exclude='uploads/' \
-              --exclude='.gitignore' \
-              --exclude='.agent/' \
-              --exclude='.scripts/' \
-              -e "ssh -o StrictHostKeyChecking=no -p 65002" \
-              ./modulos/$MODULE_NAME/ \
-              ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH_POS }}/modulos/$MODULE_NAME/
-          done
-        else
-          echo "ℹ️ No hay módulos en modulos/ todavía. Saltando sincronización de módulos."
-        fi
+        echo "🔄 Sincronizando archivos POS (v13.1)..."
         
-    - name: 📤 Sincronizar Core y Docs (sincronizados por PitayaCore)
-      run: |
-        echo "🔄 Sincronizando core/ y docs/..."
-        rsync -avz --delete \
-          -e "ssh -o StrictHostKeyChecking=no -p 65002" \
-          ./core/ \
-          ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH_POS }}/core/
-        
-        rsync -avz --delete \
-          -e "ssh -o StrictHostKeyChecking=no -p 65002" \
-          ./docs/ \
-          ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH_POS }}/docs/
-          
-    - name: 📤 Sincronizar README raíz
-      run: |
-        echo "🔄 Sincronizando README.md..."
         rsync -avz \
+          --delete \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='.gitignore' \
+          --exclude='.agent/' \
+          --exclude='.scripts/' \
+          --exclude='uploads/' \
+          --exclude='modulos/*/uploads/' \
           -e "ssh -o StrictHostKeyChecking=no -p 65002" \
-          ./README.md \
+          ./ \
           ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH_POS }}/
           
-    - name: 🔧 Configurar permisos
+    - name: 🔧 Configurar permisos (v13.1)
       run: |
         echo "🔧 Configurando permisos en el servidor..."
+        
         ssh -o StrictHostKeyChecking=no -p 65002 ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
           cd ${{ secrets.HOSTINGER_PATH_POS }}
           
-          # Permisos para core/ y docs/
-          find core -type d -exec chmod 755 {} \; 2>/dev/null || true
-          find core -type f -exec chmod 644 {} \; 2>/dev/null || true
-          find docs -type d -exec chmod 755 {} \; 2>/dev/null || true
-          find docs -type f -exec chmod 644 {} \; 2>/dev/null || true
+          # Directorios a 755
+          find . -type d -exec chmod 755 {} \;
           
-          # Permisos para módulos
+          # Archivos a 644
+          find . -type f -exec chmod 644 {} \;
+          
+          # Uploads a 777 (si existen carpetas de módulos)
           if [ -d "modulos" ]; then
-            find modulos -type d -exec chmod 755 {} \;
-            find modulos -type f -exec chmod 644 {} \;
-            find modulos -name "uploads" -type d -exec chmod 777 {} \; 2>/dev/null || true
+            find modulos -name "uploads" -type d -exec chmod 777 {} \;
           fi
+          
+          echo "✅ Permisos actualizados."
         EOF
         
     - name: ✅ Verificar deploy
       run: |
-        echo "✅ Deploy POS completado exitosamente"
+        echo "✅ Deploy completado para pos.batidospitaya.com"
         echo "🌐 Sitio: https://pos.batidospitaya.com"
-        echo "🖥️ Servidor: ${{ secrets.HOSTINGER_HOST }}:65002"
