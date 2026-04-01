@@ -14,4 +14,8 @@
 # Incluir todo en modulos
 !/modulos/**
 
+# Excluir uploads dentro de módulos
+/modulos/*/uploads/
+/modulos/uploads/
+
 # Excluir todo dentro de uploads (pero mantener las carpetas)
