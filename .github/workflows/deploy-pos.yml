@@ -29,7 +29,6 @@ jobs:
           --exclude='.agent/' \
           --exclude='.scripts/' \
           --exclude='uploads/' \
-          --exclude='modulos/*/uploads/' \
           -e "ssh -o StrictHostKeyChecking=no -p 65002" \
           ./ \
           ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH_POS }}/
