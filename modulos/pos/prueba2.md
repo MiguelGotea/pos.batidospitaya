@@ -1,1 +1,1 @@
-prueba 1 de segundo archivo
+prueba 2 de segundo archivo
