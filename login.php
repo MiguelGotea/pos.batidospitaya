@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 if (posTiendaAutenticada()) { header('Location: /index.php'); exit(); }
 $dispositivo = posVerificarDispositivo();
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!$dispositivo['status']): ?>
             <div class="pos-alert error show" style="background:rgba(224,85,85,0.05)">
-                <i class="fa fa-shield-halved"></i> <strong>Aviso:</strong> Este dispositivo no se encuentra autorizado todavía. Inicia sesión para proceder con la autorización.
+                <i class="fa fa-shield-halved"></i> <strong>Terminal Bloqueada:</strong> Este dispositivo no se encuentra autorizado todavía. Por favor, contacta al área de TI para configurar la autorización antes de operar.
             </div>
         <?php endif; ?>
 
@@ -52,11 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label class="pos-label" for="clave">Contrasena</label>
                 <input class="pos-input" type="password" id="clave" name="clave" placeholder="********" autocomplete="current-password" required>
             </div>
-            <button class="pos-btn" type="submit" id="btnLogin"><i class="fa fa-store"></i> Habilitar Terminal</button>
+            <button class="pos-btn" type="submit" id="btnLogin"><i class="fa fa-right-to-bracket"></i> Iniciar Sesión de Sucursal</button>
         </form>
 
         <div class="pos-badge">
-            Estado de Red: <span><?= $dispositivo['status'] ? 'Autorizado' : 'Pendiente' ?></span>
+            Estado de Terminal: <span><?= $dispositivo['status'] ? 'Habilitada' : 'Bloqueada' ?></span>
             &bull; <i class="fa fa-circle" style="color:<?= $dispositivo['status'] ? '#51B8AC' : '#e05555' ?>;font-size:.55rem;vertical-align:middle"></i>
             Sucursal ID: <?= htmlspecialchars((string)($dispositivo['sucursal_codigo'] ?? '—')) ?>
         </div>

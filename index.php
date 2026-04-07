@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 if (!posTiendaAutenticada()) { header('Location: /login.php'); exit(); }
 
@@ -83,11 +83,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         <?php if (!$dispositivo['status']): ?>
             <!-- DISPOSITIVO NO AUTORIZADO -->
             <h2 style="color:#e05555">Terminal Bloqueada</h2>
-            <p>Este dispositivo no está autorizado todavía. Debes realizar la autorización antes de operar.</p>
+            <p style="margin-bottom:20px">La autorización de este dispositivo ha expirado o no es válida. Por favor, contacta al personal de TI para reconfigurar la terminal.</p>
             
-            <a href="/modulos/sistemas/autorizar_pos_pc.php" class="pos-btn" style="text-decoration:none">
-                <i class="fa fa-shield-halved"></i> Autorizar esta PC
-            </a>
+            <i class="fa fa-shield-halved" style="font-size:3rem;color:rgba(224,85,85,0.2);margin-bottom:20px"></i>
         <?php else: ?>
             <h2>Acceso Colaborador</h2>
             <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
@@ -98,17 +96,14 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" id="pinForm">
-                <input type="hidden" name="colaborador_clave" id="pinInput">
-                <div class="pos-pin-display" id="pinDisplay"></div>
-                <div class="pos-pin-grid" style="margin-top:18px;">
-                    <?php for ($i = 1; $i <= 9; $i++): ?>
-                        <button type="button" class="pos-pin-key" onclick="addPin('<?= $i ?>')"><?= $i ?></button>
-                    <?php endfor; ?>
-                    <button type="button" class="pos-pin-key backspace" onclick="clearPin()"><i class="fa fa-delete-left"></i></button>
-                    <button type="button" class="pos-pin-key" onclick="addPin('0')">0</button>
-                    <button type="submit"  class="pos-pin-key confirm"><i class="fa fa-arrow-right"></i></button>
+            <form method="POST" id="pinForm" autocomplete="off">
+                <div class="pos-field">
+                    <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
+                    <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem">
                 </div>
+                <button type="submit" class="pos-btn" style="margin-top:10px">
+                    <i class="fa fa-right-to-bracket"></i> Entrar al POS
+                </button>
             </form>
         <?php endif; ?>
 
@@ -158,22 +153,10 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 </div>
 
 <script>
-let pin = '';
-function addPin(n) { if (pin.length < 20) { pin += n; updateDisplay(); } }
-function clearPin() { pin = pin.slice(0, -1); updateDisplay(); }
-function updateDisplay() {
-    const d = document.getElementById('pinDisplay');
-    if (d) {
-        d.textContent = '•'.repeat(pin.length) || '';
-        document.getElementById('pinInput').value = pin;
-    }
-}
-document.addEventListener('keydown', e => {
-    if (e.key >= '0' && e.key <= '9') addPin(e.key);
-    if (e.key === 'Backspace') clearPin();
-    if (e.key === 'Enter' && pin.length > 0) {
-        const f = document.getElementById('pinForm');
-        if (f) f.submit();
+document.addEventListener('DOMContentLoaded', () => {
+    const colabInput = document.getElementById('colaborador_clave');
+    if (colabInput) {
+        colabInput.focus();
     }
 });
 </script>
