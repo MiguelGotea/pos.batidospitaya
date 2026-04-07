@@ -1,12 +1,20 @@
 ﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 if (!posTiendaAutenticada()) { header('Location: /login.php'); exit(); }
+
+$dispositivo = posVerificarDispositivo();
 $pinError = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['colaborador_clave'])) {
-    $r = posValidarColaborador($_POST['colaborador_clave']);
-    if ($r['status']) { header('Location: /index.php'); exit(); }
-    $pinError = $r['msg'];
+    if (!$dispositivo['status']) {
+        $pinError = 'No puedes ingresar: El dispositivo NO esta autorizado.';
+    } else {
+        $r = posValidarColaborador($_POST['colaborador_clave']);
+        if ($r['status']) { header('Location: /index.php'); exit(); }
+        $pinError = $r['msg'];
+    }
 }
+
 $hayColaborador = posColaboradorAutenticado();
 $sucursal = $_SESSION['pos_store_sucursal'] ?? '—';
 $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? '';
@@ -54,16 +62,13 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-action-btn.primary { background: #51B8AC; color: #06110f; border-color: #51B8AC; }
         .pos-action-btn.primary:hover { background: #68cfc4; }
 
-        /* Pin Overlay */
         .pos-pin-overlay { position: fixed; inset: 0; background: rgba(8,13,16,.96);
                            backdrop-filter: blur(16px); display: flex; justify-content: center;
                            align-items: center; z-index: 1000; }
-        .pos-pin-card { width: 100%; max-width: 360px; background: var(--surface);
+        .pos-pin-card { width: 100%; max-width: 380px; background: var(--surface);
                         border: 1px solid var(--border); border-radius: 26px;
                         padding: 40px 36px; text-align: center;
                         box-shadow: 0 0 60px rgba(81,184,172,.1); }
-        .pos-pin-card h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
-        .pos-pin-card p  { color: var(--text-muted); font-size: .85rem; margin-bottom: 26px; }
     </style>
 </head>
 <body>
@@ -74,27 +79,38 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 <div class="pos-pin-overlay">
     <div class="pos-pin-card">
         <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
-        <h2>Acceso Colaborador</h2>
-        <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
+        
+        <?php if (!$dispositivo['status']): ?>
+            <!-- DISPOSITIVO NO AUTORIZADO -->
+            <h2 style="color:#e05555">Terminal Bloqueada</h2>
+            <p>Este dispositivo no está autorizado todavía. Debes realizar la autorización antes de operar.</p>
+            
+            <a href="/modulos/sistemas/autorizar_pos_pc.php" class="pos-btn" style="text-decoration:none">
+                <i class="fa fa-shield-halved"></i> Autorizar esta PC
+            </a>
+        <?php else: ?>
+            <h2>Acceso Colaborador</h2>
+            <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
 
-        <?php if ($pinError): ?>
-            <div class="pos-alert error show" style="margin-bottom:16px;">
-                <i class="fa fa-circle-exclamation"></i> <?= htmlspecialchars($pinError) ?>
-            </div>
+            <?php if ($pinError): ?>
+                <div class="pos-alert error show" style="margin-bottom:16px;">
+                    <i class="fa fa-circle-exclamation"></i> <?= htmlspecialchars($pinError) ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" id="pinForm">
+                <input type="hidden" name="colaborador_clave" id="pinInput">
+                <div class="pos-pin-display" id="pinDisplay"></div>
+                <div class="pos-pin-grid" style="margin-top:18px;">
+                    <?php for ($i = 1; $i <= 9; $i++): ?>
+                        <button type="button" class="pos-pin-key" onclick="addPin('<?= $i ?>')"><?= $i ?></button>
+                    <?php endfor; ?>
+                    <button type="button" class="pos-pin-key backspace" onclick="clearPin()"><i class="fa fa-delete-left"></i></button>
+                    <button type="button" class="pos-pin-key" onclick="addPin('0')">0</button>
+                    <button type="submit"  class="pos-pin-key confirm"><i class="fa fa-arrow-right"></i></button>
+                </div>
+            </form>
         <?php endif; ?>
-
-        <form method="POST" id="pinForm">
-            <input type="hidden" name="colaborador_clave" id="pinInput">
-            <div class="pos-pin-display" id="pinDisplay"></div>
-            <div class="pos-pin-grid" style="margin-top:18px;">
-                <?php for ($i = 1; $i <= 9; $i++): ?>
-                    <button type="button" class="pos-pin-key" onclick="addPin('<?= $i ?>')"><?= $i ?></button>
-                <?php endfor; ?>
-                <button type="button" class="pos-pin-key backspace" onclick="clearPin()"><i class="fa fa-delete-left"></i></button>
-                <button type="button" class="pos-pin-key" onclick="addPin('0')">0</button>
-                <button type="submit"  class="pos-pin-key confirm"><i class="fa fa-arrow-right"></i></button>
-            </div>
-        </form>
 
         <div style="margin-top:26px;padding-top:18px;border-top:1px solid var(--border);">
             <a href="/logout.php?type=store" style="color:var(--text-muted);font-size:.78rem;text-decoration:none;">
@@ -105,11 +121,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 </div>
 <?php endif; ?>
 
-<!-- ===== DASHBOARD PRINCIPAL ===== -->
 <div class="pos-wrapper">
     <div class="pos-dashboard">
-
-        <!-- Header -->
         <header class="pos-header">
             <div class="pos-user-info">
                 <div class="pos-avatar"><?= htmlspecialchars(mb_substr($colabNombre ?: 'P', 0, 1)) ?></div>
@@ -130,7 +143,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             </div>
         </header>
 
-        <!-- Bienvenida -->
         <div class="pos-welcome">
             <div style="font-size:3.5rem;margin-bottom:20px;">🛒</div>
             <h2>¡Bienvenido, <?= htmlspecialchars(explode(' ', trim($colabNombre))[0] ?? 'Colaborador') ?>!</h2>
@@ -142,7 +154,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                 <a href="/modulos/inventario/" class="pos-action-btn"><i class="fa fa-boxes-stacked"></i> Inventario</a>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -151,13 +162,19 @@ let pin = '';
 function addPin(n) { if (pin.length < 20) { pin += n; updateDisplay(); } }
 function clearPin() { pin = pin.slice(0, -1); updateDisplay(); }
 function updateDisplay() {
-    document.getElementById('pinDisplay').textContent = '•'.repeat(pin.length) || '';
-    document.getElementById('pinInput').value = pin;
+    const d = document.getElementById('pinDisplay');
+    if (d) {
+        d.textContent = '•'.repeat(pin.length) || '';
+        document.getElementById('pinInput').value = pin;
+    }
 }
 document.addEventListener('keydown', e => {
     if (e.key >= '0' && e.key <= '9') addPin(e.key);
     if (e.key === 'Backspace') clearPin();
-    if (e.key === 'Enter' && pin.length > 0) document.getElementById('pinForm').submit();
+    if (e.key === 'Enter' && pin.length > 0) {
+        const f = document.getElementById('pinForm');
+        if (f) f.submit();
+    }
 });
 </script>
 </body>
