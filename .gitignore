@@ -8,6 +8,10 @@
 !/core/
 !/docs/
 !/.agent/
+# Archivos raíz del dominio POS
+!/index.php
+!/login.php
+!/logout.php
 # Las 3 carpetas compartidas (core, docs, .agent) son trackeadas en GitHub
 # pero excluidas del host vía --exclude en deploy-pos.yml
 
