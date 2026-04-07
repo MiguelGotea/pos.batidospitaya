@@ -1,5 +1,6 @@
-<?php
-require_once '../../../core/auth/auth.php';
+﻿<?php
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -13,7 +14,7 @@ try {
     
     // Validaciones
     if ($idProducto <= 0) {
-        throw new Exception('ID de producto inválido');
+        throw new Exception('ID de producto invÃ¡lido');
     }
     
     if (empty($nombre)) {
@@ -34,7 +35,7 @@ try {
     
     echo json_encode([
         'success' => true,
-        'message' => 'Variación agregada exitosamente'
+        'message' => 'VariaciÃ³n agregada exitosamente'
     ]);
     
 } catch (Exception $e) {

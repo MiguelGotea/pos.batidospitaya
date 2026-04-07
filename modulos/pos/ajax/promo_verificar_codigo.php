@@ -1,11 +1,12 @@
-<?php
-// ajax/promo_verificar_codigo.php — Verifica que codigo_interno no esté duplicado
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_verificar_codigo.php â€” Verifica que codigo_interno no estÃ© duplicado
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $codigo = isset($_POST['codigo']) ? trim($_POST['codigo']) : '';
     $id     = isset($_POST['id'])     ? (int)$_POST['id']     : 0;

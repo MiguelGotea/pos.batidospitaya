@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once '../../../core/permissions/permissions.php';
 session_start();
@@ -6,12 +6,12 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
-    if (!isset($_SESSION['usuario_id'])) {
-        throw new Exception('Sesión no válida');
+    // Verificar sesiÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
+        throw new Exception('SesiÃ³n no vÃ¡lida');
     }
     
-    $codOperario = $_SESSION['usuario_id'];
+    $codOperario = $_SESSION['pos_colaborador_id'];
     $cargoOperario = $_SESSION['cargo_cod'];
     
     // Verificar permiso de vista
@@ -62,7 +62,7 @@ try {
     $stmtCount->execute($params);
     $totalRegistros = $stmtCount->fetch()['total'];
     
-    // Consulta de datos con paginación
+    // Consulta de datos con paginaciÃ³n
     $sql = "SELECT 
                 u.id,
                 u.nombre,
@@ -86,7 +86,7 @@ try {
     $stmt->execute();
     $datos = $stmt->fetchAll();
     
-    // Agregar información de permisos
+    // Agregar informaciÃ³n de permisos
     $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $cargoOperario);
     foreach ($datos as &$row) {
         $row['puede_crear'] = $puedeCrear;

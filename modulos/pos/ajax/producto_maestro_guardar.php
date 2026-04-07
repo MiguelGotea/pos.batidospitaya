@@ -1,12 +1,12 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/permissions/permissions.php';
 header('Content-Type: application/json');
 
 try {
-    // Verificar autenticación
-    if (!isset($_SESSION['usuario_id'])) {
+    // Verificar autenticaciÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
         throw new Exception('No autorizado');
     }
     
@@ -16,7 +16,7 @@ try {
     $accion = isset($_POST['accion']) ? $_POST['accion'] : '';
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     
-    // Verificar permisos según acción
+    // Verificar permisos segÃºn acciÃ³n
     if ($accion === 'crear') {
         if (!tienePermiso('producto_maestro', 'nuevo_registro', $cargoOperario)) {
             throw new Exception('No tiene permisos para crear productos');
@@ -32,7 +32,7 @@ try {
     $descripcion = isset($_POST['Descripcion']) ? trim($_POST['Descripcion']) : '';
     $id_categoria = isset($_POST['Id_categoria']) ? (int)$_POST['Id_categoria'] : 0;
     $estado = isset($_POST['Estado']) ? (int)$_POST['Estado'] : 1;
-    $usuario_id = $_SESSION['usuario_id'];
+    $usuario_id = $_SESSION['pos_colaborador_id'];
     
     // Validaciones
     if (empty($nombre)) {
@@ -44,17 +44,17 @@ try {
     }
     
     if ($id_categoria <= 0) {
-        throw new Exception('Debe seleccionar una categoría');
+        throw new Exception('Debe seleccionar una categorÃ­a');
     }
     
-    // Verificar que la categoría existe
+    // Verificar que la categorÃ­a existe
     $sqlCheckCat = "SELECT COUNT(*) as total FROM categoria_producto_maestro WHERE id = :id_categoria";
     $stmtCheckCat = $conn->prepare($sqlCheckCat);
     $stmtCheckCat->bindValue(':id_categoria', $id_categoria, PDO::PARAM_INT);
     $stmtCheckCat->execute();
     
     if ($stmtCheckCat->fetch()['total'] == 0) {
-        throw new Exception('La categoría seleccionada no existe');
+        throw new Exception('La categorÃ­a seleccionada no existe');
     }
     
     if ($accion === 'crear') {
@@ -88,7 +88,7 @@ try {
         
     } elseif ($accion === 'editar') {
         if ($id <= 0) {
-            throw new Exception('ID inválido');
+            throw new Exception('ID invÃ¡lido');
         }
         
         // Verificar que no exista otro producto con el mismo SKU
@@ -129,7 +129,7 @@ try {
         ]);
         
     } else {
-        throw new Exception('Acción inválida');
+        throw new Exception('AcciÃ³n invÃ¡lida');
     }
     
 } catch (Exception $e) {

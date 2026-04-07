@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
@@ -18,7 +18,7 @@ if (!tienePermiso('producto_maestro', 'vista', $cargoOperario)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Productos Maestro</title>
+    <title>GestiÃ³n de Productos Maestro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -39,10 +39,10 @@ if (!tienePermiso('producto_maestro', 'vista', $cargoOperario)) {
     
     <div class="main-container">
         <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Gestión de Productos Maestro'); ?>
+            <?php echo renderHeader($usuario, false, 'GestiÃ³n de Productos Maestro'); ?>
             
             <div class="container-fluid p-3">
-                <!-- Botón para agregar nuevo producto -->
+                <!-- BotÃ³n para agregar nuevo producto -->
                 <?php if (tienePermiso('producto_maestro', 'nuevo_registro', $cargoOperario)): ?>
                 <div class="mb-3">
                     <button class="btn btn-success" onclick="abrirModalNuevoProducto()">
@@ -64,15 +64,15 @@ if (!tienePermiso('producto_maestro', 'vista', $cargoOperario)) {
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="Descripcion" data-type="text">
-                                    Descripción
+                                    DescripciÃ³n
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="categoria_nombre" data-type="list">
-                                    Categoría
+                                    CategorÃ­a
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="fecha_creacion" data-type="daterange">
-                                    Fecha Creación
+                                    Fecha CreaciÃ³n
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <?php if (tienePermiso('producto_maestro', 'editar', $cargoOperario)): ?>
@@ -85,7 +85,7 @@ if (!tienePermiso('producto_maestro', 'vista', $cargoOperario)) {
                             </tr>
                         </thead>
                         <tbody id="tablaProductosBody">
-                            <!-- Datos cargados vía AJAX -->
+                            <!-- Datos cargados vÃ­a AJAX -->
                         </tbody>
                     </table>
                 </div>
@@ -127,20 +127,20 @@ if (!tienePermiso('producto_maestro', 'vista', $cargoOperario)) {
                             <div class="col-md-6 mb-3">
                                 <label for="skuProducto" class="form-label">SKU *</label>
                                 <input type="text" class="form-control" id="skuProducto" name="SKU" required maxlength="50">
-                                <small class="text-muted">Código único del producto</small>
+                                <small class="text-muted">CÃ³digo Ãºnico del producto</small>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="descripcionProducto" class="form-label">Descripción</label>
+                            <label for="descripcionProducto" class="form-label">DescripciÃ³n</label>
                             <textarea class="form-control" id="descripcionProducto" name="Descripcion" rows="3" maxlength="500"></textarea>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="categoriaProducto" class="form-label">Categoría *</label>
+                                <label for="categoriaProducto" class="form-label">CategorÃ­a *</label>
                                 <select class="form-select" id="categoriaProducto" name="Id_categoria" required>
-                                    <option value="">Seleccione una categoría</option>
+                                    <option value="">Seleccione una categorÃ­a</option>
                                 </select>
                             </div>
 

@@ -1,5 +1,6 @@
-<?php
-require_once '../../../core/auth/auth.php';
+﻿<?php
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -10,7 +11,7 @@ try {
     $idProducto = (int)$_POST['id_producto'];
     
     if ($idProducto <= 0) {
-        throw new Exception('ID de producto inválido');
+        throw new Exception('ID de producto invÃ¡lido');
     }
     
     if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
@@ -22,10 +23,10 @@ try {
     // Validar tipo
     $tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!in_array($archivo['type'], $tiposPermitidos)) {
-        throw new Exception('Solo se permiten imágenes (JPG, PNG, GIF, WEBP)');
+        throw new Exception('Solo se permiten imÃ¡genes (JPG, PNG, GIF, WEBP)');
     }
     
-    // Validar tamaño (10MB)
+    // Validar tamaÃ±o (10MB)
     if ($archivo['size'] > 10 * 1024 * 1024) {
         throw new Exception('El archivo no debe superar 10MB');
     }
@@ -36,7 +37,7 @@ try {
         mkdir($dirUpload, 0755, true);
     }
     
-    // Generar nombre único
+    // Generar nombre Ãºnico
     $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
     $nombreArchivo = uniqid() . '_' . time() . '.' . $extension;
     $rutaDestino = $dirUpload . $nombreArchivo;

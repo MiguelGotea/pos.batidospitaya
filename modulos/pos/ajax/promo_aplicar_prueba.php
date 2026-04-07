@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 /**
- * ajax/promo_aplicar_prueba.php — Motor de evaluación de promociones (Simulación), de prueba
+ * ajax/promo_aplicar_prueba.php â€” Motor de evaluaciÃ³n de promociones (SimulaciÃ³n), de prueba
  */
 
 // Desactivar salida de errores al navegador para evitar corromper el JSON
@@ -9,7 +9,8 @@ error_reporting(E_ALL);
 
 try {
     // 1. Cargar dependencias
-    require_once '../../../core/auth/auth.php';
+    require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
     require_once '../../../core/database/conexion.php';
 
     // 2. Leer Input
@@ -18,7 +19,7 @@ try {
 
     if (!$data || !isset($data['context']) || !isset($data['cart'])) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Datos de entrada incompletos o inválidos']);
+        echo json_encode(['success' => false, 'message' => 'Datos de entrada incompletos o invÃ¡lidos']);
         exit;
     }
 
@@ -37,7 +38,7 @@ try {
     $stmt = $conn->query($sql);
     $promociones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 4. Preparar el carrito para evaluación (campos de seguimiento)
+    // 4. Preparar el carrito para evaluaciÃ³n (campos de seguimiento)
     foreach ($cart as &$item) {
         $item['descuento_total'] = 0;
         $item['promos'] = [];
@@ -48,11 +49,11 @@ try {
 
     $promos_aplicadas = [];
     $promos_califican = []; 
-    $promos_potenciales = []; // NUEVO: Promociones que cumplen al menos una condición
+    $promos_potenciales = []; // NUEVO: Promociones que cumplen al menos una condiciÃ³n
     $promos_descartadas = [];
     $total_descuento_global_extra = 0;
 
-    // 5. Evaluar cada promoción
+    // 5. Evaluar cada promociÃ³n
     foreach ($promociones as $p) {
         $promo_id = $p['id'];
         
@@ -64,7 +65,7 @@ try {
         $total_conds = count($condiciones);
         $conds_met = 0;
         $pasa_contexto = true;
-        // qualifying_indices guardará los índices del carrito que califican para esta promo
+        // qualifying_indices guardarÃ¡ los Ã­ndices del carrito que califican para esta promo
         $qualifying_indices = array_keys($cart); 
         $has_product_condition = false;
         $motivo_descarte = '';
@@ -76,13 +77,13 @@ try {
             $met_esta_condicion = true;
 
             if ($c['tipo_cond'] === 'A') {
-                // TIPO A: CONTEXTO (Aplica a toda la evaluación)
+                // TIPO A: CONTEXTO (Aplica a toda la evaluaciÃ³n)
                 switch ($nombre) {
                     case 'dia_semana':
                         if (!isset($valor['dias']) || !in_array($context['dia'], $valor['dias'])) {
                             $met_esta_condicion = false;
                             $pasa_contexto = false;
-                            $motivo_descarte = "Día no permitido: " . $context['dia'];
+                            $motivo_descarte = "DÃ­a no permitido: " . $context['dia'];
                         }
                         break;
                     case 'sucursal':
@@ -104,7 +105,7 @@ try {
                         if (!isset($valor['canales']) || !in_array($context['canal'], $valor['canales'])) {
                             $met_esta_condicion = false;
                             $pasa_contexto = false;
-                            $motivo_descarte = "Canal no válido.";
+                            $motivo_descarte = "Canal no vÃ¡lido.";
                         }
                         break;
                     case 'tipo_cliente':
@@ -116,7 +117,7 @@ try {
                         break;
                 }
             } else {
-                // TIPO B: CARRITO (Filtra ítems o valida totales)
+                // TIPO B: CARRITO (Filtra Ã­tems o valida totales)
                 switch ($nombre) {
                     case 'producto':
                         $has_product_condition = true;
@@ -166,7 +167,7 @@ try {
                         if ($total_monto < ($valor['monto'] ?? 0)) {
                             $met_esta_condicion = false;
                             $qualifying_indices = [];
-                            $motivo_descarte = "Monto mínimo insuficiente.";
+                            $motivo_descarte = "Monto mÃ­nimo insuficiente.";
                         }
                         break;
 
@@ -176,7 +177,7 @@ try {
                         if ($total_items < ($valor['cantidad'] ?? 1)) {
                             $met_esta_condicion = false;
                             $qualifying_indices = [];
-                            $motivo_descarte = "Cantidad mínima no alcanzada.";
+                            $motivo_descarte = "Cantidad mÃ­nima no alcanzada.";
                         }
                         break;
                 }
@@ -190,7 +191,7 @@ try {
             $aplicado = false;
             $monto_descuento_promo = 0;
             
-            // 1. DETERMINAR ÍTEMS A DESCONTAR
+            // 1. DETERMINAR ÃTEMS A DESCONTAR
             $candidatos = []; 
             foreach ($qualifying_indices as $idx) {
                 for ($i = 0; $i < $cart[$idx]['cantidad_libre']; $i++) {
@@ -198,7 +199,7 @@ try {
                 }
             }
 
-            // 2. APLICAR SEGÚN OBJETIVO
+            // 2. APLICAR SEGÃšN OBJETIVO
             $items_finales = []; 
             switch ($p['objetivo_descuento']) {
                 case 'todos':
@@ -274,13 +275,13 @@ try {
                     $promos_aplicadas[] = ['id' => $p['id'], 'nombre' => $p['nombre'], 'resumen' => "Ahorro: C$" . number_format($monto_descuento_promo, 2)];
                     if ($p['objetivo_descuento'] === 'factura') $total_descuento_global_extra += $monto_descuento_promo;
                 } else {
-                    $promos_califican[] = ['id' => $p['id'], 'nombre' => $p['nombre'], 'resumen' => "Podrías ahorrar C$" . number_format($monto_descuento_promo, 2)];
+                    $promos_califican[] = ['id' => $p['id'], 'nombre' => $p['nombre'], 'resumen' => "PodrÃ­as ahorrar C$" . number_format($monto_descuento_promo, 2)];
                 }
             } else {
-                $promos_descartadas[] = ['id' => $p['id'], 'nombre' => $p['nombre'], 'motivo' => "No se encontraron ítems válidos."];
+                $promos_descartadas[] = ['id' => $p['id'], 'nombre' => $p['nombre'], 'motivo' => "No se encontraron Ã­tems vÃ¡lidos."];
             }
         } elseif ($conds_met > 0) {
-            // NUEVO: Promoción POTENCIAL (cumple algunas condiciones pero no todas)
+            // NUEVO: PromociÃ³n POTENCIAL (cumple algunas condiciones pero no todas)
             $promos_potenciales[] = [
                 'id' => $p['id'],
                 'nombre' => $p['nombre'],

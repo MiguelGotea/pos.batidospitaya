@@ -1,18 +1,19 @@
-<?php
-// ajax/promo_get_productos.php — Devuelve productos para Select2 (búsqueda en tiempo real)
+﻿<?php
+// ajax/promo_get_productos.php â€” Devuelve productos para Select2 (bÃºsqueda en tiempo real)
 // Retorna formato Select2: { success, data: [{id, text}] }
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $term = isset($_POST['term']) ? trim($_POST['term']) : '';
 
     $sql = "SELECT
                 pp.id,
-                CONCAT(pm.Nombre, ' — ', pp.Nombre) AS text
+                CONCAT(pm.Nombre, ' â€” ', pp.Nombre) AS text
             FROM producto_presentacion pp
             INNER JOIN producto_maestro pm ON pp.id_producto_maestro = pm.id
             WHERE pp.Activo = 'SI'

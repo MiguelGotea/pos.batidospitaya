@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once '../../../core/permissions/permissions.php';
 session_start();
@@ -6,9 +6,9 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
-    if (!isset($_SESSION['usuario_id'])) {
-        throw new Exception('Sesión no válida');
+    // Verificar sesiÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
+        throw new Exception('SesiÃ³n no vÃ¡lida');
     }
     
     $cargoOperario = $_SESSION['cargo_cod'];
@@ -21,11 +21,11 @@ try {
     $id_unidad = isset($_POST['id_unidad']) ? (int)$_POST['id_unidad'] : 0;
     
     if ($id_unidad <= 0) {
-        throw new Exception('ID de unidad inválido');
+        throw new Exception('ID de unidad invÃ¡lido');
     }
     
     // Obtener conversiones donde esta unidad es inicio o final
-    // Usando parámetros posicionales (?) para evitar el error HY093
+    // Usando parÃ¡metros posicionales (?) para evitar el error HY093
     $sql = "SELECT 
                 c.id,
                 c.cantidad,

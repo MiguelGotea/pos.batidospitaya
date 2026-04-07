@@ -1,12 +1,13 @@
-<?php
+﻿<?php
 // facturas_get_detalle.php
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    if ($id <= 0) throw new Exception('ID de factura inválido.');
+    if ($id <= 0) throw new Exception('ID de factura invÃ¡lido.');
 
     // Cabecera
     $sqlCab = "SELECT f.*,

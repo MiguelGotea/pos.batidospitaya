@@ -1,11 +1,12 @@
-<?php
-// ajax/promo_get_grupos.php — Devuelve grupos, subgrupos o sucursales según parámetro ?tipo=
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_get_grupos.php â€” Devuelve grupos, subgrupos o sucursales segÃºn parÃ¡metro ?tipo=
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $tipo     = isset($_GET['tipo'])     ? trim($_GET['tipo'])   : 'grupos';
     $idGrupo  = isset($_GET['id_grupo']) ? (int)$_GET['id_grupo'] : 0;

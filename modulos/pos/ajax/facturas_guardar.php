@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 // facturas_guardar.php
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -12,10 +13,10 @@ try {
     $notas         = isset($_POST['notas'])          ? trim($_POST['notas'])          : null;
     $detalle       = isset($_POST['detalle'])        ? json_decode($_POST['detalle'], true) : [];
 
-    $usuarioId = $_SESSION['usuario_id'];
+    $usuarioId = $_SESSION['pos_colaborador_id'];
 
     // ---- Validaciones ----
-    if (empty($numeroFactura)) throw new Exception('El número de factura es obligatorio.');
+    if (empty($numeroFactura)) throw new Exception('El nÃºmero de factura es obligatorio.');
     if (empty($fecha))         throw new Exception('La fecha es obligatoria.');
     if ($idProveedor <= 0)     throw new Exception('Debe seleccionar un proveedor.');
     if (empty($detalle) || !is_array($detalle) || count($detalle) === 0) {
@@ -32,9 +33,9 @@ try {
         $costoTotalIva = isset($item['costo_total_iva']) ? (float)$item['costo_total_iva'] : 0;
         $idPresentacion = isset($item['id_presentacion']) ? (int)$item['id_presentacion'] : 0;
 
-        if ($idPresentacion <= 0) throw new Exception("Producto inválido en la línea ".($i+1).".");
-        if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la línea ".($i+1).".");
-        if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la línea ".($i+1).".");
+        if ($idPresentacion <= 0) throw new Exception("Producto invÃ¡lido en la lÃ­nea ".($i+1).".");
+        if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la lÃ­nea ".($i+1).".");
+        if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la lÃ­nea ".($i+1).".");
 
         $totalFactura += $costoTotalIva;
     }
@@ -56,7 +57,7 @@ try {
     ]);
     $idFactura = $conn->lastInsertId();
 
-    // Si el número era AUTO, actualizar con el ID autoincremental
+    // Si el nÃºmero era AUTO, actualizar con el ID autoincremental
     if ($numeroFactura === 'AUTO') {
         $stmtUpdate = $conn->prepare("UPDATE pos_facturas SET numero_factura = :num WHERE id = :id");
         $stmtUpdate->execute([':num' => $idFactura, ':id' => $idFactura]);

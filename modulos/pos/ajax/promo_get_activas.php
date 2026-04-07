@@ -1,11 +1,12 @@
-<?php
-// ajax/promo_get_activas.php — Devuelve lista de promociones ACTIVAS, de prueba
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_get_activas.php â€” Devuelve lista de promociones ACTIVAS, de prueba
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $sql = "SELECT id, nombre, codigo_interno, resultado_tipo, resultado_valor, objetivo_descuento 
             FROM promo_promociones 

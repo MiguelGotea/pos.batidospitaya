@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 // historial_unidades_conversion.php
-// Ubicación: /public_html/modulos/POS/historial_unidades_conversion.php
+// UbicaciÃ³n: /public_html/modulos/POS/historial_unidades_conversion.php
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
@@ -18,7 +18,7 @@ if (!tienePermiso('unidades_conversion_productos', 'vista', $cargoOperario)) {
     exit();
 }
 
-// Verificar permiso de creación
+// Verificar permiso de creaciÃ³n
 $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $cargoOperario);
 ?>
 <!DOCTYPE html>
@@ -26,7 +26,7 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración de Unidades y Conversión</title>
+    <title>AdministraciÃ³n de Unidades y ConversiÃ³n</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -39,10 +39,10 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
     
     <div class="main-container">
         <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Administración de Unidades y Conversión'); ?>
+            <?php echo renderHeader($usuario, false, 'AdministraciÃ³n de Unidades y ConversiÃ³n'); ?>
             
             <div class="container-fluid p-3">
-                <!-- Botón para agregar nueva unidad -->
+                <!-- BotÃ³n para agregar nueva unidad -->
                 <?php if ($puedeCrear): ?>
                 <div class="mb-3">
                     <button class="btn btn-success" onclick="abrirModalNuevaUnidad()">
@@ -70,12 +70,12 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
                             </tr>
                         </thead>
                         <tbody id="tablaUnidadesBody">
-                            <!-- Datos cargados vía AJAX -->
+                            <!-- Datos cargados vÃ­a AJAX -->
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Paginación -->
+                <!-- PaginaciÃ³n -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="d-flex align-items-center gap-2">
                         <label class="mb-0">Mostrar:</label>
@@ -125,12 +125,12 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
         </div>
     </div>
 
-    <!-- Modal para nueva conversión -->
+    <!-- Modal para nueva conversiÃ³n -->
     <div class="modal fade" id="modalConversion" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nueva Conversión</h5>
+                    <h5 class="modal-title">Nueva ConversiÃ³n</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -150,7 +150,7 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
                         </div>
 
                         <div class="mb-3">
-                            <label for="cantidad" class="form-label">Factor de Conversión *</label>
+                            <label for="cantidad" class="form-label">Factor de ConversiÃ³n *</label>
                             <input type="number" class="form-control" id="cantidad" name="cantidad" 
                                    required step="0.0001" min="0.0001" placeholder="Ej: 1000">
                             <small class="text-muted">
@@ -185,7 +185,7 @@ $puedeCrear = tienePermiso('unidades_conversion_productos', 'nuevo_registro', $c
                 </div>
                 <div class="modal-body">
                     <div id="historialConversiones" class="conversiones-container">
-                        <!-- Datos cargados vía AJAX -->
+                        <!-- Datos cargados vÃ­a AJAX -->
                     </div>
                 </div>
             </div>

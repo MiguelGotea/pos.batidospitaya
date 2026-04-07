@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // cliente_gestion.php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once '../../core/layout/menu_lateral.php';
@@ -8,7 +8,7 @@ require_once '../../core/permissions/permissions.php';
 $usuario = obtenerUsuarioActual();
 $cargoOperario = $usuario['CodNivelesCargos'];
 
-// Verificar acceso básico
+// Verificar acceso bÃ¡sico
 if (!tienePermiso('clientes_club_pos', 'vista', $cargoOperario)) {
     header('Location: /login.php');
     exit();
@@ -74,7 +74,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
                     </button>
                     <?php if (!$esModoEdicion && $puedeEditar): ?>
                         <a href="?membresia=<?php echo urlencode($membresia); ?>&modo=edit" class="btn btn-primary">
-                            <i class="bi bi-pencil"></i> Modo Edición
+                            <i class="bi bi-pencil"></i> Modo EdiciÃ³n
                         </a>
                     <?php endif; ?>
                 </div>
@@ -85,12 +85,12 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
                         
                         <div class="section-title">
                             <i class="bi bi-person-badge fs-4"></i>
-                            <h4 class="mb-0">Información de Membresía</h4>
+                            <h4 class="mb-0">InformaciÃ³n de MembresÃ­a</h4>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Membresía</label>
+                                <label class="form-label">MembresÃ­a</label>
                                 <input type="text" class="form-control" id="membresia" value="<?php echo htmlspecialchars($membresia); ?>" disabled>
                             </div>
                             <div class="col-md-4 mb-3">
@@ -118,7 +118,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
                                 <input type="text" class="form-control" id="apellido" name="apellido" <?php echo !$esModoEdicion ? 'disabled' : ''; ?>>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label for="cedula" class="form-label">Cédula</label>
+                                <label for="cedula" class="form-label">CÃ©dula</label>
                                 <input type="text" class="form-control" id="cedula" name="cedula" 
                                        placeholder="001-000000-0000A" maxlength="20"
                                        <?php echo !$esModoEdicion ? 'disabled' : ''; ?>>
@@ -131,7 +131,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
                                 <input type="text" class="form-control" id="celular" name="celular" <?php echo !$esModoEdicion ? 'disabled' : ''; ?>>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="correo" class="form-label">Correo Electrónico</label>
+                                <label for="correo" class="form-label">Correo ElectrÃ³nico</label>
                                 <input type="email" class="form-control" id="correo" name="correo" <?php echo !$esModoEdicion ? 'disabled' : ''; ?>>
                             </div>
                         </div>
@@ -171,7 +171,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
             puedeEditar: <?php echo $puedeEditar ? 'true' : 'false'; ?>
         };
 
-        // Función para formatear la cédula (estándar Nicaragua)
+        // FunciÃ³n para formatear la cÃ©dula (estÃ¡ndar Nicaragua)
         function formatearCedula(input) {
             const startPos = input.selectionStart;
             let value = input.value.replace(/-/g, '').toUpperCase();
@@ -194,7 +194,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
 
             if (letter) formattedValue += letter;
             
-            // Contar cuántos dígitos (no guiones) había antes del cursor originalmente
+            // Contar cuÃ¡ntos dÃ­gitos (no guiones) habÃ­a antes del cursor originalmente
             let digitsBeforeCursor = 0;
             const originalValue = input.value;
             for (let i = 0; i < startPos; i++) {
@@ -203,7 +203,7 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
 
             input.value = formattedValue;
 
-            // Encontrar la nueva posición del cursor
+            // Encontrar la nueva posiciÃ³n del cursor
             let newPos = 0;
             let currentDigits = 0;
             while (newPos < formattedValue.length && currentDigits < digitsBeforeCursor) {

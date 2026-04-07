@@ -1,18 +1,19 @@
-<?php
-// ajax/promo_get_productos_precios.php — Devuelve productos para la prueba con metadatos completos (RECALIBRADO), de prueba
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_get_productos_precios.php â€” Devuelve productos para la prueba con metadatos completos (RECALIBRADO), de prueba
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $rawTerm = isset($_POST['term']) ? trim($_POST['term']) : '';
     $term = '%' . $rawTerm . '%';
 
     // Query robusta:
-    // 1. Busca en Nombre del maestro, Nombre de la presentación y SKU.
-    // 2. Obtiene el id_grupo real desde la jerarquía de la presentación.
+    // 1. Busca en Nombre del maestro, Nombre de la presentaciÃ³n y SKU.
+    // 2. Obtiene el id_grupo real desde la jerarquÃ­a de la presentaciÃ³n.
     $sql = "SELECT 
                 pp.id, 
                 pp.Nombre as nombre_presentacion, 
@@ -46,7 +47,7 @@ try {
         
         $fullName = $nombreMaestro;
         if ($nombrePresent && $nombrePresent !== $nombreMaestro) {
-            $fullName = $fullName ? ($fullName . ' — ' . $nombrePresent) : $nombrePresent;
+            $fullName = $fullName ? ($fullName . ' â€” ' . $nombrePresent) : $nombrePresent;
         }
         if (!$fullName) $fullName = 'Producto sin nombre id:' . $p['id'];
 

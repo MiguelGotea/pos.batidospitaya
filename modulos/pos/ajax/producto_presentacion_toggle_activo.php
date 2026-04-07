@@ -1,12 +1,13 @@
-<?php
+﻿<?php
 require_once '../../../core/database/conexion.php';
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/permissions/permissions.php';
 
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
+    // Verificar sesiÃ³n
     verificarAutenticacion();
     $usuario = obtenerUsuarioActual();
     $cargoOperario = $usuario['CodNivelesCargos'];
@@ -20,11 +21,11 @@ try {
     $estado = isset($_POST['estado']) ? $_POST['estado'] : '';
     
     if ($id <= 0) {
-        throw new Exception('ID inválido');
+        throw new Exception('ID invÃ¡lido');
     }
     
     if (!in_array($estado, ['SI', 'NO'])) {
-        throw new Exception('Estado inválido');
+        throw new Exception('Estado invÃ¡lido');
     }
     
     // Actualizar estado

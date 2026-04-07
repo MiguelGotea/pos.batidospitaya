@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -6,7 +6,7 @@ try {
     $accion = isset($_GET['accion']) ? $_GET['accion'] : 'todos';
     
     if ($accion === 'subgrupos') {
-        // Obtener subgrupos de un grupo específico
+        // Obtener subgrupos de un grupo especÃ­fico
         $idGrupo = isset($_GET['id_grupo']) ? (int)$_GET['id_grupo'] : 0;
         
         $sql = "SELECT id, nombre 
@@ -25,7 +25,7 @@ try {
         exit();
     }
     
-    // Obtener todos los catálogos
+    // Obtener todos los catÃ¡logos
     
     // Productos Maestros
     $sqlMaestros = "SELECT id, Nombre FROM producto_maestro ORDER BY Nombre";
@@ -47,7 +47,7 @@ try {
     $stmtTipos = $conn->query($sqlTipos);
     $tiposReceta = $stmtTipos->fetchAll();
     
-    // Productos Presentación (para componentes)
+    // Productos PresentaciÃ³n (para componentes)
     $sqlProductos = "SELECT pp.id, pp.Nombre, pp.SKU, up.nombre as unidad
                      FROM producto_presentacion pp
                      LEFT JOIN unidad_producto up ON pp.id_unidad_producto = up.id
@@ -67,7 +67,7 @@ try {
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'message' => 'Error al cargar catálogos: ' . $e->getMessage()
+        'message' => 'Error al cargar catÃ¡logos: ' . $e->getMessage()
     ]);
 }
 ?>

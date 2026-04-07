@@ -1,5 +1,6 @@
-<?php
-require_once '../../../core/auth/auth.php';
+﻿<?php
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -8,7 +9,7 @@ try {
     $id = (int)$data['id'];
     
     if ($id <= 0) {
-        throw new Exception('ID inválido');
+        throw new Exception('ID invÃ¡lido');
     }
     
     $sql = "DELETE FROM variedad_producto_presentacion WHERE id = :id";
@@ -17,7 +18,7 @@ try {
     
     echo json_encode([
         'success' => true,
-        'message' => 'Variación eliminada exitosamente'
+        'message' => 'VariaciÃ³n eliminada exitosamente'
     ]);
     
 } catch (Exception $e) {

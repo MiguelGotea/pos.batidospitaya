@@ -1,7 +1,8 @@
-<?php
-// promociones.php — Configurador de Promociones (Pitaya ERP)
+﻿<?php
+// promociones.php â€” Configurador de Promociones (Pitaya ERP)
 
-require_once '../../core/auth/auth.php';
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/permissions/permissions.php';
@@ -24,7 +25,7 @@ $puedeCambiarEstado = tienePermiso('promociones', 'cambiar_estado', $cargoOperar
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurador de Promociones</title>
-    <meta name="description" content="Gestión y configuración de promociones del ERP Pitaya">
+    <meta name="description" content="GestiÃ³n y configuraciÃ³n de promociones del ERP Pitaya">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -45,7 +46,7 @@ $puedeCambiarEstado = tienePermiso('promociones', 'cambiar_estado', $cargoOperar
                 <div class="d-flex flex-wrap gap-2 align-items-center justify-content-end mb-3">
                     <?php if ($puedeCrear): ?>
                     <a href="promocion_form.php" class="btn promo-btn-nuevo">
-                        <i class="bi bi-plus-circle"></i> Nueva Promoción
+                        <i class="bi bi-plus-circle"></i> Nueva PromociÃ³n
                     </a>
                     <?php endif; ?>
                 </div>
@@ -56,7 +57,7 @@ $puedeCambiarEstado = tienePermiso('promociones', 'cambiar_estado', $cargoOperar
                         <thead>
                             <tr>
                                 <th data-column="id" data-type="number">
-                                    Código
+                                    CÃ³digo
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="nombre" data-type="text">
@@ -88,13 +89,13 @@ $puedeCambiarEstado = tienePermiso('promociones', 'cambiar_estado', $cargoOperar
                         </thead>
                         <tbody id="tablaPromocionesBody">
                             <tr><td colspan="8" class="text-center py-4 text-muted">
-                                <i class="bi bi-arrow-repeat spin-icon"></i> Cargando…
+                                <i class="bi bi-arrow-repeat spin-icon"></i> Cargandoâ€¦
                             </td></tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- PAGINACIÓN -->
+                <!-- PAGINACIÃ“N -->
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="d-flex align-items-center gap-2">
                         <label class="mb-0 small">Mostrar:</label>
@@ -117,26 +118,26 @@ $puedeCambiarEstado = tienePermiso('promociones', 'cambiar_estado', $cargoOperar
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header promo-modal-header">
-                    <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>Ayuda — Configurador de Promociones</h5>
+                    <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>Ayuda â€” Configurador de Promociones</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <h6 class="fw-bold text-success">¿Qué es el Configurador de Promociones?</h6>
-                    <p>Herramienta para definir reglas de descuento que el motor del POS evaluará en tiempo real al procesar una venta. <strong>No es el motor de facturación</strong> — solo configura las reglas.</p>
+                    <h6 class="fw-bold text-success">Â¿QuÃ© es el Configurador de Promociones?</h6>
+                    <p>Herramienta para definir reglas de descuento que el motor del POS evaluarÃ¡ en tiempo real al procesar una venta. <strong>No es el motor de facturaciÃ³n</strong> â€” solo configura las reglas.</p>
 
-                    <h6 class="fw-bold text-success mt-3">Estados de una promoción</h6>
+                    <h6 class="fw-bold text-success mt-3">Estados de una promociÃ³n</h6>
                     <ul>
-                        <li><span class="badge bg-secondary">Borrador</span> — En preparación, no activa en POS.</li>
-                        <li><span class="badge bg-success">Activa</span> — El POS la evalúa en cada venta.</li>
-                        <li><span class="badge bg-warning text-dark">Inactiva</span> — Pausada temporalmente.</li>
-                        <li><span class="badge bg-danger">Archivada</span> — Eliminación lógica, no se puede reversar.</li>
+                        <li><span class="badge bg-secondary">Borrador</span> â€” En preparaciÃ³n, no activa en POS.</li>
+                        <li><span class="badge bg-success">Activa</span> â€” El POS la evalÃºa en cada venta.</li>
+                        <li><span class="badge bg-warning text-dark">Inactiva</span> â€” Pausada temporalmente.</li>
+                        <li><span class="badge bg-danger">Archivada</span> â€” EliminaciÃ³n lÃ³gica, no se puede reversar.</li>
                     </ul>
 
                     <h6 class="fw-bold text-success mt-3">Prioridad</h6>
-                    <p>Cuando dos promociones campean sobre el mismo producto, la de <strong>menor número gana</strong>. Configure prioridad 1 para la más importante.</p>
+                    <p>Cuando dos promociones campean sobre el mismo producto, la de <strong>menor nÃºmero gana</strong>. Configure prioridad 1 para la mÃ¡s importante.</p>
 
                     <h6 class="fw-bold text-success mt-3">Condiciones</h6>
-                    <p>Todas las condiciones de una promoción se evalúan con <strong>AND</strong>: todas deben cumplirse simultáneamente para que la promoción se active.</p>
+                    <p>Todas las condiciones de una promociÃ³n se evalÃºan con <strong>AND</strong>: todas deben cumplirse simultÃ¡neamente para que la promociÃ³n se active.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once '../../../core/permissions/permissions.php';
 session_start();
@@ -6,12 +6,12 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
-    if (!isset($_SESSION['usuario_id'])) {
-        throw new Exception('Sesión no válida');
+    // Verificar sesiÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
+        throw new Exception('SesiÃ³n no vÃ¡lida');
     }
     
-    $codOperario = $_SESSION['usuario_id'];
+    $codOperario = $_SESSION['pos_colaborador_id'];
     $cargoOperario = $_SESSION['cargo_cod'];
     
     // Verificar permiso de crear
@@ -65,7 +65,7 @@ try {
         
     } elseif ($accion === 'editar') {
         if ($id <= 0) {
-            throw new Exception('ID inválido');
+            throw new Exception('ID invÃ¡lido');
         }
         
         // Verificar que no exista otra unidad con el mismo nombre
@@ -101,7 +101,7 @@ try {
         ]);
         
     } else {
-        throw new Exception('Acción inválida');
+        throw new Exception('AcciÃ³n invÃ¡lida');
     }
     
 } catch (Exception $e) {

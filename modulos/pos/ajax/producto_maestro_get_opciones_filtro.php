@@ -1,11 +1,11 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    // Verificar autenticación
-    if (!isset($_SESSION['usuario_id'])) {
+    // Verificar autenticaciÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
         throw new Exception('No autorizado');
     }
     
@@ -14,7 +14,7 @@ try {
     $opciones = [];
     
     if ($columna === 'categoria_nombre') {
-        // Obtener categorías
+        // Obtener categorÃ­as
         $sql = "SELECT id as valor, Nombre as texto 
                 FROM categoria_producto_maestro 
                 ORDER BY Nombre";

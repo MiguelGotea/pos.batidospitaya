@@ -1,5 +1,6 @@
-<?php
-require_once '../../core/auth/auth.php';
+﻿<?php
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/permissions/permissions.php';
@@ -12,7 +13,7 @@ $cargoOperario = $usuario['CodNivelesCargos'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Facturas — POS</title>
+    <title>Historial de Facturas â€” POS</title>
     <meta name="description" content="Historial de facturas de compra y abastecimiento de tienda">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -43,7 +44,7 @@ $cargoOperario = $usuario['CodNivelesCargos'];
                         <thead>
                             <tr>
                                 <th data-column="numero_factura" data-type="text">
-                                    N° Factura
+                                    NÂ° Factura
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="fecha" data-type="daterange">
@@ -77,14 +78,14 @@ $cargoOperario = $usuario['CodNivelesCargos'];
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-4">
                                     <div class="spinner-border spinner-border-sm me-2"></div>
-                                    Cargando…
+                                    Cargandoâ€¦
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Paginación + registros por página -->
+                <!-- PaginaciÃ³n + registros por pÃ¡gina -->
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                     <div class="d-flex align-items-center gap-2">
                         <label class="mb-0" style="font-size:.85rem;">Mostrar:</label>
@@ -133,7 +134,7 @@ $cargoOperario = $usuario['CodNivelesCargos'];
                                 </tr>
                             </thead>
                             <tbody id="tablaDetalleModal">
-                                <tr><td colspan="5" class="text-center text-muted">Cargando…</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted">Cargandoâ€¦</td></tr>
                             </tbody>
                         </table>
                     </div>

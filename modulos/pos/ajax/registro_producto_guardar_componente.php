@@ -1,5 +1,6 @@
-<?php
-require_once '../../../core/auth/auth.php';
+﻿<?php
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -14,7 +15,7 @@ try {
     
     // Validaciones
     if ($idProducto <= 0) {
-        throw new Exception('ID de producto inválido');
+        throw new Exception('ID de producto invÃ¡lido');
     }
     
     if ($idPresentacionProducto <= 0) {
@@ -25,9 +26,9 @@ try {
         throw new Exception('La cantidad debe ser mayor a 0');
     }
     
-    // Validar que el producto no sea componente de sí mismo
+    // Validar que el producto no sea componente de sÃ­ mismo
     if ($idPresentacionProducto === $idProducto) {
-        throw new Exception('Un producto no puede ser componente de sí mismo');
+        throw new Exception('Un producto no puede ser componente de sÃ­ mismo');
     }
     
     // Obtener el ID de la receta del producto

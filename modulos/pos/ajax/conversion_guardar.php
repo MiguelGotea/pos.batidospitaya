@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once '../../../core/permissions/permissions.php';
 session_start();
@@ -6,12 +6,12 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
-    if (!isset($_SESSION['usuario_id'])) {
-        throw new Exception('Sesión no válida');
+    // Verificar sesiÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
+        throw new Exception('SesiÃ³n no vÃ¡lida');
     }
     
-    $codOperario = $_SESSION['usuario_id'];
+    $codOperario = $_SESSION['pos_colaborador_id'];
     $cargoOperario = $_SESSION['cargo_cod'];
     
     // Verificar permiso de crear
@@ -33,7 +33,7 @@ try {
     }
     
     if ($cantidad <= 0) {
-        throw new Exception('La conversión tiene que ser positiva');
+        throw new Exception('La conversiÃ³n tiene que ser positiva');
     }
     
     if ($id_unidad_producto_inicio === $id_unidad_producto_final) {
@@ -52,7 +52,7 @@ try {
         throw new Exception('Una o ambas unidades no existen');
     }
     
-    // Verificar que no exista ya esta conversión
+    // Verificar que no exista ya esta conversiÃ³n
     $sqlCheckConversion = "SELECT COUNT(*) as total FROM conversion_unidad_producto 
                           WHERE id_unidad_producto_inicio = :id_inicio 
                           AND id_unidad_producto_final = :id_final";
@@ -62,10 +62,10 @@ try {
     $stmtCheckConversion->execute();
     
     if ($stmtCheckConversion->fetch()['total'] > 0) {
-        throw new Exception('Ya existe una conversión entre estas unidades');
+        throw new Exception('Ya existe una conversiÃ³n entre estas unidades');
     }
     
-    // Insertar conversión
+    // Insertar conversiÃ³n
     $sql = "INSERT INTO conversion_unidad_producto 
             (id_unidad_producto_inicio, id_unidad_producto_final, cantidad, usuario_creacion) 
             VALUES (:id_inicio, :id_final, :cantidad, :usuario_creacion)";
@@ -79,7 +79,7 @@ try {
     
     echo json_encode([
         'success' => true,
-        'message' => 'Nueva conversión registrada exitosamente'
+        'message' => 'Nueva conversiÃ³n registrada exitosamente'
     ]);
     
 } catch (Exception $e) {

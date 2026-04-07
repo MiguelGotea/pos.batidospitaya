@@ -1,13 +1,14 @@
-<?php
-// prueba_promociones.php — Página de pruebas para el motor de promociones, de prueba
-require_once '../../core/auth/auth.php';
+﻿<?php
+// prueba_promociones.php â€” PÃ¡gina de pruebas para el motor de promociones, de prueba
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 
 $usuario = obtenerUsuarioActual();
 $cargoOperario = $usuario['CodNivelesCargos'];
 
-// No estricto en permisos para esta página de prueba, pero requiere login
+// No estricto en permisos para esta pÃ¡gina de prueba, pero requiere login
 if (!$usuario) {
     header('Location: /login.php'); exit();
 }
@@ -17,7 +18,7 @@ if (!$usuario) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de Promociones — Pitaya ERP</title>
+    <title>Prueba de Promociones â€” Pitaya ERP</title>
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -39,15 +40,15 @@ if (!$usuario) {
 
     <div class="main-container">
         <div class="sub-container">
-            <?php echo renderHeader($usuario, false, '🧪 Demo Aplicación de Promociones'); ?>
+            <?php echo renderHeader($usuario, false, 'ðŸ§ª Demo AplicaciÃ³n de Promociones'); ?>
 
             <div class="container-fluid p-3">
                 <div class="row g-4">
                     
-                    <!-- COLUMNA IZQUIERDA: CONFIGURACIÓN -->
+                    <!-- COLUMNA IZQUIERDA: CONFIGURACIÃ“N -->
                     <div class="col-lg-4">
                         <div class="test-panel mb-4">
-                            <h5 class="mb-3"><i class="bi bi-gear-fill"></i> 1. Contexto de Simulación</h5>
+                            <h5 class="mb-3"><i class="bi bi-gear-fill"></i> 1. Contexto de SimulaciÃ³n</h5>
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label small fw-bold">Sucursal</label>
@@ -56,10 +57,10 @@ if (!$usuario) {
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold">Día</label>
+                                    <label class="form-label small fw-bold">DÃ­a</label>
                                     <select id="simDia" class="form-select form-select-sm">
                                         <?php
-                                        $dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+                                        $dias = ['Lunes','Martes','MiÃ©rcoles','Jueves','Viernes','SÃ¡bado','Domingo'];
                                         $hoy = date('N'); // 1-7
                                         foreach($dias as $i => $d) {
                                             $sel = ($i+1 == $hoy) ? 'selected' : '';
@@ -76,7 +77,7 @@ if (!$usuario) {
                                     <label class="form-label small fw-bold">Canal</label>
                                     <select id="simCanal" class="form-select form-select-sm">
                                         <option value="general" selected>General</option>
-                                        <option value="página web">Página Web</option>
+                                        <option value="pÃ¡gina web">PÃ¡gina Web</option>
                                     </select>
                                 </div>
                                 <div class="col-6">
@@ -99,7 +100,7 @@ if (!$usuario) {
                                 <select id="searchProducto" class="form-select" style="width:100%"></select>
                             </div>
                             <div id="cartList" class="mb-3">
-                                <div class="text-center text-muted py-3">El carrito está vacío</div>
+                                <div class="text-center text-muted py-3">El carrito estÃ¡ vacÃ­o</div>
                             </div>
                             <button class="btn btn-success w-100" onclick="procesarPromociones()">
                                 <i class="bi bi-lightning-charge-fill"></i> Agregar
@@ -110,7 +111,7 @@ if (!$usuario) {
                     <!-- COLUMNA DERECHA: RESULTADOS -->
                     <div class="col-lg-8">
                         <div class="test-panel h-100">
-                            <h5 class="mb-3"><i class="bi bi-journal-text"></i> Resultados de Evaluación</h5>
+                            <h5 class="mb-3"><i class="bi bi-journal-text"></i> Resultados de EvaluaciÃ³n</h5>
                             
                             <div id="resultLoading" class="text-center py-5 d-none">
                                 <div class="spinner-border text-success" role="status"></div>
@@ -158,7 +159,7 @@ if (!$usuario) {
                                 <div id="suggestedPromos" class="mb-4"></div>
 
                                 <h6><i class="bi bi-info-circle text-warning"></i> 4. Promociones Potenciales</h6>
-                                <p class="small text-muted">Se cumple al menos una condición. Completa los requisitos para activarla.</p>
+                                <p class="small text-muted">Se cumple al menos una condiciÃ³n. Completa los requisitos para activarla.</p>
                                 <div id="potentialPromos" class="mb-4"></div>
 
                                 <h6><i class="bi bi-x-circle text-danger"></i> 5. Promociones que NO Califican</h6>

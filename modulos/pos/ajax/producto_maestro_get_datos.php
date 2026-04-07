@@ -1,11 +1,11 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    // Verificar autenticación
-    if (!isset($_SESSION['usuario_id'])) {
+    // Verificar autenticaciÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
         throw new Exception('No autorizado');
     }
     
@@ -60,7 +60,7 @@ try {
         $where[] = "pm.Estado IN (" . implode(',', $placeholders) . ")";
     }
     
-    // Filtro de rango de fechas de creación
+    // Filtro de rango de fechas de creaciÃ³n
     if (isset($filtros['fecha_creacion']) && is_array($filtros['fecha_creacion'])) {
         if (!empty($filtros['fecha_creacion']['desde'])) {
             $where[] = "DATE(pm.fecha_creacion) >= :fecha_creacion_desde";
@@ -103,7 +103,7 @@ try {
     $stmtCount->execute($params);
     $totalRegistros = $stmtCount->fetch()['total'];
     
-    // Consulta de datos con paginación
+    // Consulta de datos con paginaciÃ³n
     $sql = "SELECT 
                 pm.id,
                 pm.Nombre,

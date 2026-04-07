@@ -1,29 +1,29 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/permissions/permissions.php';
 header('Content-Type: application/json');
 
 try {
-    // Verificar autenticación
-    if (!isset($_SESSION['usuario_id'])) {
+    // Verificar autenticaciÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
         throw new Exception('No autorizado');
     }
     
-    // Verificar permisos de edición
+    // Verificar permisos de ediciÃ³n
     $usuario = obtenerUsuarioActual();
     $cargoOperario = $usuario['CodNivelesCargos'];
     
     if (!tienePermiso('producto_maestro', 'editar', $cargoOperario)) {
-        throw new Exception('No tiene permisos para realizar esta acción');
+        throw new Exception('No tiene permisos para realizar esta acciÃ³n');
     }
     
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     $estado = isset($_POST['estado']) ? (int)$_POST['estado'] : 0;
-    $usuario_id = $_SESSION['usuario_id'];
+    $usuario_id = $_SESSION['pos_colaborador_id'];
     
     if ($id <= 0) {
-        throw new Exception('ID inválido');
+        throw new Exception('ID invÃ¡lido');
     }
     
     // Verificar que el producto existe

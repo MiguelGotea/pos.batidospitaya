@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 // registro_producto_guardar.php
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -12,7 +13,7 @@ try {
     $idUnidad = isset($_POST['id_unidad_producto']) ? (int) $_POST['id_unidad_producto'] : 0;
     $cantidad = isset($_POST['cantidad']) ? (float) $_POST['cantidad'] : 0.00;
 
-    // CORREGIDO: JavaScript envía 'SI' o 'NO', no 'on'
+    // CORREGIDO: JavaScript envÃ­a 'SI' o 'NO', no 'on'
     $esVendible = isset($_POST['es_vendible']) && $_POST['es_vendible'] === 'SI' ? 'SI' : 'NO';
     $esComprable = isset($_POST['es_comprable']) && $_POST['es_comprable'] === 'SI' ? 'SI' : 'NO';
     $esFabricable = isset($_POST['es_fabricable']) && $_POST['es_fabricable'] === 'SI' ? 'SI' : 'NO';
@@ -33,7 +34,7 @@ try {
         : null;
     $descripcionReceta = isset($_POST['descripcion_receta']) ? trim($_POST['descripcion_receta']) : null;
 
-    $usuarioId = $_SESSION['usuario_id'];
+    $usuarioId = $_SESSION['pos_colaborador_id'];
 
     // Validaciones
     if (empty($sku)) {
@@ -52,7 +53,7 @@ try {
         throw new Exception('Debe seleccionar una unidad');
     }
 
-    // Validar SKU único
+    // Validar SKU Ãºnico
     $sqlCheck = "SELECT COUNT(*) as total FROM producto_presentacion WHERE SKU = :sku";
     if ($id > 0) {
         $sqlCheck .= " AND id != :id";
@@ -78,7 +79,7 @@ try {
         }
     }
 
-    // Iniciar transacción
+    // Iniciar transacciÃ³n
     $conn->beginTransaction();
 
     // Guardar/Actualizar producto PRIMERO (antes de la receta)
@@ -151,7 +152,7 @@ try {
         $idProducto = $conn->lastInsertId();
     }
 
-    // Ahora gestionar receta (después de que el producto existe)
+    // Ahora gestionar receta (despuÃ©s de que el producto existe)
     $idRecetaProducto = null;
 
     if ($tieneReceta) {
@@ -214,8 +215,8 @@ try {
         $stmtUpdateProductoReceta->execute([':id' => $idProducto]);
     }
 
-    // Confirmar transacción de producto y receta básica
-    // (Mantendremos la transacción abierta para los componentes, variaciones y fichas)
+    // Confirmar transacciÃ³n de producto y receta bÃ¡sica
+    // (Mantendremos la transacciÃ³n abierta para los componentes, variaciones y fichas)
 
     // 1. GESTIONAR COMPONENTES (Si hay receta)
     if ($idRecetaProducto) {
@@ -266,7 +267,7 @@ try {
             }
 
             if ($conteoPrincipal !== 1) {
-                throw new Exception("Debe haber exactamente una variación marcada como Principal.");
+                throw new Exception("Debe haber exactamente una variaciÃ³n marcada como Principal.");
             }
 
             $sqlInsertVar = "INSERT INTO variedad_producto_presentacion 
@@ -285,7 +286,7 @@ try {
         }
     }
 
-    // 3. GESTIONAR FICHA TÉCNICA
+    // 3. GESTIONAR FICHA TÃ‰CNICA
     $fichas = isset($_POST['fichas']) ? json_decode($_POST['fichas'], true) : [];
     if (json_last_error() === JSON_ERROR_NONE) {
         // Eliminar ficha anterior
@@ -310,7 +311,7 @@ try {
         }
     }
 
-    // Confirmar transacción total
+    // Confirmar transacciÃ³n total
     $conn->commit();
 
     echo json_encode([

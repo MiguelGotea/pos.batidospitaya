@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -105,7 +105,7 @@ try {
     $stmtCount->execute($params);
     $totalRegistros = $stmtCount->fetch()['total'];
     
-    // Consulta de datos con paginación
+    // Consulta de datos con paginaciÃ³n
     $sql = "SELECT 
                 pp.id,
                 pp.SKU,

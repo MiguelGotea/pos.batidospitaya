@@ -1,16 +1,16 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/permissions/permissions.php';
 header('Content-Type: application/json');
 
 try {
-    // Verificar autenticación
-    if (!isset($_SESSION['usuario_id'])) {
+    // Verificar autenticaciÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
         throw new Exception('No autorizado');
     }
     
-    // Verificar permisos de edición
+    // Verificar permisos de ediciÃ³n
     $usuario = obtenerUsuarioActual();
     $cargoOperario = $usuario['CodNivelesCargos'];
     
@@ -21,7 +21,7 @@ try {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     
     if ($id <= 0) {
-        throw new Exception('ID inválido');
+        throw new Exception('ID invÃ¡lido');
     }
     
     $sql = "SELECT id, Nombre, SKU, Descripcion, Id_categoria, Estado 

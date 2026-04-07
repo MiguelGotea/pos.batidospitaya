@@ -1,5 +1,6 @@
-<?php
-require_once '../../core/auth/auth.php';
+﻿<?php
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/permissions/permissions.php';
@@ -13,7 +14,7 @@ if (!tienePermiso('registro_producto_global', 'vista', $cargoOperario)) {
     exit();
 }
 
-// Determinar si es nuevo o edición
+// Determinar si es nuevo o ediciÃ³n
 $idProducto = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $esNuevo = ($idProducto === 0);
 
@@ -21,7 +22,7 @@ $esNuevo = ($idProducto === 0);
 $puedeCrear = tienePermiso('registro_producto_global', 'nuevo_registro', $cargoOperario);
 $puedeEditar = tienePermiso('registro_producto_global', 'editar', $cargoOperario);
 
-// Si es edición pero no tiene permisos, redirigir
+// Si es ediciÃ³n pero no tiene permisos, redirigir
 if (!$esNuevo && !$puedeEditar) {
     header('Location: producto_presentacion_gestion.php');
     exit();
@@ -60,16 +61,16 @@ if ($esNuevo && !$puedeCrear) {
                 <form id="formProducto">
                     <input type="hidden" id="idProducto" name="id" value="<?php echo $idProducto; ?>">
 
-                    <!-- CONTENEDOR DE PESTAÑAS -->
+                    <!-- CONTENEDOR DE PESTAÃ‘AS -->
                     <div class="tabs-container">
-                        <!-- NAVEGACIÓN DE PESTAÑAS -->
+                        <!-- NAVEGACIÃ“N DE PESTAÃ‘AS -->
                         <div class="tabs-navigation">
                             <button type="button" class="tab-button active" onclick="cambiarTab('datos-basicos')"
                                 data-tab="datos-basicos">
                                 <div class="tab-icon">
                                     <i class="bi bi-info-circle"></i>
                                 </div>
-                                <span class="tab-label">Datos Básicos</span>
+                                <span class="tab-label">Datos BÃ¡sicos</span>
                             </button>
 
                             <button type="button" class="tab-button" onclick="cambiarTab('receta')" data-tab="receta">
@@ -103,15 +104,15 @@ if ($esNuevo && !$puedeCrear) {
                                 <div class="tab-icon">
                                     <i class="bi bi-card-list"></i>
                                 </div>
-                                <span class="tab-label">Ficha Técnica</span>
+                                <span class="tab-label">Ficha TÃ©cnica</span>
                                 <span class="tab-badge" id="badgeFicha" style="display: none;">0</span>
                             </button>
                         </div>
 
-                        <!-- CONTENIDO DE PESTAÑAS -->
+                        <!-- CONTENIDO DE PESTAÃ‘AS -->
                         <div class="tabs-content">
                             <!-- ============================================ -->
-                            <!-- PESTAÑA 1: DATOS BÁSICOS -->
+                            <!-- PESTAÃ‘A 1: DATOS BÃSICOS -->
                             <!-- ============================================ -->
                             <div class="tab-pane active" id="tab-datos-basicos">
                                 <div class="row g-3">
@@ -125,7 +126,7 @@ if ($esNuevo && !$puedeCrear) {
                                     </div>
 
                                     <div class="col-md-6">
-                                        <label class="form-label d-block">Características</label>
+                                        <label class="form-label d-block">CaracterÃ­sticas</label>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" id="esVendible"
                                                 name="es_vendible" value="SI">
@@ -143,7 +144,7 @@ if ($esNuevo && !$puedeCrear) {
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label d-block">¿Es comprable para facturas?</label>
+                                        <label class="form-label d-block">Â¿Es comprable para facturas?</label>
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                 id="compraTienda" name="compra_tienda" value="1"
@@ -172,7 +173,7 @@ if ($esNuevo && !$puedeCrear) {
                             </div>
 
                             <!-- ============================================ -->
-                            <!-- PESTAÑA 2: RECETA Y COMPONENTES -->
+                            <!-- PESTAÃ‘A 2: RECETA Y COMPONENTES -->
                             <!-- ============================================ -->
                             <div class="tab-pane" id="tab-receta">
                                 <div class="row g-3">
@@ -196,7 +197,7 @@ if ($esNuevo && !$puedeCrear) {
                                     </div>
                                     <div class="col-md-12">
                                         <div class="toggle-container">
-                                            <span class="toggle-label">¿Este producto tiene receta?</span>
+                                            <span class="toggle-label">Â¿Este producto tiene receta?</span>
                                             <label class="switch">
                                                 <input type="checkbox" id="tieneReceta" onchange="toggleReceta()">
                                                 <span class="slider round">
@@ -221,7 +222,7 @@ if ($esNuevo && !$puedeCrear) {
                                                 </select>
                                             </div>
                                             <div class="col-md-12">
-                                                <label for="descripcionReceta" class="form-label">Descripción</label>
+                                                <label for="descripcionReceta" class="form-label">DescripciÃ³n</label>
                                                 <textarea class="form-control" id="descripcionReceta"
                                                     name="descripcion_receta" rows="2"></textarea>
                                             </div>
@@ -286,18 +287,18 @@ if ($esNuevo && !$puedeCrear) {
                             </div>
 
                             <!-- ============================================ -->
-                            <!-- PESTAÑA 3: VARIACIONES -->
+                            <!-- PESTAÃ‘A 3: VARIACIONES -->
                             <!-- ============================================ -->
                             <div class="tab-pane" id="tab-variaciones">
                                 <div class="inline-form-container mb-3 p-3 border rounded bg-light">
                                     <div class="row g-2 align-items-end">
                                         <div class="col-md-4">
-                                            <label class="form-label small">Nombre Variación *</label>
+                                            <label class="form-label small">Nombre VariaciÃ³n *</label>
                                             <input type="text" class="form-control form-control-sm"
                                                 id="inlineVariacionNombre" placeholder="Ej: Rojo, L, XL">
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small">Descripción</label>
+                                            <label class="form-label small">DescripciÃ³n</label>
                                             <input type="text" class="form-control form-control-sm"
                                                 id="inlineVariacionDescripcion" placeholder="Opcional">
                                         </div>
@@ -315,11 +316,11 @@ if ($esNuevo && !$puedeCrear) {
                             </div>
 
                             <!-- ============================================ -->
-                            <!-- PESTAÑA 4: MULTIMEDIA (FOTOS Y ARCHIVOS) -->
+                            <!-- PESTAÃ‘A 4: MULTIMEDIA (FOTOS Y ARCHIVOS) -->
                             <!-- ============================================ -->
                             <div class="tab-pane" id="tab-multimedia">
                                 <div class="multimedia-grid">
-                                    <!-- Sección de Fotos -->
+                                    <!-- SecciÃ³n de Fotos -->
                                     <div class="multimedia-section">
                                         <div class="multimedia-section-title">
                                             <i class="bi bi-image"></i>
@@ -332,7 +333,7 @@ if ($esNuevo && !$puedeCrear) {
                                             </button>
                                             <input type="file" id="inputFoto" accept="image/*" style="display:none"
                                                 onchange="subirFoto()">
-                                            <small class="text-muted d-block mt-1">Formatos: JPG, PNG. Tamaño máximo:
+                                            <small class="text-muted d-block mt-1">Formatos: JPG, PNG. TamaÃ±o mÃ¡ximo:
                                                 10MB</small>
                                         </div>
                                         <div id="galeriaFotos" class="foto-gallery">
@@ -340,7 +341,7 @@ if ($esNuevo && !$puedeCrear) {
                                         </div>
                                     </div>
 
-                                    <!-- Sección de Archivos -->
+                                    <!-- SecciÃ³n de Archivos -->
                                     <div class="multimedia-section">
                                         <div class="multimedia-section-title">
                                             <i class="bi bi-file-earmark-text"></i>
@@ -353,8 +354,8 @@ if ($esNuevo && !$puedeCrear) {
                                             </button>
                                             <input type="file" id="inputArchivo" style="display:none"
                                                 onchange="subirArchivo()">
-                                            <small class="text-muted d-block mt-1">Formatos: PDF, Excel, Word. Tamaño
-                                                máximo: 10MB</small>
+                                            <small class="text-muted d-block mt-1">Formatos: PDF, Excel, Word. TamaÃ±o
+                                                mÃ¡ximo: 10MB</small>
                                         </div>
                                         <div id="listaArchivos">
                                             <p class="text-center text-muted">No hay archivos adjuntos</p>
@@ -364,7 +365,7 @@ if ($esNuevo && !$puedeCrear) {
                             </div>
 
                             <!-- ============================================ -->
-                            <!-- PESTAÑA 5: FICHA TÉCNICA -->
+                            <!-- PESTAÃ‘A 5: FICHA TÃ‰CNICA -->
                             <!-- ============================================ -->
                             <div class="tab-pane" id="tab-ficha-tecnica">
                                 <div class="inline-form-container mb-3 p-3 border rounded bg-light">
@@ -377,7 +378,7 @@ if ($esNuevo && !$puedeCrear) {
                                         <div class="col-md-6">
                                             <label class="form-label small">Valor *</label>
                                             <input type="text" class="form-control form-control-sm"
-                                                id="inlineFichaValor" placeholder="Ej: Algodón, 500g">
+                                                id="inlineFichaValor" placeholder="Ej: AlgodÃ³n, 500g">
                                         </div>
                                         <div class="col-md-2">
                                             <button type="button" class="btn btn-sm btn-success w-100"
@@ -388,13 +389,13 @@ if ($esNuevo && !$puedeCrear) {
                                     </div>
                                 </div>
                                 <div id="listaFichaTecnica">
-                                    <p class="text-center text-muted">No hay campos en la ficha técnica</p>
+                                    <p class="text-center text-muted">No hay campos en la ficha tÃ©cnica</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Botones de acción finales -->
+                    <!-- Botones de acciÃ³n finales -->
                     <div class="form-actions">
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-save"></i> Guardar Producto
@@ -408,7 +409,7 @@ if ($esNuevo && !$puedeCrear) {
         </div>
     </div>
 
-    <!-- Modal de Vista Previa de Imágenes -->
+    <!-- Modal de Vista Previa de ImÃ¡genes -->
     <div id="imagePreviewModal" class="preview-modal">
         <span class="preview-close">&times;</span>
         <img class="preview-content" id="imgPreview">

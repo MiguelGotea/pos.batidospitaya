@@ -1,23 +1,24 @@
-<?php
-// ajax/promo_guardar.php — Crear o actualizar una promoción (con transacción)
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_guardar.php â€” Crear o actualizar una promociÃ³n (con transacciÃ³n)
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $raw = isset($_POST['payload']) ? $_POST['payload'] : null;
-    if (!$raw) throw new Exception('Payload vacío');
+    if (!$raw) throw new Exception('Payload vacÃ­o');
 
     $payload = json_decode($raw, true);
-    if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('JSON inválido: ' . json_last_error_msg());
+    if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('JSON invÃ¡lido: ' . json_last_error_msg());
 
     $p   = $payload['promo']       ?? [];
     $cs  = $payload['condiciones'] ?? [];
-    $uid = $_SESSION['usuario_id'];
+    $uid = $_SESSION['pos_colaborador_id'];
 
-    // ── Validaciones ──
+    // â”€â”€ Validaciones â”€â”€
     $nombre = trim($p['nombre'] ?? '');
     if (!$nombre) throw new Exception('El nombre es obligatorio');
 
@@ -26,7 +27,7 @@ try {
 
     $id = (int)($p['id'] ?? 0);
 
-    // Validar código único
+    // Validar cÃ³digo Ãºnico
     $codigo = trim($p['codigo_interno'] ?? '');
     if ($codigo !== '') {
         $sqlChk = 'SELECT COUNT(*) as n FROM promo_promociones WHERE codigo_interno = :cod';
@@ -35,7 +36,7 @@ try {
         $chkParams = [':cod' => $codigo];
         if ($id > 0) $chkParams[':id'] = $id;
         $stmtChk->execute($chkParams);
-        if ($stmtChk->fetch()['n'] > 0) throw new Exception('El código interno ya está en uso');
+        if ($stmtChk->fetch()['n'] > 0) throw new Exception('El cÃ³digo interno ya estÃ¡ en uso');
     }
 
     $campos = [
@@ -64,7 +65,7 @@ try {
     $conn->beginTransaction();
 
     if ($id > 0) {
-        // ── UPDATE ──
+        // â”€â”€ UPDATE â”€â”€
         $sets = array_map(fn($k) => "$k = :$k", array_keys($campos));
         $sets[] = 'usuario_modificacion = :uid';
         $sql = 'UPDATE promo_promociones SET ' . implode(', ', $sets) . ' WHERE id = :id';
@@ -73,10 +74,10 @@ try {
         $stmt->bindValue(':uid', $uid, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        $mensaje = 'Promoción actualizada exitosamente';
+        $mensaje = 'PromociÃ³n actualizada exitosamente';
 
     } else {
-        // ── INSERT ──
+        // â”€â”€ INSERT â”€â”€
         $campos['usuario_creacion'] = $uid;
         $cols = implode(', ', array_keys($campos));
         $phs  = implode(', ', array_map(fn($k) => ":$k", array_keys($campos)));
@@ -85,10 +86,10 @@ try {
         foreach ($campos as $k => $v) $stmt->bindValue(":$k", $v);
         $stmt->execute();
         $id = $conn->lastInsertId();
-        $mensaje = 'Promoción creada exitosamente';
+        $mensaje = 'PromociÃ³n creada exitosamente';
     }
 
-    // ── Condiciones: eliminar anteriores y re-insertar ──
+    // â”€â”€ Condiciones: eliminar anteriores y re-insertar â”€â”€
     $stmtDel = $conn->prepare('DELETE FROM promo_condiciones WHERE promo_id = :pid');
     $stmtDel->execute([':pid' => $id]);
 

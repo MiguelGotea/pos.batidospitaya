@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once '../../../core/permissions/permissions.php';
 session_start();
@@ -6,9 +6,9 @@ session_start();
 header('Content-Type: application/json');
 
 try {
-    // Verificar sesión
-    if (!isset($_SESSION['usuario_id'])) {
-        throw new Exception('Sesión no válida');
+    // Verificar sesiÃ³n
+    if (!isset($_SESSION['pos_colaborador_id'])) {
+        throw new Exception('SesiÃ³n no vÃ¡lida');
     }
     
     $cargoOperario = $_SESSION['cargo_cod'];

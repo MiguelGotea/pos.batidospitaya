@@ -1,5 +1,6 @@
-<?php
-require_once '../../../core/auth/auth.php';
+﻿<?php
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
@@ -7,7 +8,7 @@ try {
     $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
     if ($id <= 0) {
-        throw new Exception('ID inválido');
+        throw new Exception('ID invÃ¡lido');
     }
 
     // Datos del producto
@@ -26,7 +27,7 @@ try {
         throw new Exception('Producto no encontrado');
     }
 
-    // Receta (si existe) - Buscar por id_presentacion_producto para evitar problemas de case-sensitivity o vínculos rotos
+    // Receta (si existe) - Buscar por id_presentacion_producto para evitar problemas de case-sensitivity o vÃ­nculos rotos
     $sqlReceta = "SELECT * FROM receta_producto_global WHERE id_presentacion_producto = :id_producto";
     $stmtReceta = $conn->prepare($sqlReceta);
     $stmtReceta->execute([':id_producto' => $id]);
@@ -73,7 +74,7 @@ try {
     $stmtArchivos->execute([':id' => $id]);
     $archivos = $stmtArchivos->fetchAll();
 
-    // Ficha técnica
+    // Ficha tÃ©cnica
     $sqlFicha = "SELECT * FROM fichatecnica_presentacion_producto 
                  WHERE id_presentacion_producto = :id 
                  ORDER BY campo";

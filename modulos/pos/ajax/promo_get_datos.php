@@ -1,11 +1,12 @@
-<?php
-// ajax/promo_get_datos.php — Listado paginado de promociones
-require_once '../../../core/auth/auth.php';
+﻿<?php
+// ajax/promo_get_datos.php â€” Listado paginado de promociones
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_SESSION['usuario_id'])) throw new Exception('No autorizado');
+    if (!isset($_SESSION['pos_colaborador_id'])) throw new Exception('No autorizado');
 
     $pagina    = isset($_POST['pagina']) ? max(1, (int)$_POST['pagina']) : 1;
     $rpp       = isset($_POST['registros_por_pagina']) ? max(1, (int)$_POST['registros_por_pagina']) : 25;

@@ -1,19 +1,22 @@
-<?php
-require_once '../../core/auth/auth.php';
+﻿<?php
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
+
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/permissions/permissions.php';
 
-$usuario       = obtenerUsuarioActual();
-$cargoOperario = $usuario['CodNivelesCargos'];
-$hoy           = date('Y-m-d');
+$colabNombre    = $_SESSION['pos_colaborador_nombre'] ?? 'Colaborador';
+$sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sin Sucursal';
+$hoy            = date('Y-m-d');
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Factura — POS</title>
+    <title>Nueva Factura â€” POS</title>
     <meta name="description" content="Crear nuevo registro de factura de compra o abastecimiento de tienda">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -23,11 +26,21 @@ $hoy           = date('Y-m-d');
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <?php echo renderMenuLateral($cargoOperario); ?>
+    <?php // echo renderMenuLateral($cargoOperario); ?>
+
 
     <div class="main-container">
         <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Nueva Factura'); ?>
+            <?php // echo renderHeader($usuario, false, 'Nueva Factura'); ?>
+            <header class="header-pos-simple" style="padding:15px 25px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-weight:700; color:#51B8AC;">
+                    <i class="fa fa-cash-register"></i> Nueva Factura
+                </div>
+                <div style="font-size:.85rem; color:var(--text-muted);">
+                    <?= htmlspecialchars($colabNombre) ?> @ <?= htmlspecialchars($sucursalNombre) ?>
+                </div>
+            </header>
+
 
             <div class="container-fluid p-3">
                 <div class="facturas-layout">
@@ -45,7 +58,7 @@ $hoy           = date('Y-m-d');
                                 <form id="formFactura" class="form-cabecera">
                                     <div class="row g-3">
                                         <div class="col-md-4">
-                                            <label for="numeroFactura" class="form-label">N° Factura *</label>
+                                            <label for="numeroFactura" class="form-label">NÂ° Factura *</label>
                                             <input type="text" class="form-control" id="numeroFactura"
                                                    name="numero_factura" value="AUTO"
                                                    readonly style="background-color: #f8fafc; font-weight: bold; color: #0E544C;">
@@ -68,7 +81,7 @@ $hoy           = date('Y-m-d');
                                         <div class="col-12">
                                             <label for="notasFactura" class="form-label">Notas (opcional)</label>
                                             <textarea class="form-control" id="notasFactura" name="notas"
-                                                      rows="2" placeholder="Observaciones sobre esta factura…"></textarea>
+                                                      rows="2" placeholder="Observaciones sobre esta facturaâ€¦"></textarea>
                                         </div>
                                     </div>
 
@@ -91,7 +104,7 @@ $hoy           = date('Y-m-d');
                                 <i class="bi bi-list-ul"></i>
                                 Productos en la Factura
                                 <span id="contadorProductos" class="ms-auto badge"
-                                      style="background:rgba(255,255,255,.2); font-size:.78rem;">0 ítem(s)</span>
+                                      style="background:rgba(255,255,255,.2); font-size:.78rem;">0 Ã­tem(s)</span>
                             </div>
                             <div class="card-body-factura p-0">
                                 <div class="table-responsive">
@@ -136,13 +149,13 @@ $hoy           = date('Y-m-d');
                                 <div class="buscador-productos">
                                     <i class="bi bi-search icon-search"></i>
                                     <input type="text" id="buscarProducto"
-                                           placeholder="Buscar producto…"
+                                           placeholder="Buscar productoâ€¦"
                                            autocomplete="off">
                                 </div>
                                 <div class="lista-productos-scroll" id="listaProductosElegibles">
                                     <p class="no-productos-msg">
                                         <span class="spinner-border spinner-border-sm me-1"></span>
-                                        Cargando productos…
+                                        Cargando productosâ€¦
                                     </p>
                                 </div>
                             </div>

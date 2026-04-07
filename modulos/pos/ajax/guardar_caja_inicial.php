@@ -1,17 +1,18 @@
-<?php
+﻿<?php
 /**
  * guardar_caja_inicial.php
- * AJAX endpoint — Guarda un registro de Caja Inicial en BD
+ * AJAX endpoint â€” Guarda un registro de Caja Inicial en BD
  */
 
-require_once '../../../core/auth/auth.php';
+require_once '../../../core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 // Solo POST permitido
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['ok' => false, 'mensaje' => 'Método no permitido.']);
+    echo json_encode(['ok' => false, 'mensaje' => 'MÃ©todo no permitido.']);
     exit;
 }
 
@@ -20,7 +21,7 @@ $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
 
 if (!$data) {
-    echo json_encode(['ok' => false, 'mensaje' => 'Datos inválidos.']);
+    echo json_encode(['ok' => false, 'mensaje' => 'Datos invÃ¡lidos.']);
     exit;
 }
 
@@ -29,7 +30,7 @@ $campos = ['fecha', 'sucursal_id', 'tipo_cambio_usado', 'total_cordobas', 'total
            'total_dolares_en_cordobas', 'total_efectivo_global', 'detalles'];
 foreach ($campos as $c) {
     if (!isset($data[$c]) || (empty($data[$c]) && $data[$c] !== 0)) {
-        echo json_encode(['ok' => false, 'mensaje' => "Campo faltante o vacío: $c"]);
+        echo json_encode(['ok' => false, 'mensaje' => "Campo faltante o vacÃ­o: $c"]);
         exit;
     }
 }
@@ -37,13 +38,13 @@ foreach ($campos as $c) {
 $fecha      = $data['fecha'];
 $sucursalId = $data['sucursal_id'];
 
-// Obtener usuario de sesión si está disponible
+// Obtener usuario de sesiÃ³n si estÃ¡ disponible
 $codUsuario = null;
 try {
     $usuario = obtenerUsuarioActual();
     $codUsuario = $usuario['CodOperario'] ?? ($usuario['id'] ?? null);
 } catch (Exception $e) {
-    // Si la función no existe o falla, dejamos null
+    // Si la funciÃ³n no existe o falla, dejamos null
 }
 
 try {
@@ -79,7 +80,7 @@ try {
 
     $cajaId = (int)$conn->lastInsertId();
 
-    // 2. Insertar detalles por denominación
+    // 2. Insertar detalles por denominaciÃ³n
     $stmtDetalle = $conn->prepare("
         INSERT INTO pos_caja_inicial_detalle
             (caja_inicial_id, moneda, denominacion, cantidad, total)

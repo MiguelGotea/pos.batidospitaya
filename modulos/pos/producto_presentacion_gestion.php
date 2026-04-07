@@ -1,5 +1,6 @@
-<?php
-require_once '../../core/auth/auth.php';
+﻿<?php
+require_once '../../core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/permissions/permissions.php';
@@ -25,7 +26,7 @@ $puedeDesactivar = tienePermiso('producto_presentacion', 'desactivar', $cargoOpe
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Productos de Presentación</title>
+    <title>GestiÃ³n de Productos de PresentaciÃ³n</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -39,10 +40,10 @@ $puedeDesactivar = tienePermiso('producto_presentacion', 'desactivar', $cargoOpe
 
     <div class="main-container">
         <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Gestión de Productos de Presentación'); ?>
+            <?php echo renderHeader($usuario, false, 'GestiÃ³n de Productos de PresentaciÃ³n'); ?>
 
             <div class="container-fluid p-3">
-                <!-- Botón para agregar nuevo producto -->
+                <!-- BotÃ³n para agregar nuevo producto -->
                 <?php if ($puedeCrear): ?>
                     <div class="mb-3">
                         <button class="btn btn-success" onclick="window.location.href='registro_producto_global.php'">
@@ -107,7 +108,7 @@ $puedeDesactivar = tienePermiso('producto_presentacion', 'desactivar', $cargoOpe
                                 </th>
                                 <th data-column="es_fabricable" data-type="tristate" class="tristate-header">
                                     <div class="tristate-header-content">
-                                        <span>Fabricación</span>
+                                        <span>FabricaciÃ³n</span>
                                         <div class="tristate-toggle-group">
                                             <button class="tristate-btn" data-state="SI" data-column="es_fabricable"
                                                 onclick="setTriStateFilter(this, 'es_fabricable', 'SI')">
@@ -166,7 +167,7 @@ $puedeDesactivar = tienePermiso('producto_presentacion', 'desactivar', $cargoOpe
                             </tr>
                         </thead>
                         <tbody id="tablaProductosBody">
-                            <!-- Datos cargados vía AJAX -->
+                            <!-- Datos cargados vÃ­a AJAX -->
                         </tbody>
                     </table>
                 </div>
