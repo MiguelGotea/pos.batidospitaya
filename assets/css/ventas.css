@@ -1,0 +1,357 @@
+/* Estilos generales */
+.contenedor-principal {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.barra-herramientas {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-nuevo-pedido, .btn-secundario {
+    background-color: #51B8AC;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-nuevo-pedido:hover, .btn-secundario:hover {
+    background-color: #0E544C;
+}
+
+/* Estilos para secciones del pedido */
+.seccion-pedido {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.seccion-pedido h2 {
+    margin-top: 0;
+    color: #0E544C;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Estilos para filas y campos */
+.fila {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.campo {
+    flex: 1;
+    margin-bottom: 10px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.campo input, .campo select, .campo textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.campo textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Estilos para botones de opciones */
+.botones-opciones {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-opcion, .btn-opcion-pago {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-opcion.active, .btn-opcion-pago.active {
+    background: #51B8AC;
+    color: white;
+    border-color: #51B8AC;
+}
+
+/* Estilos para filtros de productos */
+.filtros-productos {
+    margin-bottom: 20px;
+}
+
+.grupos-productos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-grupo {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-grupo:hover, .btn-grupo.active {
+    background: #51B8AC;
+    color: white;
+    border-color: #51B8AC;
+}
+
+.subgrupos-productos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Estilos para lista de productos */
+.lista-productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.producto-item {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.producto-item:hover {
+    background: #51B8AC;
+    color: white;
+    border-color: #51B8AC;
+}
+
+.producto-item h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+}
+
+.producto-item .precios {
+    font-size: 14px;
+    color: #666;
+}
+
+.producto-item:hover .precios {
+    color: white;
+}
+
+/* Estilos para tabla de pedido */
+.tabla-pedido-container {
+    overflow-x: auto;
+}
+
+.tabla-pedido {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.tabla-pedido th, .tabla-pedido td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.tabla-pedido th {
+    background-color: #51B8AC;
+    color: white;
+}
+
+.tabla-pedido tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.tabla-pedido tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Estilos para resumen de pago */
+.resumen-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.totales {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.total {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    flex: 1;
+    margin: 0 10px;
+}
+
+.total span:first-child {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.total span:last-child {
+    font-size: 20px;
+    color: #0E544C;
+}
+
+/* Estilos para botones de acción */
+.botones-accion {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-guardar, .btn-imprimir {
+    background-color: #51B8AC;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-guardar:hover, .btn-imprimir:hover {
+    background-color: #0E544C;
+}
+
+/* Estilos para el modal de impresión */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-contenido {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+}
+
+.cerrar-modal {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.opciones-impresion {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.btn-opcion-impresion {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 100px;
+}
+
+.btn-opcion-impresion:hover {
+    background: #51B8AC;
+    color: white;
+    border-color: #51B8AC;
+}
+
+/* Estilos para extras y endulzantes */
+.fila-extra {
+    background: #f9f9f9;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fila-extra select, .fila-extra input {
+    flex: 1;
+    padding: 5px;
+}
+
+.btn-eliminar-extra {
+    color: #ff4444;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .fila {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .lista-productos {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .totales {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .total {
+        margin: 0;
+    }
+}
