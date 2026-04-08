@@ -2,7 +2,8 @@
 // historial_unidades_conversion.php
 // UbicaciÃ³n: /public_html/modulos/POS/historial_unidades_conversion.php
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
+posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 
 require_once '../../core/layout/menu_lateral.php';

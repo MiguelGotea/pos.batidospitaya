@@ -1,5 +1,6 @@
-﻿<?php
-require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
+posRequiereColaboradorAjax();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/permissions/permissions.php';
 header('Content-Type: application/json');
