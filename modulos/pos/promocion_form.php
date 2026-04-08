@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // promocion_form.php â€” Formulario de PromociÃ³n (crear / editar)
 
 require_once '../../core/auth/auth_pos.php';

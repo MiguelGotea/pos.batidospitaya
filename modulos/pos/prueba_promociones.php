@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // prueba_promociones.php â€” PÃ¡gina de pruebas para el motor de promociones, de prueba
 require_once '../../core/auth/auth_pos.php';
 posRequiereColaborador();

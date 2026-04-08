@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // cliente_gestion.php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth.php';
 require_once '../../core/layout/menu_lateral.php';

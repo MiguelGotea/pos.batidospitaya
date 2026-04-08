@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // promociones.php â€” Configurador de Promociones (Pitaya ERP)
 
 require_once '../../core/auth/auth_pos.php';

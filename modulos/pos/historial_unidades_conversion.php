@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // historial_unidades_conversion.php
 // UbicaciÃ³n: /public_html/modulos/POS/historial_unidades_conversion.php
 

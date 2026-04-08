@@ -1,22 +1,42 @@
-﻿<?php
+<?php
 /**
- * caja_inicial.php â€” Conteo de Caja Inicial
- * MÃ³dulo POS / modulos/POS/caja_inicial.php
+ * caja_inicial.php — Conteo de Caja Inicial
+ * Módulo POS / modulos/POS/caja_inicial.php
  */
-require_once '../../core/auth/auth_pos.php';
-posRequiereColaborador();
-
+require_once '../../core/auth/auth.php';
 require_once '../../core/layout/menu_lateral.php';
 require_once '../../core/layout/header_universal.php';
 require_once '../../core/database/conexion.php';
 
-// Obtener sucursal y colaborador de la sesion POS
-$sucursalId     = $_SESSION['pos_store_sucursal'] ?? null;
-$sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sin Sucursal';
-$codOperario    = $_SESSION['pos_colaborador_id'] ?? null;
+$usuario       = obtenerUsuarioActual();
+$cargoOperario = $usuario['CodNivelesCargos'];
+$hoy           = date('Y-m-d');
 
+// Obtener la sucursal activa según la lógica de asignación (el más reciente sin fecha de fin o con fecha futura)
+$sucursalId   = null;
+$sucursalNombre = 'Sin Sucursal';
 
-// Obtener Ãºltimo tipo de cambio
+try {
+    $stmtS = $conn->prepare("
+        SELECT s.codigo, s.nombre 
+        FROM sucursales s
+        JOIN AsignacionNivelesCargos anc ON s.codigo = anc.Sucursal
+        WHERE anc.CodOperario = ? 
+        AND (anc.Fin IS NULL OR anc.Fin > NOW())
+        ORDER BY anc.Fecha DESC 
+        LIMIT 1
+    ");
+    $stmtS->execute([$_SESSION['usuario_id']]);
+    $sRow = $stmtS->fetch();
+    if ($sRow) {
+        $sucursalId     = $sRow['codigo'];
+        $sucursalNombre = $sRow['nombre'];
+    }
+} catch (Exception $e) {
+    // Error en la consulta, se mantiene el valor por defecto
+}
+
+// Obtener último tipo de cambio
 $tipoCambio = 36.6; // valor por defecto
 try {
     $tcRow = $conn->query("SELECT tasa FROM tipo_cambio ORDER BY id DESC LIMIT 1")->fetch();
@@ -32,8 +52,8 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Inicial â€” POS</title>
-    <meta name="description" content="Conteo de caja inicial: denominaciones en cÃ³rdobas y dÃ³lares con cÃ¡lculo automÃ¡tico de totales">
+    <title>Caja Inicial — POS</title>
+    <meta name="description" content="Conteo de caja inicial: denominaciones en córdobas y dólares con cálculo automático de totales">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -42,8 +62,7 @@ try {
     <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <?php // echo renderMenuLateral($cargoOperario); // Opcional: ajustar menu para POS si es necesario ?>
-
+    <?php echo renderMenuLateral($cargoOperario); ?>
 
     <div class="main-container">
         <div class="sub-container">
@@ -106,11 +125,11 @@ try {
                     <!-- ====== TABLAS LADO A LADO ====== -->
                     <div class="caja-inicial-layout">
 
-                        <!-- ====== CÃ“RDOBAS ====== -->
+                        <!-- ====== CÓRDOBAS ====== -->
                         <div class="ci-card">
                             <div class="ci-card-header">
                                 <i class="bi bi-cash-coin"></i>
-                                CÃ³rdobas (NIO)
+                                Córdobas (NIO)
                             </div>
                             <div class="table-responsive">
                                 <table class="ci-table">
@@ -128,7 +147,7 @@ try {
                                         <tr class="ci-subtotal-row">
                                             <td colspan="2" class="subtotal-label">
                                                 <i class="bi bi-sigma me-1"></i>
-                                                Total CÃ³rdobas
+                                                Total Córdobas
                                             </td>
                                             <td class="subtotal-value" id="subtotalNIO">C$ 0.00</td>
                                         </tr>
@@ -137,11 +156,11 @@ try {
                             </div>
                         </div>
 
-                        <!-- ====== DÃ“LARES ====== -->
+                        <!-- ====== DÓLARES ====== -->
                         <div class="ci-card">
                             <div class="ci-card-header usd">
                                 <i class="bi bi-currency-dollar"></i>
-                                DÃ³lares (USD)
+                                Dólares (USD)
                             </div>
                             <div class="table-responsive">
                                 <table class="ci-table">
@@ -159,14 +178,14 @@ try {
                                         <tr class="ci-subtotal-row">
                                             <td colspan="2" class="subtotal-label">
                                                 <i class="bi bi-sigma me-1"></i>
-                                                Total DÃ³lares
+                                                Total Dólares
                                             </td>
                                             <td class="subtotal-value usd-val" id="subtotalUSD">$ 0.00</td>
                                         </tr>
                                         <tr class="ci-subtotal-row">
                                             <td colspan="2" class="subtotal-label">
                                                 <i class="bi bi-arrow-left-right me-1"></i>
-                                                DÃ³lares en CÃ³rdobas
+                                                Dólares en Córdobas
                                                 <small style="opacity:.7;">(TC: <?php echo number_format($tipoCambio, 2); ?>)</small>
                                             </td>
                                             <td class="subtotal-value cordobizado-val" id="subtotalUSDenNIO">C$ 0.00</td>
