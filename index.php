@@ -110,15 +110,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             color: #fff;
         }
 
-        .pos-btn-exit.secondary {
-            border-color: var(--border);
-            background: var(--surface);
-            color: var(--text-muted);
-        }
-
         .pos-btn-exit.secondary:hover {
-            background: var(--surface-hover);
-            color: #fff;
+            background: #F1F5F9;
+            color: var(--text);
         }
 
         .pos-welcome {
@@ -180,8 +174,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-pin-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(8, 13, 16, .96);
-            backdrop-filter: blur(16px);
+            background: #F6F6F6;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -190,19 +183,18 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 
         .pos-pin-card {
             width: 100%;
-            max-width: 380px;
+            max-width: 420px;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 26px;
-            padding: 40px 36px;
+            border-radius: 16px;
+            padding: 40px;
             text-align: center;
-            box-shadow: 0 0 60px rgba(81, 184, 172, .1);
+            box-shadow: var(--shadow-soft);
         }
     </style>
 </head>
 
 <body>
-    <div class="pos-bg"></div>
 
     <?php if (!$hayColaborador): ?>
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->

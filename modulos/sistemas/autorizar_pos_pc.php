@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * POS - Autorizar Dispositivo POS
  * Ruta: /modulos/sistemas/autorizar_pos_pc.php
@@ -60,19 +60,17 @@ $sucursales = obtenerSucursalesFisicas();
     <link rel="stylesheet" href="/core/assets/css/pos_login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { overflow: auto; }
+        body { overflow: auto; background: #F6F6F6; }
         .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative; z-index: 1; }
-        .info-box { background: rgba(81,184,172,.08); border: 1px solid rgba(81,184,172,.25); color: #a8d8d4; padding: 14px 18px; border-radius: 14px; font-size: .85rem; line-height: 1.7; margin-bottom: 22px; }
-        .msg-ok  { background: rgba(81,184,172,.1);  border: 1px solid rgba(81,184,172,.35); color: #51B8AC; padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; }
-        .msg-err { background: rgba(224,85,85,.1);   border: 1px solid rgba(224,85,85,.35);  color: #e05555; padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; }
-        .back-link { display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted); font-size: .82rem; text-decoration: none; margin-top: 20px; }
-        .back-link:hover { color: #fff; }
-        .pos-select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 13px 16px; font-size: 1rem; color: #fff; outline: none; margin-bottom: 15px; }
-        .pos-select option { background: #080d10; color: #fff; }
+        .msg-ok  { background: #E6F4F1; border: 1px solid #B2DFDB; color: #0E544C; padding: 12px 16px; border-radius: 12px; margin-bottom: 22px; font-size: .95rem; }
+        .msg-err { background: #FFF5F5; border: 1px solid #FED7D7; color: #E05555; padding: 12px 16px; border-radius: 12px; margin-bottom: 22px; font-size: .95rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 7px; color: #64748B; font-size: .85rem; text-decoration: none; margin-top: 24px; font-weight: 600; }
+        .back-link:hover { color: #0E544C; }
+        .pos-select { width: 100%; background: #fff; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 12px 14px; font-size: 1rem; color: #333; outline: none; margin-bottom: 20px; transition: border-color .2s; }
+        .pos-select:focus { border-color: #51B8AC; }
     </style>
 </head>
 <body>
-<div class="pos-bg"></div>
 <div class="wrap">
     <div class="pos-card" style="max-width:460px">
         <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" class="pos-logo">

@@ -31,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div class="pos-bg"></div>
     <div class="pos-wrapper">
         <div class="pos-card">
             <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Batidos Pitaya" class="pos-logo">
@@ -43,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <?php if (!$dispositivo['status']): ?>
-                <div class="pos-alert error show" style="background:rgba(224,85,85,0.05)">
+                <div class="pos-alert error show">
                     <i class="fa fa-shield-halved"></i> <strong>Terminal Bloqueada:</strong> Por favor, contacta al área de TI para configurar la autorización antes de operar.
                 </div>
             <?php endif; ?>
