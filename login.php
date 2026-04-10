@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Acceso POS — Batidos Pitaya</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="/core/assets/img/icon.png" type="image/png">
-    <link rel="stylesheet" href="/core/assets/css/pos_login.css">
+    <link rel="stylesheet" href="/core/assets/css/pos_login.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 

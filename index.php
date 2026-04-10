@@ -35,12 +35,12 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS — Batidos Pitaya</title>
     <link rel="icon" href="/core/assets/img/icon.png" type="image/png">
-    <link rel="stylesheet" href="/core/assets/css/pos_login.css">
+    <link rel="stylesheet" href="/core/assets/css/pos_login.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
-            background-color: var(--bg);
-            color: var(--text);
+            background-color: #F6F6F6 !important;
+            color: #333333 !important;
             overflow: auto;
         }
 
@@ -119,8 +119,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         }
 
         .pos-welcome {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: #FFFFFF !important;
+            color: #333333 !important;
+            border: 1px solid #E2E8F0;
             border-radius: 20px;
             padding: 60px 40px;
             text-align: center;
@@ -202,10 +203,12 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 <body>
 
     <?php if (!$hayColaborador): ?>
+        <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
+
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->
         <div class="pos-pin-overlay">
             <div class="pos-pin-card">
-                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
+
 
                 <?php if (!$dispositivo['status']): ?>
                     <!-- DISPOSITIVO NO AUTORIZADO -->
