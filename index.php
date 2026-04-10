@@ -182,6 +182,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             inset: 0;
             background: #F6F6F6;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -190,12 +191,23 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-pin-card {
             width: 100%;
             max-width: 420px;
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: #FFFFFF !important;
+            border: 1px solid #E2E8F0;
             border-radius: 16px;
             padding: 40px;
             text-align: center;
             box-shadow: var(--shadow-soft);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .logo-container img {
+            max-width: 150px;
+            height: auto;
         }
     </style>
 </head>
@@ -205,9 +217,10 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <?php if (!$hayColaborador): ?>
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->
         <div class="pos-pin-overlay">
+            <div class="logo-container">
+                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya">
+            </div>
             <div class="pos-pin-card">
-                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
-
                 <?php if (!$dispositivo['status']): ?>
                     <!-- DISPOSITIVO NO AUTORIZADO -->
                     <h2 style="color:#e05555">Terminal Bloqueada</h2>
