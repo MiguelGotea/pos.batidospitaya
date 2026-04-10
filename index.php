@@ -39,6 +39,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
+            background-color: var(--bg);
+            color: var(--text);
             overflow: auto;
         }
 
@@ -59,10 +61,11 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             align-items: center;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 18px;
+            border-radius: 12px;
             padding: 14px 22px;
             gap: 16px;
             margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
         }
 
         .pos-user-info {
@@ -111,7 +114,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         }
 
         .pos-btn-exit.secondary:hover {
-            background: #F1F5F9;
+            background: var(--surface-hover);
             color: var(--text);
         }
 
