@@ -176,9 +176,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-pin-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(246, 246, 246, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: #F6F6F6;
             display: flex;
             justify-content: center;
             align-items: center;
