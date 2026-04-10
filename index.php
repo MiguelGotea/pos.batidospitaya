@@ -170,6 +170,27 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-action-btn.primary:hover {
             background: #68cfc4;
         }
+
+        .pos-pin-overlay {
+            position: fixed;
+            inset: 0;
+            background: #F6F6F6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .pos-pin-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+        }
     </style>
 </head>
 
