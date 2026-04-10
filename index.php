@@ -229,10 +229,10 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     </form>
                 <?php endif; ?>
 
-                <div style="margin-top:26px;padding-top:18px;border-top:1px solid var(--border);">
-                    <a href="/logout.php?type=store" style="color:var(--text-muted);font-size:.78rem;text-decoration:none;">
-                        <i class="fa fa-power-off"></i> Cerrar sesión de tienda (<?= htmlspecialchars($storeUsuario) ?>)
-                    </a>
+                <div style="margin-top:26px;padding-top:10px;border-top:1px solid var(--border);">
+                    <div style="color:var(--text-muted);font-size:.78rem;">
+                        <i class="fa fa-shop"></i> Terminal configurada para: <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -252,10 +252,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                 </div>
                 <div class="pos-header-actions">
                     <a href="/logout.php?type=colaborador" class="pos-btn-exit" title="Cambiar operador">
-                        <i class="fa fa-user-slash"></i> Salir Colaborador
-                    </a>
-                    <a href="/logout.php?type=store" class="pos-btn-exit secondary" title="Cerrar todo">
-                        <i class="fa fa-power-off"></i> Cerrar Tienda
+                        <i class="fa fa-user-slash"></i> Salir de Sesión
                     </a>
                 </div>
             </header>

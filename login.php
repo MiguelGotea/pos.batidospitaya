@@ -1,20 +1,30 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
+
+// 1. Verificar si el dispositivo está autorizado
+// Si lo está, la función posVerificarDispositivo() poblará la sesión automáticamente
+$dispositivo = posVerificarDispositivo();
+
+// 2. Si ya está autenticado (sea por auto-login o sesión previa), redirigir al index (PIN Colaborador)
 if (posTiendaAutenticada()) {
     header('Location: /index.php');
     exit();
 }
-$dispositivo = posVerificarDispositivo();
+
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Permitimos el intento de login incluso si el dispositivo no esta autorizado
-    // para que el encargado pueda entrar y autorizarlo.
-    $r = posValidarLoginTienda(trim($_POST['usuario'] ?? ''), $_POST['clave'] ?? '');
-    if ($r['status']) {
-        header('Location: /index.php');
-        exit();
+    // Esto solo se ejecutará si el auto-login falla pero permitimos intento manual 
+    // SOLO si el dispositivo no está bloqueado (opcional, pero el usuario dijo "no permita poner nada si no lo es")
+    if (!$dispositivo['status']) {
+        $error = "Dispositivo no autorizado. Acceso denegado.";
+    } else {
+        $r = posValidarLoginTienda(trim($_POST['usuario'] ?? ''), $_POST['clave'] ?? '');
+        if ($r['status']) {
+            header('Location: /index.php');
+            exit();
+        }
+        $error = $r['msg'];
     }
-    $error = $r['msg'];
 }
 ?>
 <!DOCTYPE html>
@@ -45,19 +55,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="pos-alert error show">
                     <i class="fa fa-shield-halved"></i> <strong>Terminal Bloqueada:</strong> Por favor, contacta al área de TI para configurar la autorización antes de operar.
                 </div>
+                <div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                    Este dispositivo no cuenta con una firma digital válida en la base de datos de Batidos Pitaya.
+                </div>
+            <?php else: ?>
+                <!-- El formulario solo se muestra si NO hubo auto-login y el dispositivo está habilitado -->
+                <form method="POST" autocomplete="off" id="loginForm">
+                    <div class="pos-field">
+                        <label class="pos-label" for="usuario">Usuario</label>
+                        <input class="pos-input" type="text" id="usuario" name="usuario" placeholder="usuario" autocomplete="username" required autofocus value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>">
+                    </div>
+                    <div class="pos-field">
+                        <label class="pos-label" for="clave">Contrasena</label>
+                        <input class="pos-input" type="password" id="clave" name="clave" placeholder="********" autocomplete="current-password" required>
+                    </div>
+                    <button class="pos-btn" type="submit" id="btnLogin"><i class="fa fa-right-to-bracket"></i> Iniciar Sesión de Sucursal</button>
+                </form>
             <?php endif; ?>
-
-            <form method="POST" autocomplete="off" id="loginForm">
-                <div class="pos-field">
-                    <label class="pos-label" for="usuario">Usuario</label>
-                    <input class="pos-input" type="text" id="usuario" name="usuario" placeholder="usuario" autocomplete="username" required autofocus value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>">
-                </div>
-                <div class="pos-field">
-                    <label class="pos-label" for="clave">Contrasena</label>
-                    <input class="pos-input" type="password" id="clave" name="clave" placeholder="********" autocomplete="current-password" required>
-                </div>
-                <button class="pos-btn" type="submit" id="btnLogin"><i class="fa fa-right-to-bracket"></i> Iniciar Sesión de Sucursal</button>
-            </form>
 
             <div class="pos-badge">
                 Estado de Terminal: <span><?= $dispositivo['status'] ? 'Habilitada' : 'Bloqueada' ?></span>
