@@ -223,7 +223,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <form method="POST" id="pinForm" autocomplete="off">
                         <div class="pos-field">
                             <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
-                            <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000; border: 1.5px solid #475569;">
+                            <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
                         </div>
                         <button type="submit" class="pos-btn" style="margin-top:10px">
                             <i class="fa fa-right-to-bracket"></i> Acceder
