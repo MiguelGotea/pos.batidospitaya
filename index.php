@@ -199,16 +199,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             box-shadow: var(--shadow-soft);
         }
 
-        .logo-container {
-            text-align: center;
-            margin-bottom: 30px;
-            width: 100%;
-        }
-
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
     </style>
 </head>
 
@@ -218,7 +208,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->
         <div class="pos-pin-overlay">
             <div class="logo-container">
-                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya">
+                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" class="pos-logo">
             </div>
             <div class="pos-pin-card">
                 <?php if (!$dispositivo['status']): ?>

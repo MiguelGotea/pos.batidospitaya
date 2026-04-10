@@ -42,8 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body>
     <div class="pos-wrapper">
-        <div class="pos-card">
+        <div class="logo-container">
             <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Batidos Pitaya" class="pos-logo">
+        </div>
+        <div class="pos-card">
             <h1 class="pos-title">Punto de Venta</h1>
             <p class="pos-subtitle">Acceso de Sucursal &mdash; Nivel 1</p>
 
