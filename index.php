@@ -174,22 +174,36 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         .pos-pin-overlay {
             position: fixed;
             inset: 0;
-            background: #F6F6F6;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            animation: fadeIn .3s ease-out;
         }
 
         .pos-pin-card {
             width: 100%;
             max-width: 420px;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: none;
+            border-radius: 20px;
             padding: 40px;
             text-align: center;
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: slideUpScale .4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUpScale {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
     </style>
 </head>
