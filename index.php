@@ -228,7 +228,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                             <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem">
                         </div>
                         <button type="submit" class="pos-btn" style="margin-top:10px">
-                            <i class="fa fa-right-to-bracket"></i> Entrar al POS
+                            <i class="fa fa-right-to-bracket"></i> Acceder
                         </button>
                     </form>
                 <?php endif; ?>
