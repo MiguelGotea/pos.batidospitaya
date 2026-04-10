@@ -75,7 +75,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #51B8AC, #0E544C);
+            background: var(--pitaya-dark-teal);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -127,6 +127,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             font-size: 1.6rem;
             font-weight: 800;
             margin-bottom: 12px;
+            color: var(--pitaya-teal);
         }
 
         .pos-welcome p {
@@ -168,7 +169,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         }
 
         .pos-action-btn.primary:hover {
-            background: #68cfc4;
+            background: var(--pitaya-dark-teal);
+            color: #fff;
         }
 
         .pos-pin-overlay {
@@ -209,7 +211,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 
                     <i class="fa fa-shield-halved" style="font-size:3rem;color:rgba(224,85,85,0.2);margin-bottom:20px"></i>
                 <?php else: ?>
-                    <h2>Acceso Colaborador</h2>
+                    <h2 style="color: var(--pitaya-teal)">Acceso Colaborador</h2>
                     <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
 
                     <?php if ($pinError): ?>

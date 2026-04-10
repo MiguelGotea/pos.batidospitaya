@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // registro_producto_guardar.php
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
