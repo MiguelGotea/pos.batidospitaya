@@ -37,163 +37,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <link rel="icon" href="/core/assets/img/icon.png" type="image/png">
     <link rel="stylesheet" href="/core/assets/css/pos_login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        body {
-            overflow: auto;
-        }
 
-        .pos-wrapper {
-            min-height: 100vh;
-            display: block;
-            padding: 20px;
-        }
-
-        .pos-dashboard {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .pos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 14px 22px;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .pos-user-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .pos-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--pitaya-dark-teal);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .pos-header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .pos-btn-exit {
-            padding: 8px 14px;
-            border-radius: 9px;
-            font-size: .8rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            border: 1px solid rgba(224, 85, 85, .35);
-            background: rgba(224, 85, 85, .1);
-            color: #e05555;
-            transition: .2s;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .pos-btn-exit:hover {
-            background: #e05555;
-            color: #fff;
-        }
-
-        .pos-btn-exit.secondary:hover {
-            background: #F1F5F9;
-            color: var(--text);
-        }
-
-        .pos-welcome {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 60px 40px;
-            text-align: center;
-        }
-
-        .pos-welcome h2 {
-            font-size: 1.6rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: var(--pitaya-teal);
-        }
-
-        .pos-welcome p {
-            color: var(--text-muted);
-            max-width: 480px;
-            margin: 0 auto 32px;
-        }
-
-        .pos-actions {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .pos-action-btn {
-            padding: 14px 28px;
-            border-radius: 13px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text);
-            font-family: inherit;
-            font-size: .95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: .2s;
-            text-decoration: none;
-        }
-
-        .pos-action-btn:hover {
-            background: var(--surface-hover);
-            border-color: #51B8AC;
-        }
-
-        .pos-action-btn.primary {
-            background: #51B8AC;
-            color: #06110f;
-            border-color: #51B8AC;
-        }
-
-        .pos-action-btn.primary:hover {
-            background: var(--pitaya-dark-teal);
-            color: #fff;
-        }
-
-        .pos-pin-overlay {
-            position: fixed;
-            inset: 0;
-            background: #F6F6F6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .pos-pin-card {
-            width: 100%;
-            max-width: 420px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: var(--shadow-soft);
-        }
-    </style>
 </head>
 
 <body>
@@ -223,7 +67,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <form method="POST" id="pinForm" autocomplete="off">
                         <div class="pos-field">
                             <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
-                            <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000; border: 1.5px solid #475569;">
+                            <input class="pos-input pos-input-pin" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus>
                         </div>
                         <button type="submit" class="pos-btn" style="margin-top:10px">
                             <i class="fa fa-right-to-bracket"></i> Acceder
@@ -240,7 +84,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         </div>
     <?php endif; ?>
 
-    <div class="pos-wrapper">
+    <div class="pos-wrapper dashboard">
         <div class="pos-dashboard">
             <header class="pos-header">
                 <div class="pos-user-info">
