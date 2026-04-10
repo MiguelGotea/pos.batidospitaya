@@ -203,10 +203,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 <body>
 
     <?php if (!$hayColaborador): ?>
-        <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
-
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->
         <div class="pos-pin-overlay">
+            <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" style="width:70px;margin:0 auto 18px;display:block">
             <div class="pos-pin-card">
 
 
