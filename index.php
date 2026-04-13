@@ -36,7 +36,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS — Batidos Pitaya</title>
-    <link rel="icon" href="/core/assets/img/icon.png" type="image/png">
+    <link rel="icon" href="/core/assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="/core/assets/css/pos_login.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
