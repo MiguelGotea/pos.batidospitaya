@@ -1,5 +1,7 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
 if (!posTiendaAutenticada()) {
     header('Location: /login.php');
     exit();
@@ -44,73 +46,29 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             overflow: auto;
         }
 
-        .pos-wrapper {
-            min-height: 100vh;
-            display: block;
-            padding: 20px;
-        }
+
 
         .pos-dashboard {
             max-width: 1100px;
             margin: 0 auto;
         }
 
-        .pos-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px 22px;
-            gap: 16px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+        /* Layout Modular con Sidebar */
+        .pos-main-container {
+            margin-left: 70px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
+            background: #F6F6F6;
         }
 
-        .pos-user-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+        /* Cuando el sidebar esté en hover, el contenido no tiene que moverse necesariamente 
+           pues el sidebar suele estar encima (fixed), pero si queremos que el ERP sea fiel: */
+        /* .pos-sidebar:hover + .pos-main-container { margin-left: 260px; } */
 
-        .pos-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--pitaya-dark-teal);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .pos-header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .pos-btn-exit {
-            padding: 8px 14px;
-            border-radius: 9px;
-            font-size: .8rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            border: 1px solid rgba(224, 85, 85, .35);
-            background: rgba(224, 85, 85, .1);
-            color: #e05555;
-            transition: .2s;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .pos-btn-exit:hover {
-            background: #e05555;
-            color: #fff;
+        .pos-content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .pos-btn-exit.secondary:hover {
@@ -198,7 +156,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             text-align: center;
             box-shadow: var(--shadow-soft);
         }
-
     </style>
 </head>
 
@@ -247,38 +204,29 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         </div>
     <?php endif; ?>
 
-    <div class="pos-wrapper">
-        <div class="pos-dashboard">
-            <header class="pos-header">
-                <div class="pos-user-info">
-                    <div class="pos-avatar"><?= htmlspecialchars(mb_substr($colabNombre ?: 'P', 0, 1)) ?></div>
-                    <div>
-                        <div style="font-weight:700;font-size:1rem"><?= htmlspecialchars($colabNombre ?: 'Sin colaborador') ?></div>
-                        <div style="font-size:.75rem;color:var(--text-muted)">
-                            Sucursal <?= htmlspecialchars($sucursal) ?> — <?= htmlspecialchars($sucursalNombre) ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="pos-header-actions">
-                    <a href="/logout.php?type=colaborador" class="pos-btn-exit" title="Cambiar operador">
-                        <i class="fa fa-user-slash"></i> Salir de Sesión
-                    </a>
-                </div>
-            </header>
+    <?php if ($hayColaborador): ?>
+        <!-- Renderizar Menú Lateral -->
+        <?= renderPOSSidebar('inicio') ?>
 
-            <div class="pos-welcome">
-                <div style="font-size:3.5rem;margin-bottom:20px;">🛒</div>
-                <h2>¡Bienvenid@, <?= htmlspecialchars(explode(' ', trim($colabNombre))[0] ?? 'Colaborador') ?>!</h2>
-                <p>Estás operando en la sucursal <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
-                    Tu marcación de entrada fue verificada exitosamente.</p>
-                <div class="pos-actions">
-                    <a href="/modulos/ventas/" class="pos-action-btn primary"><i class="fa fa-cash-register"></i> Nueva Venta</a>
-                    <a href="/modulos/caja/" class="pos-action-btn"><i class="fa fa-vault"></i> Caja</a>
-                    <a href="/modulos/inventario/" class="pos-action-btn"><i class="fa fa-boxes-stacked"></i> Inventario</a>
+        <div class="pos-main-container">
+            <!-- Renderizar Cabecera -->
+            <?= renderPOSHeader('Panel de Control') ?>
+
+            <div class="pos-content">
+                <div class="pos-welcome">
+                    <div style="font-size:3.5rem;margin-bottom:20px;">🛒</div>
+                    <h2>¡Bienvenid@, <?= htmlspecialchars(explode(' ', trim($colabNombre))[0] ?? 'Colaborador') ?>!</h2>
+                    <p>Estás operando en la sucursal <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
+                        Tu marcación de entrada fue verificada exitosamente.</p>
+                    <div class="pos-actions">
+                        <a href="/modulos/facturacion/" class="pos-action-btn primary"><i class="fa fa-cash-register"></i> Nueva Venta</a>
+                        <a href="/modulos/inicial/" class="pos-action-btn"><i class="fa fa-vault"></i> Caja Inicial</a>
+                        <a href="/modulos/inventario/" class="pos-action-btn"><i class="fa fa-boxes-stacked"></i> Inventario</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
