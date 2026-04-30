@@ -22,3 +22,6 @@
 /modulos/uploads/
 
 # Excluir todo dentro de uploads (pero mantener las carpetas)
+
+# Excluir archivos SQL (dumps, backups, etc)
+*.sql
