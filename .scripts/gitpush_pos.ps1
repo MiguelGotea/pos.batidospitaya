@@ -8,8 +8,8 @@ if ($cambios) {
     $emptyFiles = @()
     foreach ($line in ($cambios -split "`r?`n")) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
-        $file = $line.Substring(3).Trim()
-        if (Test-Path $file) {
+        $file = $line.Substring(3).Trim().Trim('"')
+        if (Test-Path -LiteralPath $file) {
             $item = Get-Item $file
             if ($item.PSIsContainer -ne $true -and $item.Length -eq 0) {
                 $emptyFiles += $file

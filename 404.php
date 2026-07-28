@@ -10,6 +10,7 @@ if (file_exists($auth_file)) {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 
