@@ -132,9 +132,18 @@ function formatoFechaEspanol($fecha = null)
 function formatFechaEspanol($fecha = 'now')
 {
     $meses = [
-        1 => 'ene', 2 => 'feb', 3 => 'mar', 4 => 'abr',
-        5 => 'may', 6 => 'jun', 7 => 'jul', 8 => 'ago',
-        9 => 'sep', 10 => 'oct', 11 => 'nov', 12 => 'dic'
+        1 => 'ene',
+        2 => 'feb',
+        3 => 'mar',
+        4 => 'abr',
+        5 => 'may',
+        6 => 'jun',
+        7 => 'jul',
+        8 => 'ago',
+        9 => 'sep',
+        10 => 'oct',
+        11 => 'nov',
+        12 => 'dic'
     ];
 
     try {
@@ -363,7 +372,7 @@ function obtenerSucursalesLider($codOperario)
     global $conn;
 
     $stmt = $conn->prepare("
-        SELECT DISTINCT s.codigo, s.nombre 
+        SELECT DISTINCT s.codigo, s.nombre, s.ip_impresora 
         FROM AsignacionNivelesCargos anc
         JOIN sucursales s ON anc.Sucursal = s.codigo
         WHERE anc.CodOperario = ? 
@@ -442,7 +451,16 @@ function obtenerOperariosSucursalConHorario($codSucursal, $idSemana)
             o.Apellido, 
             o.Apellido2,
             hs.total_horas,
-            hs.cod_contrato
+            hs.cod_contrato,
+            CASE
+                WHEN o.Operativo = 0 THEN 1
+                WHEN NOT EXISTS (
+                    SELECT 1 FROM AsignacionNivelesCargos anc_check
+                    WHERE anc_check.CodOperario = o.CodOperario
+                      AND (anc_check.Fin IS NULL OR anc_check.Fin = '' OR anc_check.Fin > CURDATE())
+                ) THEN 1
+                ELSE 0
+            END AS es_baja
         FROM Operarios o
         INNER JOIN HorariosSemanales hs ON o.CodOperario = hs.cod_operario
         INNER JOIN SemanasSistema ss ON hs.id_semana_sistema = ss.id
@@ -631,7 +649,7 @@ function obtenerTodasSucursales()
     global $conn;
 
     $stmt = $conn->prepare("
-        SELECT id, codigo, nombre, cod_departamento, departamento
+        SELECT id, codigo, nombre, cod_departamento, departamento, ip_impresora
         FROM sucursales 
         WHERE activa = 1
         ORDER BY nombre
@@ -742,36 +760,51 @@ function verificarDispositivoAutorizado($codSucursal)
         return ['status' => false, 'msg' => 'Navegador no permitido. Favor usar Google Chrome o Microsoft Edge.'];
     }
 
-    // 2. Verificar si la sucursal tiene un token configurado
+    // 2. Verificar si la sucursal tiene algún dispositivo autorizado
     global $conn;
     try {
-        $stmt = $conn->prepare("SELECT cookie_token FROM sucursales WHERE codigo = ? LIMIT 1");
-        $stmt->execute([$codSucursal]);
-        $tokenBD = $stmt->fetchColumn();
+        // Comprobar si la sucursal tiene al menos un dispositivo registrado
+        $stmtExiste = $conn->prepare("SELECT COUNT(*) FROM dispositivos_autorizados WHERE sucursal_codigo = ?");
+        $stmtExiste->execute([$codSucursal]);
+        $totalDispositivos = (int)$stmtExiste->fetchColumn();
 
-        if (empty($tokenBD)) {
+        if ($totalDispositivos === 0) {
             return [
                 'status' => false,
-                'msg' => 'Esta sucursal todavía no ha sido autorizada para este proceso de marcación. Contacta con soporte técnico.'
+                'msg'    => 'Esta sucursal todavía no ha sido autorizada para este proceso de marcación. Contacta con soporte técnico.'
             ];
         }
 
-        // 3. Verificar Token de la Cookie
+        // 3. Verificar si ESTE dispositivo está autorizado para esta sucursal
         $tokenCookie = $_COOKIE['erp_device_token'] ?? null;
 
-        if ($tokenCookie && $tokenCookie === $tokenBD) {
+        if (!$tokenCookie) {
+            return [
+                'status' => false,
+                'msg'    => 'Este dispositivo no está autorizado para realizar marcaciones en esta sucursal o la sesión de autorización expiró.'
+            ];
+        }
+
+        $stmtToken = $conn->prepare(
+            "SELECT COUNT(*) FROM dispositivos_autorizados WHERE sucursal_codigo = ? AND cookie_token = ?"
+        );
+        $stmtToken->execute([$codSucursal, $tokenCookie]);
+        $esAutorizado = (int)$stmtToken->fetchColumn() > 0;
+
+        if ($esAutorizado) {
             return ['status' => true];
         }
 
         return [
             'status' => false,
-            'msg' => 'Este dispositivo no está autorizado para realizar marcaciones en esta sucursal o la sesión de autorización expiró.'
+            'msg'    => 'Este dispositivo no está autorizado para realizar marcaciones en esta sucursal o la sesión de autorización expiró.'
         ];
     } catch (Exception $e) {
         error_log("Error en validación de dispositivo: " . $e->getMessage());
         return ['status' => false, 'msg' => 'Error de sistema al validar dispositivo.'];
     }
 }
+
 
 /**
  * Obtiene las sucursales asignadas a un usuario (no necesariamente líder)
@@ -2165,6 +2198,17 @@ function aplicaViaticoDepartamento($codDepartamento, $fecha)
     // Convertir a string para comparación segura
     $codDepartamento = (string) $codDepartamento;
 
+    // HARDCODED: Las reglas de qué días de la semana aplica el viático por departamento
+    // están literalizadas en este switch. Si cambia la regla de un departamento o se agrega
+    // uno nuevo, hay que modificar este código PHP.
+    // Reglas actuales:
+    //   - 1 (Managua):  aplica todos los días (siempre retorna true)
+    //   - 3 (Masaya):   aplica todos los días (siempre retorna true)
+    //   - 4 (Granada):  solo aplica jueves (4) a domingo (7) según ISO weekday
+    //   - Default:      cualquier otro departamento NO aplica (retorna false)
+    // TODO: Migrar a BD con una columna en 'departamentos' tipo:
+    //   'dias_semana_viatico' VARCHAR(13) almacenando los días ISO separados por coma,
+    //   ej. '1,2,3,4,5,6,7' (todos), '4,5,6,7' (jue-dom). NULL = no aplica.
     switch ($codDepartamento) {
         case '1': // Managua - todos los días
         case '3': // Masaya - todos los días
@@ -3719,4 +3763,31 @@ function obtenerSucursalUsuarioActual()
     $result = $stmt->fetch();
 
     return $result ? $result['Sucursal'] : null;
+}
+
+if (!function_exists('obtenerFechaInicioContinua')) {
+    /**
+     * Obtiene la fecha de inicio continua (contrato más antiguo) de un operario.
+     * Usada en marcación para calcular aniversarios laborales.
+     */
+    function obtenerFechaInicioContinua($codOperario)
+    {
+        global $conn;
+
+        try {
+            $stmt = $conn->prepare("
+                SELECT MIN(inicio_contrato) as fecha_inicio
+                FROM Contratos
+                WHERE cod_operario = ?
+                AND inicio_contrato IS NOT NULL
+                AND inicio_contrato != '0000-00-00'
+            ");
+            $stmt->execute([$codOperario]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? $row['fecha_inicio'] : null;
+        } catch (Exception $e) {
+            error_log("Error en obtenerFechaInicioContinua para operario $codOperario: " . $e->getMessage());
+            return null;
+        }
+    }
 }

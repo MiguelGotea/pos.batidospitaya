@@ -17,6 +17,37 @@
     const MARGIN = 10;
 
     /**
+     * Lee los safe area insets del entorno del navegador.
+     * En iOS (iPhone X+) devuelve el espacio ocupado por el home indicator / notch.
+     * En el resto de dispositivos devuelve {bottom: 0, right: 0}.
+     * Se usa un elemento temporal con padding seteado a env() para leer el valor.
+     */
+    function getSafeAreaInsets() {
+        try {
+            const probe = document.createElement('div');
+            probe.style.cssText = [
+                'position:fixed',
+                'bottom:0',
+                'right:0',
+                'height:0',
+                'width:0',
+                'padding-bottom:env(safe-area-inset-bottom,0px)',
+                'padding-right:env(safe-area-inset-right,0px)',
+                'visibility:hidden',
+                'pointer-events:none'
+            ].join(';');
+            document.documentElement.appendChild(probe);
+            const cs = window.getComputedStyle(probe);
+            const bottom = parseFloat(cs.paddingBottom) || 0;
+            const right  = parseFloat(cs.paddingRight)  || 0;
+            document.documentElement.removeChild(probe);
+            return { bottom, right };
+        } catch (e) {
+            return { bottom: 0, right: 0 };
+        }
+    }
+
+    /**
      * Clamp un valor entre min y max
      */
     function clamp(val, min, max) {
@@ -44,10 +75,15 @@
             document.body.appendChild(fab);
         }
 
+        // ── Leer safe area una sola vez al iniciar (ej. iPhone home indicator)
+        const safeArea = getSafeAreaInsets();
+        const INIT_BOTTOM = 20 + safeArea.bottom;
+        const INIT_RIGHT  = 20 + safeArea.right;
+
         // ── Forzar position:fixed via inline style (máxima prioridad)
         forceFixed(fab);
-        fab.style.bottom = '20px';
-        fab.style.right  = '20px';
+        fab.style.bottom = INIT_BOTTOM + 'px';
+        fab.style.right  = INIT_RIGHT  + 'px';
 
         let dragging    = false;
         let didDrag     = false;
@@ -58,6 +94,27 @@
 
         const handle = fab.querySelector('.btn-floating-pitaya') || fab;
         handle.style.cursor = 'grab';
+
+        /* ── Dimensiones seguras del trigger (no del contenedor expandido) ── */
+        function getTriggerSize() {
+            const t = fab.querySelector('.btn-floating-pitaya') || fab;
+            return {
+                w: t.offsetWidth  || 65,
+                h: t.offsetHeight || 65
+            };
+        }
+
+        /* ── Aplicar posición con seguridad de límites ── */
+        function safePosition(right, bottom) {
+            const { w, h } = getTriggerSize();
+            // Mínimo bottom respeta el safe area (home indicator iOS)
+            const minBottom = MARGIN + safeArea.bottom;
+            const minRight  = MARGIN + safeArea.right;
+            const r = clamp(right,  minRight,  Math.max(minRight,  window.innerWidth  - w - MARGIN));
+            const b = clamp(bottom, minBottom, Math.max(minBottom, window.innerHeight - h - MARGIN));
+            fab.style.right  = r + 'px';
+            fab.style.bottom = b + 'px';
+        }
 
         /* ── Coordenadas normalizadas mouse/touch ── */
         function getCoords(e) {
@@ -105,18 +162,8 @@
 
             if (!didDrag) return;
 
-            const fabW = fab.offsetWidth;
-            const fabH = fab.offsetHeight;
-
             // right decrece al mover derecha (dx+), bottom decrece al mover abajo (dy+)
-            let newRight  = startRight  - dx;
-            let newBottom = startBottom - dy;
-
-            newRight  = clamp(newRight,  MARGIN, window.innerWidth  - fabW - MARGIN);
-            newBottom = clamp(newBottom, MARGIN, window.innerHeight - fabH - MARGIN);
-
-            fab.style.right  = newRight  + 'px';
-            fab.style.bottom = newBottom + 'px';
+            safePosition(startRight - dx, startBottom - dy);
         }
 
         /* ── FIN DEL DRAG ── */
@@ -141,6 +188,31 @@
         handle.addEventListener('mousedown',  onPointerDown);
         handle.addEventListener('touchstart', onPointerDown, { passive: true });
 
+        handle.addEventListener('click', function (e) {
+            if (fab.classList.contains('fab-just-dragged')) {
+                return;
+            }
+            fab.classList.toggle('active');
+            if (fab.classList.contains('active')) {
+                ajustarAlturaOpciones(fab);
+            }
+            e.stopPropagation();
+        });
+
+        // Close menu when clicking outside of the fab container
+        document.addEventListener('click', function (e) {
+            if (!fab.contains(e.target)) {
+                fab.classList.remove('active');
+            }
+        });
+
+        // Close menu when clicking an option (event delegation)
+        fab.addEventListener('click', function (e) {
+            if (e.target.closest('.fab-option')) {
+                fab.classList.remove('active');
+            }
+        });
+
         // Interceptar click post-drag para no abrir el menú
         fab.addEventListener('click', function (e) {
             if (fab.classList.contains('fab-just-dragged')) {
@@ -150,22 +222,68 @@
         }, true);
 
         // ── Seguro extra para navegadores móviles con scroll problemático:
-        //    re-afirmar position:fixed si el scroll mueve el elemento
+        //    re-afirmar position:fixed si el scroll mueve el elemento.
+        //    Throttle con rAF para no disparar decenas de veces por segundo.
+        let scrollRafId = null;
         window.addEventListener('scroll', function () {
-            if (!dragging) {
-                forceFixed(fab);
+            if (!dragging && !scrollRafId) {
+                scrollRafId = requestAnimationFrame(function () {
+                    scrollRafId = null;
+                    forceFixed(fab);
+                });
             }
         }, { passive: true });
 
         window.addEventListener('resize', function () {
-            // Al rotar pantalla, re-confinar dentro del nuevo viewport
-            const fabW = fab.offsetWidth;
-            const fabH = fab.offsetHeight;
-            const r = clamp(parseFloat(fab.style.right)  || 20, MARGIN, window.innerWidth  - fabW - MARGIN);
-            const b = clamp(parseFloat(fab.style.bottom) || 20, MARGIN, window.innerHeight - fabH - MARGIN);
-            fab.style.right  = r + 'px';
-            fab.style.bottom = b + 'px';
+            // Re-leer safe area en caso de cambio de orientación (portrait ↔ landscape)
+            // No se necesita actualizar safeArea porque los valores env() se recalculan
+            // via CSS; sólo reclampeamos la posición para que siga dentro del viewport.
+            safePosition(
+                parseFloat(fab.style.right)  || INIT_RIGHT,
+                parseFloat(fab.style.bottom) || INIT_BOTTOM
+            );
+            // Recalcular altura de opciones si el menú está abierto
+            if (fab.classList.contains('active')) {
+                ajustarAlturaOpciones(fab);
+            }
         }, { passive: true });
+    }
+
+    /**
+     * Ajusta el max-height de .fab-options según el espacio disponible
+     * hacia arriba del trigger en el viewport, evitando desbordamiento
+     * y que las opciones tapen el botón principal.
+     */
+    function ajustarAlturaOpciones(fab) {
+        const options = fab.querySelector('.fab-options');
+        if (!options) return;
+
+        const trigger = fab.querySelector('.btn-floating-pitaya');
+        const GAP = 15; // gap del flex-container entre options y trigger
+        const PADDING_SAFE = 12; // espacio extra desde el borde superior del viewport
+
+        // Posición del botón trigger relativa al viewport
+        let triggerBottom;
+        if (trigger) {
+            const rect = trigger.getBoundingClientRect();
+            // La parte superior del trigger dentro del viewport
+            triggerBottom = rect.top;
+        } else {
+            // Fallback: usar el bottom del fab
+            const fabBottom = parseFloat(fab.style.bottom) || 20;
+            triggerBottom = window.innerHeight - fabBottom - 65;
+        }
+
+        // Espacio disponible hacia arriba: desde el tope del viewport hasta justo
+        // encima del trigger, menos el gap y el padding de seguridad
+        const espacioDisponible = triggerBottom - GAP - PADDING_SAFE;
+
+        if (espacioDisponible > 60) {
+            options.style.maxHeight = espacioDisponible + 'px';
+        } else {
+            // Muy poco espacio: colapsar a mínimo con scroll
+            options.style.maxHeight = '60px';
+        }
     }
 
     /* ── Esperar a que el DOM esté listo ── */

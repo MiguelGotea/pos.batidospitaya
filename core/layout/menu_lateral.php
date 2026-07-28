@@ -123,12 +123,12 @@ $menuGlobal = [
             [
                 'nombre' => 'Horarios Programados',
                 'url' => 'supervision/ver_horarios_compactos.php',
-                'cargos_permitidos' => [49, 16, 11, 5, 43, 21, 42, 36, 13, 28, 30, 37, 39, 27, 8, 54, 53, 33, 52]
+                'cargos_permitidos' => [49, 16, 11, 5, 43, 21, 42, 36, 13, 28, 30, 37, 39, 27, 8, 54, 53, 33, 52, 62]
             ],
             [
                 'nombre' => 'Marcaciones',
-                'url' => 'rh/ver_marcaciones_todas_nuevo.php',
-                'cargos_permitidos' => [49, 13, 5, 43, 8, 11, 21, 22, 36, 13, 28, 30, 37, 39, 8, 12, 54, 33, 52, 42, 16, 61]
+                'url' => 'rh/ver_marcaciones_todas.php',
+                'cargos_permitidos' => [49, 13, 5, 43, 8, 11, 21, 22, 36, 13, 28, 30, 37, 39, 8, 12, 54, 33, 52, 42, 16, 61, 63]
             ],
             [
                 'nombre' => 'Panel Equipos de Tiendas',
@@ -155,7 +155,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Colaboradores',
                 'url' => 'rh/colaboradores.php',
-                'cargos_permitidos' => [49, 16, 13, 28, 30, 37, 39, 54]
+                'cargos_permitidos' => [49, 16, 13, 28, 30, 37, 39, 54, 42]
             ],
             [
                 'nombre' => 'Agenda Colaboradores',
@@ -226,6 +226,26 @@ $menuGlobal = [
                 'url' => 'supervision/auditorias_original/auditinternas/faltante_caja.php',
                 'cargos_permitidos' => [49, 8, 16]
             ],
+            [
+                'nombre' => 'Cierres Diarios',
+                'url' => 'contabilidad/historial_cierres_diarios.php',
+                'cargos_permitidos' => [52, 49, 42, 8, 33, 21]
+            ],
+            [
+                'nombre' => 'Depósitos',
+                'url' => 'contabilidad/masivo_depositos.php',
+                'cargos_permitidos' => [33, 8, 42, 52, 21, 49]
+            ],
+            [
+                'nombre' => 'Mermas',
+                'url' => 'inventario/mermas_productos.php',
+                'cargos_permitidos' => [33, 8, 42, 52, 21, 49]
+            ],
+            [
+                'nombre' => 'Balance Inventario',
+                'url' => 'productos/balance_inventario_access_host.php',
+                'cargos_permitidos' => [49, 12, 55, 16, 42, 52, 11, 21]
+            ],
         ]
     ],
 
@@ -237,12 +257,12 @@ $menuGlobal = [
             [
                 'nombre' => 'Nuevo Reclamo',
                 'url' => 'supervision/auditorias_original/nuevoreclamo.php',
-                'cargos_permitidos' => [49, 16, 21, 28, 50, 33]
+                'cargos_permitidos' => [49, 16, 28, 50, 33]
             ],
             [
                 'nombre' => 'Procesar Reclamos',
                 'url' => 'supervision/auditorias_original/reclamospend.php',
-                'cargos_permitidos' => [49, 16, 11, 21, 42, 50, 33, 52]
+                'cargos_permitidos' => [49, 16, 11, 42, 50, 52, 33, 21]
             ],
             [
                 'nombre' => 'Reseñas Google',
@@ -252,7 +272,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Historial Reseñas Google',
                 'url' => 'marketing/resenas_google_descargado.php',
-                'cargos_permitidos' => [49, 16, 28, 50, 42, 53, 52]
+                'cargos_permitidos' => [49, 16, 28, 50, 42, 53, 52, 33, 21]
             ],
         ]
     ],
@@ -269,7 +289,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Clientes Club',
                 'url' => 'atencioncliente/historial_clientes.php',
-                'cargos_permitidos' => [49, 16, 22, 28, 27, 42, 26, 53, 50]
+                'cargos_permitidos' => [49, 16, 22, 28, 27, 42, 26, 53, 50, 33, 21]
             ],
             [
                 'nombre' => 'Campañas WSP',
@@ -313,22 +333,22 @@ $menuGlobal = [
             [
                 'nombre' => 'Agenda Diaria',
                 'url' => 'mantenimiento/agenda_colaborador.php',
-                'cargos_permitidos' => [49, 14, 56, 63, 16, 35, 61]
+                'cargos_permitidos' => [49, 14, 56, 63, 16, 35]
             ],
             [
                 'nombre' => 'Informe Diario',
                 'url' => 'mantenimiento/historial_informes.php',
-                'cargos_permitidos' => [49, 14, 56, 16, 35, 61]
+                'cargos_permitidos' => [49, 14, 56, 16, 35, 63]
             ],
             [
                 'nombre' => 'Calendario',
                 'url' => 'mantenimiento/programacion_solicitudes.php',
-                'cargos_permitidos' => [49, 21, 16, 35, 33, 52, 61]
+                'cargos_permitidos' => [49, 21, 16, 35, 33, 52, 63]
             ],
             [
                 'nombre' => 'Planificacion',
                 'url' => 'mantenimiento/planificacion_mantenimiento.php',
-                'cargos_permitidos' => [49, 35, 61]
+                'cargos_permitidos' => [49, 35, 63]
             ]
         ]
 
@@ -388,9 +408,24 @@ $menuGlobal = [
         'cargos_permitidos' => [],
         'items' => [
             [
+                'nombre' => 'Historial Despachos',
+                'url' => 'despacho/historial_despacho.php',
+                'cargos_permitidos' => [49, 12, 16]
+            ],
+            [
+                'nombre' => 'Plan Despachos',
+                'url' => 'despacho/historial_despachos.php',
+                'cargos_permitidos' => [49, 12, 16, 19, 61, 21, 52, 33, 27, 5, 43, 42]
+            ],
+            [
                 'nombre' => 'Compras Locales Configuracion',
                 'url' => 'cds/compra_local_configuracion_despacho.php',
                 'cargos_permitidos' => [49, 12]
+            ],
+            [
+                'nombre' => 'Configuracion Despacho',
+                'url' => 'inventario/plan_despacho_global.php',
+                'cargos_permitidos' => [49, 16, 12]
             ],
             [
                 'nombre' => 'Pedido Central',
@@ -401,6 +436,11 @@ $menuGlobal = [
                 'nombre' => 'Compras Locales Consolidado',
                 'url' => 'cds/compra_local_consolidado_pedidos.php',
                 'cargos_permitidos' => [49, 12, 9, 17, 55, 11, 21, 42, 16, 21, 33, 52, 61]
+            ],
+            [
+                'nombre' => 'Proyeccion',
+                'url' => 'productos/pronostico_abastecimiento.php',
+                'cargos_permitidos' => [11, 12, 13, 16, 42, 49, 21, 33, 52, 19, 61]
             ],
         ]
     ],
@@ -454,7 +494,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Desempeño de Tienda',
                 'url' => 'supervision/auditorias_original/desempeno_sucursales_v2.php',
-                'cargos_permitidos' => [11, 21, 42, 33, 27, 5, 43, 52]
+                'cargos_permitidos' => [11, 21, 42, 33, 27, 5, 43, 52, 62, 53]
             ],
             [
                 'nombre' => 'Liderazgo',
@@ -528,6 +568,11 @@ $menuGlobal = [
                 'url' => 'productos/accessantiguo_diccionario_productos.php',
                 'cargos_permitidos' => [55, 49]
             ],
+            [
+                'nombre' => 'Costos Unitarios',
+                'url' => 'contabilidad/costo_unitario_productos.php',
+                'cargos_permitidos' => [42, 16, 8, 49]
+            ],
         ]
     ],
     [
@@ -536,14 +581,9 @@ $menuGlobal = [
         'cargos_permitidos' => [],
         'items' => [
             [
-                'nombre' => 'Inventario Semanal',
-                'url' => 'inventario/inventario_semanal.php',
-                'cargos_permitidos' => [27, 16, 49, 55]
-            ],
-            [
-                'nombre' => 'Configuración Porcentajes',
-                'url' => 'inventario/configuracion_porcentajes.php',
-                'cargos_permitidos' => [27, 16, 55]
+                'nombre' => 'Conteo Cíclico',
+                'url' => 'inventario/conteo_ciclico.php',
+                'cargos_permitidos' => [27, 16, 49, 55, 33]
             ],
         ]
     ],
@@ -558,6 +598,38 @@ $menuGlobal = [
                 'cargos_permitidos' => [11, 12, 13, 16, 42, 49, 55, 21, 33, 52]
             ],
 
+        ]
+    ],
+    [
+        'nombre' => 'Portal Talento',
+        'icon' => 'fas fa-globe',
+        'cargos_permitidos' => [],
+        'items' => [
+            [
+                'nombre' => 'Sobre Nosotros',
+                'url' => 'talento_contenido/nosotros.php',
+                'cargos_permitidos' => [16, 49, 42, 50]
+            ],
+            [
+                'nombre' => 'Colaboradores Portal',
+                'url' => 'talento_contenido/colaboradores.php',
+                'cargos_permitidos' => [16, 49, 42, 50]
+            ],
+            [
+                'nombre' => 'Noticias Portal',
+                'url' => 'talento_contenido/noticias.php',
+                'cargos_permitidos' => [16, 49, 42, 50]
+            ],
+            [
+                'nombre' => 'Habilidades Portal',
+                'url' => 'talento_contenido/habilidades.php',
+                'cargos_permitidos' => [16, 49, 42, 50]
+            ],
+            [
+                'nombre' => 'Configuración Portal',
+                'url' => 'talento_contenido/configuracion.php',
+                'cargos_permitidos' => [16, 49, 42, 50]
+            ],
         ]
     ],
     [
@@ -673,7 +745,7 @@ function filtrarMenuPorPermisos($menu, $cargoOperario)
         // Si el grupo tiene items, su visibilidad depende de éstos
         if (!empty($grupo['items'])) {
             foreach ($grupo['items'] as $item) {
-                if (tieneAcceso($cargoOperario, $item['cargos_permitidos'])) {
+                if (empty($item['hidden']) && tieneAcceso($cargoOperario, $item['cargos_permitidos'])) {
                     $itemsFiltrados[] = $item;
                 }
             }
@@ -725,7 +797,7 @@ function renderMenuLateral($cargoOperario)
     $moduloActual = detectarModuloActual();
 
     ob_start();
-    ?>
+?>
 
     <!-- Font Awesome Universal -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -743,7 +815,7 @@ function renderMenuLateral($cargoOperario)
             box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             overflow-x: hidden;
-            z-index: 1000;
+            z-index: 1040;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -969,7 +1041,7 @@ function renderMenuLateral($cargoOperario)
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+            z-index: 1030;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -1210,13 +1282,13 @@ function renderMenuLateral($cargoOperario)
 
     <!-- JavaScript del menú -->
     <script>
-        (function () {
+        (function() {
             'use strict';
 
             let activeGroupIndex = null;
 
             // Función para toggle de grupo (acordeón)
-            window.toggleMenuGroup = function (index) {
+            window.toggleMenuGroup = function(index) {
                 const grupo = document.getElementById('grupo-' + index);
                 const allGroups = document.querySelectorAll('.menu-group');
                 const titulo = grupo.querySelector('.menu-group-title');
@@ -1237,7 +1309,7 @@ function renderMenuLateral($cargoOperario)
             };
 
             // Función para abrir sidebar en móvil
-            window.toggleSidebarMobile = function () {
+            window.toggleSidebarMobile = function() {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebarOverlay');
 
@@ -1254,7 +1326,7 @@ function renderMenuLateral($cargoOperario)
             };
 
             // Función para cerrar sidebar en móvil
-            window.closeSidebarMobile = function () {
+            window.closeSidebarMobile = function() {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebarOverlay');
 
@@ -1276,7 +1348,7 @@ function renderMenuLateral($cargoOperario)
 
             // Cerrar menú en móvil al hacer clic en un enlace
             document.querySelectorAll('.menu-item').forEach(item => {
-                item.addEventListener('click', function () {
+                item.addEventListener('click', function() {
                     if (window.innerWidth <= 768) {
                         closeSidebarMobile();
                     }
@@ -1284,7 +1356,7 @@ function renderMenuLateral($cargoOperario)
             });
 
             // Marcar grupo activo si hay una página activa
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 const activeItem = document.querySelector('.menu-item.active');
                 if (activeItem) {
                     const parentGroup = activeItem.closest('.menu-group');
@@ -1315,8 +1387,8 @@ function renderMenuLateral($cargoOperario)
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
 
-            const observer = new MutationObserver(function (mutations) {
-                mutations.forEach(function (mutation) {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
                     if (mutation.attributeName === 'class') {
                         if (sidebar.classList.contains('show')) {
                             document.body.style.overflow = 'hidden';
@@ -1332,7 +1404,7 @@ function renderMenuLateral($cargoOperario)
             });
 
             // Soporte para teclado (accesibilidad)
-            document.addEventListener('keydown', function (e) {
+            document.addEventListener('keydown', function(e) {
                 // ESC para cerrar menú en móvil
                 if (e.key === 'Escape' && window.innerWidth <= 768) {
                     closeSidebarMobile();
@@ -1342,6 +1414,6 @@ function renderMenuLateral($cargoOperario)
         })();
     </script>
 
-    <?php
+<?php
     return ob_get_clean();
 }

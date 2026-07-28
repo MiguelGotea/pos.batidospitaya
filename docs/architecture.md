@@ -59,6 +59,6 @@ graph TD
 
 ## 🛠️ Comandos de Mantenimiento
 
-- **Empuje Global**: `./PitayaCore/.scripts/gitpush.ps1`
+- **Empuje Global**: `./.scripts/gitpush_pos.ps1` (o `gitpush_erp.ps1`, `gitpush_talento.ps1` según el repo)
 - **Sincronización Local**: `./gitsync-local.ps1`
 - **Revisión de Logs**: Pestaña **Actions** en GitHub (PitayaCore).
