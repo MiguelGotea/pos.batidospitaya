@@ -47,8 +47,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             overflow: auto;
         }
 
-
-
         .pos-dashboard {
             max-width: 1100px;
             margin: 0 auto;
