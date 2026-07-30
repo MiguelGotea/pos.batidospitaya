@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
+
 if (!posTiendaAutenticada()) {
     header('Location: /login.php');
     exit();
