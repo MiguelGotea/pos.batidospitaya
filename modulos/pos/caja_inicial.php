@@ -66,9 +66,9 @@ try {
     <?= renderPOSSidebar('caja') ?>
 
     <div class="pos-main-container">
-        <div class="pos-content">
-            <?= renderPOSHeader('Caja Inicial') ?>
+        <?= renderPOSHeader('Caja Inicial') ?>
 
+        <div class="pos-content">
             <div class="container-fluid p-3">
 
                 <!-- ====== CABECERA: Fecha + Tipo de Cambio ====== -->

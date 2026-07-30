@@ -24,9 +24,9 @@ $hoy = date('Y-m-d');
     <?= renderPOSSidebar('ventas') ?>
 
     <div class="pos-main-container">
-        <div class="pos-content">
-            <?= renderPOSHeader('Nueva Factura') ?>
+        <?= renderPOSHeader('Nueva Factura') ?>
 
+        <div class="pos-content">
             <div class="container-fluid p-3">
                 <div class="facturas-layout">
 

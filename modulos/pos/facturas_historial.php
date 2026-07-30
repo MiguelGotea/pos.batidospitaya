@@ -22,9 +22,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
     <?= renderPOSSidebar('ventas') ?>
 
     <div class="pos-main-container">
-        <div class="pos-content">
-            <?= renderPOSHeader('Historial de Facturas') ?>
+        <?= renderPOSHeader('Historial de Facturas') ?>
 
+        <div class="pos-content">
             <div class="container-fluid p-3">
 
                 <!-- Barra superior -->

@@ -65,9 +65,9 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
     <?= renderPOSSidebar('clientes') ?>
     
     <div class="pos-main-container">
+        <?= renderPOSHeader($esModoEdicion ? 'Editar Cliente' : 'Perfil de Cliente') ?>
+
         <div class="pos-content">
-            <?= renderPOSHeader($esModoEdicion ? 'Editar Cliente' : 'Perfil de Cliente') ?>
-            
             <div class="container-fluid p-4">
                 <div class="mb-3">
                     <button class="btn btn-secondary" onclick="window.history.back()">
