@@ -1,4 +1,5 @@
 <?php
+
 /**
  * caja_inicial.php — Conteo de Caja Inicial
  * Módulo POS / modulos/POS/caja_inicial.php
@@ -50,6 +51,7 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,6 +64,7 @@ try {
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
 </head>
+
 <body>
     <?= renderPOSSidebar('caja') ?>
 
@@ -78,12 +81,12 @@ try {
                         <div class="ci-header-field">
                             <label for="inputFecha"><i class="bi bi-calendar3 me-1"></i> Fecha del Conteo</label>
                             <input type="date"
-                                   class="form-control"
-                                   id="inputFecha"
-                                   name="fecha"
-                                   value="<?php echo $hoy; ?>"
-                                   readonly
-                                   style="background-color: #f8fafc; cursor: default;">
+                                class="form-control"
+                                id="inputFecha"
+                                name="fecha"
+                                value="<?php echo $hoy; ?>"
+                                readonly
+                                style="background-color: #f8fafc; cursor: default;">
                         </div>
 
                         <div class="ci-header-field">
@@ -138,7 +141,7 @@ try {
                                         <tr>
                                             <th style="width:40%">Moneda</th>
                                             <th class="text-center" style="width:30%">Cantidad</th>
-                                            <th class="text-end"   style="width:30%">Total</th>
+                                            <th class="text-end" style="width:30%">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaNIOBody">
@@ -169,7 +172,7 @@ try {
                                         <tr>
                                             <th style="width:40%">Moneda</th>
                                             <th class="text-center" style="width:30%">Cantidad</th>
-                                            <th class="text-end"   style="width:30%">Total</th>
+                                            <th class="text-end" style="width:30%">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaUSDBody">
@@ -225,4 +228,5 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/caja_inicial.js?v=<?php echo time(); ?>"></script>
 </body>
+
 </html>
