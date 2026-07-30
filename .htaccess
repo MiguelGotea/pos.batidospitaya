@@ -1,0 +1,5 @@
+# Página de error 404 personalizada para el POS
+ErrorDocument 404 /404.php
+
+# Desactivar listado de directorios por seguridad
+Options -Indexes
