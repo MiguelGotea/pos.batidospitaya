@@ -1,13 +1,10 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
-require_once '../../core/layout/menu_lateral.php';
-require_once '../../core/layout/header_universal.php';
-require_once '../../core/permissions/permissions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 
-$usuario       = obtenerUsuarioActual();
-$cargoOperario = $usuario['CodNivelesCargos'];
-$hoy           = date('Y-m-d');
+$hoy = date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,11 +21,11 @@ $hoy           = date('Y-m-d');
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <?php echo renderMenuLateral($cargoOperario); ?>
+    <?= renderPOSSidebar('ventas') ?>
 
-    <div class="main-container">
-        <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Nueva Factura'); ?>
+    <div class="pos-main-container">
+        <div class="pos-content">
+            <?= renderPOSHeader('Nueva Factura') ?>
 
             <div class="container-fluid p-3">
                 <div class="facturas-layout">

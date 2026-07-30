@@ -2,9 +2,9 @@
 // cliente_gestion.php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
-require_once '../../core/layout/menu_lateral.php';
-require_once '../../core/layout/header_universal.php';
-require_once '../../core/permissions/permissions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/permissions/permissions.php';
 
 $usuario = obtenerUsuarioActual();
 $cargoOperario = $usuario['CodNivelesCargos'];
@@ -62,11 +62,11 @@ $esModoEdicion = ($modo === 'edit' && $puedeEditar);
     </style>
 </head>
 <body>
-    <?php echo renderMenuLateral($cargoOperario); ?>
+    <?= renderPOSSidebar('clientes') ?>
     
-    <div class="main-container">
-        <div class="sub-container">
-            <?php echo renderHeader($usuario, false, $esModoEdicion ? 'Editar Cliente' : 'Perfil de Cliente'); ?>
+    <div class="pos-main-container">
+        <div class="pos-content">
+            <?= renderPOSHeader($esModoEdicion ? 'Editar Cliente' : 'Perfil de Cliente') ?>
             
             <div class="container-fluid p-4">
                 <div class="mb-3">

@@ -5,13 +5,13 @@
  */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
-require_once '../../core/layout/menu_lateral.php';
-require_once '../../core/layout/header_universal.php';
-require_once '../../core/database/conexion.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 
-$usuario       = obtenerUsuarioActual();
-$cargoOperario = $usuario['CodNivelesCargos'];
-$hoy           = date('Y-m-d');
+
+$hoy = date('Y-m-d');
+
 
 // Obtener la sucursal activa según la lógica de asignación (el más reciente sin fecha de fin o con fecha futura)
 $sucursalId   = null;
@@ -63,11 +63,11 @@ try {
     <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <?php echo renderMenuLateral($cargoOperario); ?>
+    <?= renderPOSSidebar('caja') ?>
 
-    <div class="main-container">
-        <div class="sub-container">
-            <?php echo renderHeader($usuario, false, 'Caja Inicial'); ?>
+    <div class="pos-main-container">
+        <div class="pos-content">
+            <?= renderPOSHeader('Caja Inicial') ?>
 
             <div class="container-fluid p-3">
 
