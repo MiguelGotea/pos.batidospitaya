@@ -219,9 +219,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <p>Estás operando en la sucursal <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
                         Tu marcación de entrada fue verificada exitosamente.</p>
                     <div class="pos-actions">
-                        <a href="/modulos/facturacion/" class="pos-action-btn primary"><i class="fa fa-cash-register"></i> Nueva Venta</a>
+                        <a href="/modulos/pos/facturas_nueva.php" class="pos-action-btn primary"><i class="fa fa-cash-register"></i> Nueva Venta</a>
                         <a href="/modulos/inicial/" class="pos-action-btn"><i class="fa fa-vault"></i> Caja Inicial</a>
-                        <a href="/modulos/inventario/" class="pos-action-btn"><i class="fa fa-boxes-stacked"></i> Inventario</a>
                     </div>
                 </div>
             </div>
