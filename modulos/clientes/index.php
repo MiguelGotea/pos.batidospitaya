@@ -19,6 +19,7 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,16 +33,18 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
         .clientes-card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             border: 1px solid #E2E8F0;
             padding: 20px;
             margin-bottom: 20px;
         }
+
         .buscador-clientes {
             position: relative;
             max-width: 450px;
             margin-bottom: 20px;
         }
+
         .buscador-clientes input {
             width: 100%;
             padding: 10px 15px 10px 40px;
@@ -51,10 +54,12 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             outline: none;
             transition: all 0.2s;
         }
+
         .buscador-clientes input:focus {
             border-color: #51B8AC;
             box-shadow: 0 0 0 3px rgba(81, 184, 172, 0.15);
         }
+
         .buscador-clientes .icon-search {
             position: absolute;
             left: 15px;
@@ -63,9 +68,11 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             color: #94A3B8;
             font-size: 1.1rem;
         }
+
         .tabla-clientes {
             font-size: 0.9rem;
         }
+
         .tabla-clientes th {
             background-color: #0E544C !important;
             color: white !important;
@@ -73,15 +80,18 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             padding: 12px 16px;
             border: none;
         }
+
         .tabla-clientes td {
             padding: 12px 16px;
             vertical-align: middle;
             color: #334155;
             border-bottom: 1px solid #F1F5F9;
         }
+
         .tabla-clientes tr:hover td {
             background-color: #F8FAFC;
         }
+
         .btn-ver-perfil {
             background-color: #E2E8F0;
             color: #334155;
@@ -96,14 +106,17 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             align-items: center;
             gap: 6px;
         }
+
         .btn-ver-perfil:hover {
             background-color: #51B8AC;
             color: white;
         }
+
         .paginacion-container {
             display: flex;
             gap: 5px;
         }
+
         .paginacion-btn {
             padding: 6px 12px;
             border-radius: 6px;
@@ -115,21 +128,25 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .paginacion-btn:hover:not(:disabled) {
             border-color: #51B8AC;
             color: #51B8AC;
         }
+
         .paginacion-btn.active {
             background-color: #51B8AC;
             border-color: #51B8AC;
             color: white;
         }
+
         .paginacion-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
     </style>
 </head>
+
 <body>
     <?= renderPOSSidebar('clientes') ?>
 
@@ -288,7 +305,10 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
             // Botón Anterior
             const btnPrev = $('<button class="paginacion-btn">Anterior</button>');
             if (paginaActual === 1) btnPrev.prop('disabled', true);
-            btnPrev.on('click', () => { paginaActual--; cargarClientes(); });
+            btnPrev.on('click', () => {
+                paginaActual--;
+                cargarClientes();
+            });
             container.append(btnPrev);
 
             // Páginas numéricas
@@ -297,14 +317,20 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
 
             for (let i = inicio; i <= fin; i++) {
                 const btnPage = $(`<button class="paginacion-btn ${i === paginaActual ? 'active' : ''}">${i}</button>`);
-                btnPage.on('click', () => { paginaActual = i; cargarClientes(); });
+                btnPage.on('click', () => {
+                    paginaActual = i;
+                    cargarClientes();
+                });
                 container.append(btnPage);
             }
 
             // Botón Siguiente
             const btnNext = $('<button class="paginacion-btn">Siguiente</button>');
             if (paginaActual === totalPaginas) btnNext.prop('disabled', true);
-            btnNext.on('click', () => { paginaActual++; cargarClientes(); });
+            btnNext.on('click', () => {
+                paginaActual++;
+                cargarClientes();
+            });
             container.append(btnNext);
         }
 
@@ -315,4 +341,5 @@ $puedeEditar = tienePermiso('clientes_club_pos', 'edicion', $cargoOperario);
         }
     </script>
 </body>
+
 </html>
