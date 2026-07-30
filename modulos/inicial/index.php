@@ -1,7 +1,7 @@
 <?php
 /**
- * caja_inicial.php — Conteo de Caja Inicial
- * Módulo POS / modulos/POS/caja_inicial.php
+ * index.php — Conteo de Caja Inicial
+ * Módulo POS / modulos/inicial/index.php
  */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
@@ -9,9 +9,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 
-
 $hoy = date('Y-m-d');
-
 
 // Obtener la sucursal activa según la lógica de asignación (el más reciente sin fecha de fin o con fecha futura)
 $sucursalId   = null;
@@ -55,7 +53,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja Inicial — POS</title>
     <meta name="description" content="Conteo de caja inicial: denominaciones en córdobas y dólares con cálculo automático de totales">
-    <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
+    <link rel="icon" href="/core/assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -78,12 +76,12 @@ try {
                         <div class="ci-header-field">
                             <label for="inputFecha"><i class="bi bi-calendar3 me-1"></i> Fecha del Conteo</label>
                             <input type="date"
-                                   class="form-control"
-                                   id="inputFecha"
-                                   name="fecha"
-                                   value="<?php echo $hoy; ?>"
-                                   readonly
-                                   style="background-color: #f8fafc; cursor: default;">
+                                class="form-control"
+                                id="inputFecha"
+                                name="fecha"
+                                value="<?php echo $hoy; ?>"
+                                readonly
+                                style="background-color: #f8fafc; cursor: default;">
                         </div>
 
                         <div class="ci-header-field">
@@ -138,7 +136,7 @@ try {
                                         <tr>
                                             <th style="width:40%">Moneda</th>
                                             <th class="text-center" style="width:30%">Cantidad</th>
-                                            <th class="text-end"   style="width:30%">Total</th>
+                                            <th class="text-end" style="width:30%">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaNIOBody">
@@ -169,7 +167,7 @@ try {
                                         <tr>
                                             <th style="width:40%">Moneda</th>
                                             <th class="text-center" style="width:30%">Cantidad</th>
-                                            <th class="text-end"   style="width:30%">Total</th>
+                                            <th class="text-end" style="width:30%">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablaUSDBody">
