@@ -407,6 +407,11 @@ $enc = New-Object System.Text.UTF8Encoding($false)
 $reader = New-Object System.IO.StreamReader($src, $enc)
 $writer = New-Object System.IO.StreamWriter($dst, $false, $enc)
 $writer.NewLine = "`n"
+
+# Desactivar validación estricta de llaves foráneas y unicidad durante la restauración masiva
+$writer.WriteLine("SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;")
+$writer.WriteLine("SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;")
+
 while (($line = $reader.ReadLine()) -ne $null) {
     if ($line -match 'SQL_LOG_BIN|GTID_PURGED') { continue }
     if ($line.Contains('DEFINER')) {
@@ -415,6 +420,11 @@ while (($line = $reader.ReadLine()) -ne $null) {
     }
     $writer.WriteLine($line)
 }
+
+# Restaurar validaciones al finalizar
+$writer.WriteLine("SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;")
+$writer.WriteLine("SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;")
+
 $reader.Close(); $writer.Close()
 ```
 
