@@ -53,7 +53,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Gestion de Asistencia',
                 'url' => 'rh/ver_marcaciones_todas_nuevo.php',
-                'cargos_permitidos' => [49, 16, 5, 43, 42, 33, 21, 52, 65, 8, 19, 41, 64, 30, 13, 39, 28, 11, 15, 63, 61, 12, 67, 35]
+                'cargos_permitidos' => [49, 16, 5, 68, 43, 42, 33, 21, 52, 65, 8, 19, 41, 64, 30, 13, 39, 28, 11, 15, 63, 61, 12, 67, 35]
             ],
             [
                 'nombre' => 'Tardanzas',
@@ -83,7 +83,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Horas Extras',
                 'url' => 'operaciones/horas_extras_manual.php',
-                'cargos_permitidos' => [49, 11, 16, 8, 13, 5, 43, 21, 42, 33, 52]
+                'cargos_permitidos' => [49, 11, 16, 8, 13, 5, 68, 43, 21, 42, 33, 52]
             ],
             [
                 'nombre' => 'Feriados',
@@ -98,12 +98,12 @@ $menuGlobal = [
             [
                 'nombre' => 'Generar Horarios',
                 'url' => 'lideres/programar_horarios_lider2.php',
-                'cargos_permitidos' => [49, 5, 43]
+                'cargos_permitidos' => [49, 5, 68, 43]
             ],
             [
                 'nombre' => 'Horarios Programados',
                 'url' => 'supervision/ver_horarios_compactos.php',
-                'cargos_permitidos' => [49, 16, 11, 5, 43, 21, 42, 36, 13, 28, 30, 37, 39, 27, 8, 54, 53, 33, 52, 62, 65, 41, 65, 55]
+                'cargos_permitidos' => [49, 16, 11, 5, 68, 43, 21, 42, 36, 13, 28, 30, 37, 39, 27, 8, 54, 53, 33, 52, 62, 65, 41, 65, 55]
             ],
             [
                 'nombre' => 'Panel Equipos de Tiendas',
@@ -205,7 +205,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Depósitos',
                 'url' => 'contabilidad/masivo_depositos.php',
-                'cargos_permitidos' => [33, 8, 42, 52, 21, 49, 5, 43]
+                'cargos_permitidos' => [33, 8, 42, 52, 21, 49, 5, 68, 43]
             ],
             [
                 'nombre' => 'Mermas',
@@ -299,7 +299,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Solicitudes',
                 'url' => 'mantenimiento/historial_solicitudes.php',
-                'cargos_permitidos' => [49, 11, 16, 5, 43, 35, 14, 56, 63, 12, 26, 42, 53, 21, 33, 52, 61, 19, 15]
+                'cargos_permitidos' => [49, 11, 16, 5, 68, 43, 35, 14, 56, 63, 12, 26, 42, 53, 21, 33, 52, 61, 19, 15]
             ],
             [
                 'nombre' => 'Informe Diario',
@@ -386,7 +386,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Despachos ERP',
                 'url' => 'despacho/historial_despachos.php',
-                'cargos_permitidos' => [49, 12, 16, 19, 61, 21, 52, 33, 27, 5, 43, 42, 62, 33, 55]
+                'cargos_permitidos' => [49, 12, 16, 19, 61, 21, 52, 33, 27, 5, 68, 43, 42, 62, 33, 55]
             ],
             [
                 'nombre' => 'Plan Despacho Perecibles',
@@ -460,7 +460,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Desempeño de Tienda',
                 'url' => 'supervision/auditorias_original/desempeno_sucursales_v2.php',
-                'cargos_permitidos' => [11, 21, 42, 33, 27, 5, 43, 52, 62, 53, 49, 16]
+                'cargos_permitidos' => [11, 21, 42, 33, 27, 5, 68, 43, 52, 62, 53, 49, 16]
             ],
             [
                 'nombre' => 'Liderazgo',
@@ -534,7 +534,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Conteo Cíclico',
                 'url' => 'inventario/historial_conteo_existencias.php',
-                'cargos_permitidos' => [16, 49, 55, 52, 5, 43, 21, 16, 42, 33, 47, 46, 45, 66, 67, 62]
+                'cargos_permitidos' => [16, 49, 55, 52, 5, 68, 43, 21, 16, 42, 33, 47, 46, 45, 66, 67, 62]
             ],
             [
                 'nombre' => 'Kardex de Insumos',
