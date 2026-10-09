@@ -367,6 +367,22 @@ $cfg['ExecTimeLimit'] = 0;
 
 ---
 
+### ⚡ Método Rápido Automático (Todo en 1 solo clic)
+
+Hemos creado un script que realiza todas las limpiezas (Pasos B, C, D y desactivación de Foreign Keys) de una sola vez sobre el archivo actualizado de la carpeta `SQL\`:
+
+```powershell
+# Ejecutar desde la raíz de erp.batidospitaya o desde CMD
+.\.scripts\limpiar_dump_local.ps1
+```
+
+> **¿Qué hace automáticamente?**  
+> Toma el archivo `SQL\u839374897_erp (completo).sql`, aplica las 3 limpiezas y genera directamente `C:\Users\TU_USUARIO\Downloads\erp_local_limpio.sql` listo para importar en DBeaver.
+
+---
+
+### Desglose manual paso a paso (Opcional):
+
 ### Paso B — Corregir el collation incompatible (`uca1400`)
 
 **Problema:** El dump usa `utf8mb4_uca1400_ai_ci`, que solo existe en MariaDB 11.3+. XAMPP trae MariaDB 10.4 y lo rechaza.

@@ -473,7 +473,8 @@ function obtenerOperariosSucursal($codSucursal, $fechaInicio, $fechaFin)
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= ?)
         )
         -- FILTRO: Solo operarios activos según fecha de liquidación relativa a la semana
@@ -535,7 +536,8 @@ function obtenerOperariosSucursalConHorario($codSucursal, $idSemana)
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= ss.fecha_inicio)
         )
         -- FILTRO: Solo operarios activos según fecha de liquidación relativa a la semana
@@ -985,7 +987,8 @@ function obtenerOperariosSucursalLider($codSucursal, $codLider)
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
         )
         GROUP BY o.CodOperario, o.Nombre, o.Apellido
@@ -1040,7 +1043,8 @@ function obtenerOperariosSucursalParaFaltas($codSucursal, $codUsuario = null)
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
         )
         GROUP BY o.CodOperario, o.Nombre, o.Apellido
@@ -1340,7 +1344,8 @@ function obtenerTodosOperariosActivos11()
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
         )
         -- Agrupamos por código de operario para evitar duplicados
@@ -3265,7 +3270,8 @@ function obtenerOperariosConHorarioEnFecha($codSucursal, $fechaFalta)
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
         )
         GROUP BY o.CodOperario
@@ -3419,7 +3425,8 @@ function obtenerCantidadOperariosActivosFiltrados()
         WHERE o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
         )
         -- FILTRO NUEVO: Solo operarios activos según fecha de liquidación
@@ -3648,11 +3655,12 @@ function obtenerOperariosSucursalPorFecha($codSucursal, $fechaReferencia)
         -- Verificar que estaba asignado a la sucursal en esa fecha
         AND anc.Fecha <= ?
         AND (anc.Fin IS NULL OR anc.Fin >= ?)
-        -- Excluir cargo 27
+        -- Excluir usuarios virtuales y de tienda
         AND o.CodOperario NOT IN (
             SELECT DISTINCT anc2.CodOperario 
             FROM AsignacionNivelesCargos anc2
-            WHERE anc2.CodNivelesCargos = 27
+            INNER JOIN NivelesCargos nc2 ON anc2.CodNivelesCargos = nc2.CodNivelesCargos
+            WHERE nc2.usuario_virtual = 1
             AND anc2.Fecha <= ?
             AND (anc2.Fin IS NULL OR anc2.Fin >= ?)
         )
