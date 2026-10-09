@@ -111,6 +111,11 @@ $menuGlobal = [
                 'cargos_permitidos' => [49, 16, 36, 11, 39, 42, 33, 28, 21, 30, 41, 65]
             ],
             [
+                'nombre' => 'Lideres de Respaldo',
+                'url' => 'operaciones/asignacion_lideres.php',
+                'cargos_permitidos' => [49, 11]
+            ],
+            [
                 'nombre' => 'Gestion de Feriados',
                 'url' => 'rh/editar_feriados.php',
                 'cargos_permitidos' => [49, 16, 13]
