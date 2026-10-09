@@ -429,7 +429,7 @@ function obtenerSucursalesLider($codOperario)
         FROM AsignacionNivelesCargos anc
         JOIN sucursales s ON anc.Sucursal = s.codigo
         WHERE anc.CodOperario = ? 
-        AND (anc.CodNivelesCargos = 5 OR anc.CodNivelesCargos = 43 OR anc.CodNivelesCargos = 67 OR anc.privilegio_lider = 1) 
+        AND (anc.CodNivelesCargos = 5 OR anc.CodNivelesCargos = 43 OR anc.CodNivelesCargos = 67 OR anc.CodNivelesCargos = 68 OR anc.privilegio_lider = 1) 
         AND (anc.Fin IS NULL OR anc.Fin >= CURDATE())
         AND s.activa = 1
         ORDER BY anc.Fecha ASC, s.nombre
@@ -957,7 +957,7 @@ function obtenerOperariosSucursalLider($codSucursal, $codLider)
         SELECT COUNT(*) as es_lider 
         FROM AsignacionNivelesCargos 
         WHERE CodOperario = ? 
-        AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR privilegio_lider = 1) 
+        AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR CodNivelesCargos = 68 OR privilegio_lider = 1) 
         AND Sucursal = ?
         AND (Fin IS NULL OR Fin >= CURDATE())
     ");
@@ -1011,7 +1011,7 @@ function obtenerOperariosSucursalParaFaltas($codSucursal, $codUsuario = null)
             SELECT COUNT(*) as es_lider 
             FROM AsignacionNivelesCargos 
             WHERE CodOperario = ? 
-            AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR privilegio_lider = 1) 
+            AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR CodNivelesCargos = 68 OR privilegio_lider = 1) 
             AND Sucursal = ?
             AND (Fin IS NULL OR Fin >= CURDATE())
         ");
@@ -1371,7 +1371,7 @@ function obtenerTodosOperariosParaSelector()
             o.Apellido2
         FROM Operarios o
         INNER JOIN AsignacionNivelesCargos anc ON o.CodOperario = anc.CodOperario
-        WHERE anc.CodNivelesCargos IN (2, 5, 43, 67)
+        WHERE anc.CodNivelesCargos IN (2, 5, 43, 67, 68)
         ORDER BY o.Nombre, o.Apellido
     ");
     $stmt->execute();
@@ -1857,7 +1857,7 @@ function obtenerSucursalesPermitidas($codOperario)
         FROM AsignacionNivelesCargos anc
         JOIN sucursales s ON anc.Sucursal = s.codigo
         WHERE anc.CodOperario = ? 
-        AND (anc.CodNivelesCargos = 5 OR anc.CodNivelesCargos = 43 OR anc.CodNivelesCargos = 67 OR anc.privilegio_lider = 1)
+        AND (anc.CodNivelesCargos = 5 OR anc.CodNivelesCargos = 43 OR anc.CodNivelesCargos = 67 OR anc.CodNivelesCargos = 68 OR anc.privilegio_lider = 1)
         AND (anc.Fin IS NULL OR Fin >= CURDATE())
         AND s.activa = 1
         ORDER BY s.nombre
@@ -1899,7 +1899,7 @@ function verificarAccesoSucursal($codOperario, $codSucursal)
         SELECT COUNT(*) as es_lider 
         FROM AsignacionNivelesCargos 
         WHERE CodOperario = ? 
-        AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR privilegio_lider = 1)
+        AND (CodNivelesCargos = 5 OR CodNivelesCargos = 43 OR CodNivelesCargos = 67 OR CodNivelesCargos = 68 OR privilegio_lider = 1)
         AND Sucursal = ?
         AND (Fin IS NULL OR Fin >= CURDATE())
     ");
