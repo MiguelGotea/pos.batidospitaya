@@ -1,22 +1,46 @@
-# Configuracion de codificacion
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+# ==============================================================================
+# Script de Guardado - POS Batidos Pitaya
+# ==============================================================================
 
-# Definicion de iconos por codigo para evitar errores de codificacion
-$i_check    = [char]0x2705
-$i_rocket   = [char]0xD83D + [char]0xDE80
-$i_disk     = [char]0xD83D + [char]0xDCBE
-$i_sparkles = [char]0x2728
-$i_outbox   = [char]0xD83D + [char]0xDCE4
-$i_warning  = [char]0x26A0
-$i_excl     = [char]0x00A1
+# 1. Inteligencia: Moverse automaticamente a la raiz del proyecto
+$expectedPath = Split-Path $PSScriptRoot -Parent
+Set-Location -Path $expectedPath
 
-# Auto-navegar a la raiz del repo (sube un nivel desde .scripts/)
-Set-Location $PSScriptRoot
-Set-Location ..
+Write-Host '--- INICIANDO PROCESO DE GUARDADO (POS) ---' -ForegroundColor Gray
 
-# Verificar archivos vacios antes de agregar
+if (-not (Test-Path '.git')) {
+    Write-Host 'ERROR: No se detecto una carpeta .git' -ForegroundColor Red
+    exit
+}
+
+# 2. Seguridad: Verificar rama dev
+$currentBranch = git branch --show-current
+if ($currentBranch -ne 'dev') {
+    Write-Host "ERROR: Estas en la rama '$currentBranch'. Cambia a dev primero." -ForegroundColor Red
+    exit
+}
+
+# 3. Sincronizar con main
+Write-Host ''
+Write-Host '1. Trayendo cambios de la nube (fetch + rebase)...' -ForegroundColor Cyan
+git fetch origin
+git rebase origin/main --autostash
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host 'ERROR: Problema al sincronizar. Revisa conflictos.' -ForegroundColor Red
+    exit
+}
+
+# 4. Verificar si hay cambios locales para guardar
 $cambios = git status --porcelain
-if ($cambios) {
+if (-not $cambios) {
+    Write-Host ''
+    Write-Host 'INFO: No hay cambios locales para guardar. Todo esta al dia.' -ForegroundColor Green
+} else {
+    Write-Host ''
+    Write-Host '2. Preparando tus cambios locales...' -ForegroundColor Cyan
+
+    # Verificacion de archivos vacios (0 bytes)
     $emptyFiles = @()
     foreach ($line in ($cambios -split "`r?`n")) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -31,52 +55,56 @@ if ($cambios) {
 
     if ($emptyFiles.Count -gt 0) {
         Write-Host ""
-        Write-Host "$i_warning ADVERTENCIA: Se detectaron archivos VACIOS (0 bytes) que estan modificados o son nuevos:" -ForegroundColor Yellow
+        Write-Host "ADVERTENCIA: Se detectaron archivos VACIOS (0 bytes) que estan modificados o son nuevos:" -ForegroundColor Yellow
         foreach ($ef in $emptyFiles) {
             Write-Host "   -> $ef" -ForegroundColor Red
         }
         Write-Host ""
-        $confirmacion = Read-Host "Estas seguro de que deseas continuar con el push de estos archivos vacios? (S/N)"
+        $confirmacion = Read-Host "Estas seguro de que deseas continuar con el guardado de estos archivos vacios? (S/N)"
         if ($confirmacion -notmatch "^[Ss]$") {
             Write-Host "Operacion cancelada. Por favor revisa tus archivos." -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Presiona Enter para cerrar..."
+            Read-Host | Out-Null
             exit
         }
     }
-}
 
-Write-Host ""
-Write-Host "--- PROCESO DE GUARDADO (POS) ---" -ForegroundColor Cyan
+    # Mensaje de commit
+    Write-Host 'Escribe que cambiaste (breve):' -ForegroundColor Yellow
+    $mensaje = Read-Host '>'
 
-# 1. Preparar cambios
-Write-Host "$i_disk Preparando archivos localmente..." -ForegroundColor Gray
-git add .
-$msg = "Human Push $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-git commit -m "$msg" 2>$null
+    if ([string]::IsNullOrWhiteSpace($mensaje)) {
+        $mensaje = "Actualizacion automatica: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    }
 
-# 2. Sincronizacion inteligente
-Write-Host ""
-Write-Host "$i_rocket Consultando cambios en la nube..." -ForegroundColor Cyan
-$resultado = (git pull origin main --rebase 2>$null)
-$resultado | Out-String | Write-Host
-
-if ($resultado -match "Already up to date" -or $resultado -match "Ya esta al dia") {
-    Write-Host "$i_sparkles Todo al dia. Nada nuevo que bajar de GitHub." -ForegroundColor Green
-}
-elseif ($LASTEXITCODE -ne 0) {
-    Write-Host "$i_warning Conflicto detectado. Aplicando reparacion automatica..." -ForegroundColor Yellow
-    git rebase --abort 2>$null
-    git pull origin main --no-rebase -X ours
+    # Agregar archivos (excluyendo .sql por seguridad)
     git add .
-    git commit -m "$msg (Conflict Resolved)" 2>$null
-}
-else {
-    Write-Host "$i_check Sincronizacion completada con exito." -ForegroundColor Green
+    git reset HEAD -- '*.sql' 2>$null
+
+    Write-Host 'Guardando commit local...' -ForegroundColor Gray
+    git commit -m "$mensaje"
+
+    Write-Host 'Subiendo cambios a GitHub (dev)...' -ForegroundColor Gray
+    git push origin dev --force-with-lease
+
+    # 5. Intentar crear/actualizar Pull Request si gh cli esta instalado
+    Write-Host ''
+    Write-Host '3. Verificando Pull Request en GitHub...' -ForegroundColor Cyan
+    $ghPath = Get-Command gh -ErrorAction SilentlyContinue
+    if ($ghPath) {
+        $prExists = gh pr list --head dev --base main --json number --jq '.[0].number'
+        if ($prExists) {
+            Write-Host "Pull Request #$prExists actualizado." -ForegroundColor Green
+        } else {
+            gh pr create --base main --head dev --title "$mensaje" --body "Enviado automaticamente via script."
+            Write-Host 'Pull Request creado con exito.' -ForegroundColor Green
+        }
+    } else {
+        Write-Host 'Nota: Instala GitHub CLI (gh) para crear PRs automaticamente.' -ForegroundColor Gray
+    }
 }
 
-# 3. Subir
-Write-Host ""
-Write-Host "$i_outbox Subiendo tus cambios a la nube..." -ForegroundColor Gray
-git push origin main
-
-Write-Host ""
-Write-Host "$i_check ${i_excl}Todo guardado y subido correctamente!" -ForegroundColor Green
+Write-Host ''
+Write-Host 'Presiona Enter para cerrar...'
+Read-Host
