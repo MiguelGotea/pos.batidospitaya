@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <form method="POST" autocomplete="off" id="loginForm">
                     <div class="pos-field">
                         <label class="pos-label" for="usuario">Usuario</label>
-                        <input class="pos-input" type="text" id="usuario" name="usuario" placeholder="usuario" autocomplete="username" required autofocus value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>">
+                        <input class="pos-input" type="text" id="usuario" name="usuario" placeholder="usuario" autocomplete="off" required autofocus value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>">
                     </div>
                     <div class="pos-field">
                         <label class="pos-label" for="clave">Contrasena</label>
