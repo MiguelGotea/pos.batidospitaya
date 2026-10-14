@@ -280,6 +280,11 @@ $menuGlobal = [
         'cargos_permitidos' => [],
         'items' => [
             [
+                'nombre' => 'Compras Access',
+                'url' => 'compras/historial_compras.php',
+                'cargos_permitidos' => [49, 19]
+            ],
+            [
                 'nombre' => 'Solicitudes Cotización',
                 'url' => 'compras/historial_solicitudes_cotizacion.php',
                 'cargos_permitidos' => [9, 15, 16, 49]
