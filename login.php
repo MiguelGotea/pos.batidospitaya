@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="pos-subtitle">Acceso de Sucursal &mdash; Nivel 1</p>
 
             <?php if ($error): ?>
-                <div class="pos-alert error show"><i class="fa fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
+                <div class="pos-alert error show" id="loginAlert"><i class="fa fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
             <?php if (!$dispositivo['status']): ?>
@@ -83,13 +83,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <script>
-        const form = document.getElementById('loginForm'),
-            btn = document.getElementById('btnLogin');
-        if (form) form.addEventListener('submit', () => {
-            if (btn) {
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verificando...';
-                btn.disabled = true;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.href);
             }
+
+            const alertEl = document.getElementById('loginAlert');
+            if (alertEl) {
+                setTimeout(() => {
+                    alertEl.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    alertEl.style.opacity = '0';
+                    alertEl.style.transform = 'translateY(-6px)';
+                    setTimeout(() => { alertEl.remove(); }, 500);
+                }, 5000);
+            }
+
+            const form = document.getElementById('loginForm'),
+                btn = document.getElementById('btnLogin');
+            if (form) form.addEventListener('submit', () => {
+                if (btn) {
+                    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verificando...';
+                    btn.disabled = true;
+                }
+            });
         });
     </script>
 </body>

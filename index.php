@@ -12,15 +12,28 @@ $dispositivo = posVerificarDispositivo();
 $pinError = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['colaborador_clave'])) {
+    $isAjax = (isset($_POST['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'));
+
     if (!$dispositivo['status']) {
-        $pinError = 'No puedes ingresar: El dispositivo NO esta autorizado.';
+        $pinError = 'No puedes ingresar: El dispositivo NO está autorizado.';
     } else {
         $r = posValidarColaborador($_POST['colaborador_clave']);
         if ($r['status']) {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['ok' => true, 'redirect' => '/index.php']);
+                exit();
+            }
             header('Location: /index.php');
             exit();
         }
         $pinError = $r['msg'];
+    }
+
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'msg' => $pinError]);
+        exit();
     }
 }
 
@@ -178,7 +191,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
 
                     <?php if ($pinError): ?>
-                        <div class="pos-alert error show" style="margin-bottom:16px;">
+                        <div class="pos-alert error show" id="pinAlert" style="margin-bottom:16px;">
                             <i class="fa fa-circle-exclamation"></i> <?= htmlspecialchars($pinError) ?>
                         </div>
                     <?php endif; ?>
@@ -188,7 +201,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                             <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
                             <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
                         </div>
-                        <button type="submit" class="pos-btn" style="margin-top:10px">
+                        <button type="submit" id="btnAcceder" class="pos-btn" style="margin-top:10px">
                             <i class="fa fa-right-to-bracket"></i> Acceder
                         </button>
                     </form>
@@ -228,9 +241,126 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Eliminar estado POST del historial para evitar la advertencia al presionar F5/recargar
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.href);
+            }
+
+            const pinForm = document.getElementById('pinForm');
             const colabInput = document.getElementById('colaborador_clave');
+            const btnAcceder = document.getElementById('btnAcceder');
+            let alertTimer = null;
+
+            function iniciarFadeOutAlerta(el) {
+                if (!el) return;
+                if (alertTimer) clearTimeout(alertTimer);
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+                alertTimer = setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-6px)';
+                    setTimeout(() => {
+                        el.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            }
+
+            function ocultarAlertaInmediata() {
+                const el = document.getElementById('pinAlert');
+                if (el && el.style.display !== 'none') {
+                    if (alertTimer) clearTimeout(alertTimer);
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        el.style.display = 'none';
+                    }, 200);
+                }
+            }
+
+            function mostrarAlerta(msg) {
+                let el = document.getElementById('pinAlert');
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = 'pinAlert';
+                    el.className = 'pos-alert error show';
+                    el.style.marginBottom = '16px';
+                    if (pinForm) {
+                        pinForm.parentNode.insertBefore(el, pinForm);
+                    }
+                }
+                el.innerHTML = '<i class="fa fa-circle-exclamation"></i> ' + msg;
+                el.style.display = 'block';
+                el.classList.add('show');
+                // Reiniciar animación de sacudida
+                el.style.animation = 'none';
+                el.offsetHeight; /* trigger reflow */
+                el.style.animation = '';
+                iniciarFadeOutAlerta(el);
+            }
+
+            // Si hay alerta renderizada por PHP al cargar
+            const existingAlert = document.getElementById('pinAlert');
+            if (existingAlert) {
+                iniciarFadeOutAlerta(existingAlert);
+            }
+
             if (colabInput) {
                 colabInput.focus();
+                // Al comenzar a escribir de nuevo, ocultar la alerta de inmediato
+                colabInput.addEventListener('input', () => {
+                    ocultarAlertaInmediata();
+                });
+            }
+
+            if (pinForm) {
+                pinForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const clave = colabInput ? colabInput.value.trim() : '';
+                    if (!clave) return;
+
+                    // Deshabilitar botón para prevenir doble submit
+                    if (btnAcceder) {
+                        btnAcceder.disabled = true;
+                        btnAcceder.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verificando...';
+                    }
+
+                    const formData = new FormData(pinForm);
+                    formData.append('ajax', '1');
+
+                    fetch('/index.php', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.ok) {
+                            window.location.href = data.redirect || '/index.php';
+                        } else {
+                            mostrarAlerta((data && data.msg) ? data.msg : 'Error al validar credenciales.');
+                            if (colabInput) {
+                                colabInput.value = '';
+                                colabInput.focus();
+                            }
+                            if (btnAcceder) {
+                                btnAcceder.disabled = false;
+                                btnAcceder.innerHTML = '<i class="fa fa-right-to-bracket"></i> Acceder';
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error de autenticación:', err);
+                        mostrarAlerta('Error de conexión con el servidor. Intenta de nuevo.');
+                        if (btnAcceder) {
+                            btnAcceder.disabled = false;
+                            btnAcceder.innerHTML = '<i class="fa fa-right-to-bracket"></i> Acceder';
+                        }
+                    });
+                });
             }
         });
     </script>
