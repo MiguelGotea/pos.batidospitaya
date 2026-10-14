@@ -544,7 +544,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Conteo Cíclico',
                 'url' => 'inventario/historial_conteo_existencias.php',
-                'cargos_permitidos' => [16, 49, 55, 52, 5, 68, 43, 21, 16, 42, 33, 47, 46, 45, 66, 67, 62]
+                'cargos_permitidos' => [16, 49, 55, 52, 5, 68, 43, 21, 16, 42, 33, 47, 46, 45, 66, 67, 62, 11]
             ],
             [
                 'nombre' => 'Kardex de Insumos',
@@ -556,7 +556,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Costo para Deducciones',
                 'url' => 'contabilidad/costo_descuento_productos.php',
-                'cargos_permitidos' => [49, 8, 16, 42, 33]
+                'cargos_permitidos' => [49, 8, 16, 42, 33, 11]
             ],
             [
                 'nombre' => 'Costo de Existencias',
