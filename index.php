@@ -54,6 +54,10 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <link rel="stylesheet" href="/core/assets/css/pos_login.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        /* Enmascara el campo de clave del colaborador mientras es type="text" */
+        input.pwd-mask {
+            -webkit-text-security: disc;
+        }
         body {
             background-color: #F6F6F6 !important;
             color: #333333 !important;
@@ -199,7 +203,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <form method="POST" id="pinForm" autocomplete="off">
                         <div class="pos-field">
                             <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
-                            <input class="pos-input" type="password" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autofocus style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
+                            <!-- type="text" + máscara CSS para evitar el gestor de contraseñas del navegador -->
+                            <input class="pos-input pwd-mask" type="text" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autocomplete="off" readonly style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
                         </div>
                         <button type="submit" id="btnAcceder" class="pos-btn" style="margin-top:10px">
                             <i class="fa fa-right-to-bracket"></i> Acceder
@@ -306,11 +311,29 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
             }
 
             if (colabInput) {
-                colabInput.focus();
+                colabInput.value = ''; // Limpiar cualquier valor inyectado por el navegador
+
+                // Activar el campo solo cuando el usuario interactúa de forma real
+                // Sin 'focus': el navegador lo dispara automáticamente y abre el autofill.
+                var claveActivated = false;
+                var activateClave = function () {
+                    if (claveActivated) return;
+                    claveActivated = true;
+                    colabInput.removeAttribute('readonly');
+                    colabInput.focus();
+                };
+                colabInput.addEventListener('touchend', activateClave, { once: true });
+                colabInput.addEventListener('keydown',  activateClave, { once: true });
+                colabInput.addEventListener('paste',    activateClave, { once: true });
+                colabInput.addEventListener('click',    activateClave, { once: true });
+
                 // Al comenzar a escribir de nuevo, ocultar la alerta de inmediato
                 colabInput.addEventListener('input', () => {
                     ocultarAlertaInmediata();
                 });
+
+                // Dar foco inicial en el primer click real del usuario
+                setTimeout(() => colabInput.click(), 100);
             }
 
             if (pinForm) {
