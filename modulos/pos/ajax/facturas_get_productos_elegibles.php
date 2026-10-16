@@ -12,7 +12,7 @@ try {
     $sql = "SELECT pp.id,
                    pp.SKU,
                    pp.Nombre,
-                   pm.Nombre AS nombre_maestro,
+                   COALESCE(pm.Nombre, pp.Nombre) AS nombre_maestro,
                    COALESCE(g.id, 0) AS id_grupo,
                    COALESCE(g.nombre, 'Otros') AS grupo,
                    COALESCE(sg.id, 0) AS id_subgrupo,
@@ -27,7 +27,7 @@ try {
                        ELSE 'sin_precio'
                    END AS origen_precio
             FROM producto_presentacion pp
-            INNER JOIN producto_maestro pm 
+            LEFT JOIN producto_maestro pm 
                 ON pp.id_producto_maestro = pm.id
             LEFT JOIN subgrupo_presentacion_producto sg 
                 ON pp.id_subgrupo_presentacion_producto = sg.id
@@ -47,7 +47,8 @@ try {
                AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
             WHERE pp.es_vendible = 'SI'
               AND pp.Activo = 'SI'
-              AND pm.Estado = 1";
+              AND (pm.id IS NULL OR pm.Estado = 1)
+              AND (psuc.precio IS NOT NULL OR pglob.precio IS NOT NULL)";
 
     $params = [
         ':sucursal' => $sucursal

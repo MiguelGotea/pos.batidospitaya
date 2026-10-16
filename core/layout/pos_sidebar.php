@@ -35,13 +35,6 @@ function renderPOSSidebar($activeModule = 'inicio')
             ]
         ],
         [
-            'id'    => 'clientes',
-            'titulo' => 'Clientes',
-            'icon'  => 'fas fa-users',
-            'url'   => '/modulos/clientes/',
-            'sub'   => []
-        ],
-        [
             'id'    => 'logout',
             'titulo' => 'Cerrar Sesión',
             'icon'  => 'fas fa-sign-out-alt',
