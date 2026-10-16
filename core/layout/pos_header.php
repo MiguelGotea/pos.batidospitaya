@@ -23,7 +23,10 @@ function renderPOSHeader($titulo = '') {
         // Las fotos están en el dominio del ERP.
         // Si el campo ya trae la ruta completa desde la raíz (ej: uploads/fotos_perfil/489/img.png)
         $rutaLimpia = ltrim($usuario['foto_perfil'], './');
-        $fotoUrl = "https://erp.batidospitaya.com/" . $rutaLimpia;
+        // Cache-buster por colaborador: el navegador cachea la foto por usuario
+        // (mismo ID = usa caché), pero al cambiar de usuario la URL cambia
+        // y descarga la foto correcta sin tener que borrar cookies.
+        $fotoUrl = "https://erp.batidospitaya.com/" . $rutaLimpia . "?v=" . $colaboradorId;
     }
 
     ob_start();

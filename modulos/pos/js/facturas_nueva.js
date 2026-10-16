@@ -139,7 +139,7 @@ function cargarProductosElegibles() {
             $('#listaProductosElegibles').html(`
                 <p class="no-productos-msg">
                     <i class="bi bi-exclamation-circle me-1"></i>
-                    No hay productos marcados como "¿Es comprable para facturas?".
+                    No hay productos vendibles activos en este momento.
                 </p>`);
             return;
         }
@@ -159,13 +159,17 @@ function renderizarListaProductos(lista) {
 
     let html = '';
     lista.forEach(p => {
+        const precioUnit = parseFloat(p.precio_venta || 0);
+        const precioFmt = precioUnit > 0 ? `C$ ${precioUnit.toFixed(2)}` : 'Sin precio';
+        const categoriaTxt = `${escHtml(p.grupo || 'Otros')}${p.subgrupo ? ' · ' + escHtml(p.subgrupo) : ''}`;
+
         html += `
         <div class="producto-card-elegible" data-id="${p.id}">
             <div class="prod-info">
                 <span class="prod-nombre">${escHtml(p.Nombre)}</span>
-                <span class="prod-presentacion">${escHtml(p.nombre_maestro)} · ${escHtml(p.nombre_unidad || '—')}</span>
+                <span class="prod-presentacion">${categoriaTxt} · <strong style="color:#0E544C;">${precioFmt}</strong></span>
             </div>
-            <button class="btn-agregar-prod" onclick="agregarProducto(${p.id}, '${escAttr(p.Nombre)}', '${escAttr(p.nombre_unidad || '')}')">
+            <button class="btn-agregar-prod" onclick="agregarProducto(${p.id}, '${escAttr(p.Nombre)}', '${escAttr(p.nombre_unidad || '')}', ${precioUnit})">
                 <i class="bi bi-plus-lg"></i> Agregar
             </button>
         </div>`;
@@ -181,15 +185,17 @@ function filtrarProductos(q) {
     }
     const ql = q.toLowerCase();
     const filtrados = todosProductos.filter(p =>
-        (p.Nombre        || '').toLowerCase().includes(ql) ||
+        (p.Nombre         || '').toLowerCase().includes(ql) ||
         (p.nombre_maestro || '').toLowerCase().includes(ql) ||
-        (p.SKU            || '').toLowerCase().includes(ql)
+        (p.SKU            || '').toLowerCase().includes(ql) ||
+        (p.grupo          || '').toLowerCase().includes(ql) ||
+        (p.subgrupo       || '').toLowerCase().includes(ql)
     );
     renderizarListaProductos(filtrados);
 }
 
 /* ---- Agregar producto al detalle ---- */
-function agregarProducto(id, nombre, unidad) {
+function agregarProducto(id, nombre, unidad, precio = 0) {
     // Verificar si ya está en el detalle
     const existe = detalleFactura.find(d => d.id_presentacion === id);
     if (existe) {
@@ -201,12 +207,13 @@ function agregarProducto(id, nombre, unidad) {
         return;
     }
 
+    const precioNum = parseFloat(precio) || 0;
     detalleFactura.push({
         id_presentacion: id,
         nombre:          nombre,
         unidad:          unidad,
         cantidad:        1,
-        costo_total_iva: 0
+        costo_total_iva: precioNum
     });
 
     actualizarTablaDetalle();

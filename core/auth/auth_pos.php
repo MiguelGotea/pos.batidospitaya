@@ -339,7 +339,8 @@ function posCerrarSesionColaborador()
 {
     unset(
         $_SESSION['pos_colaborador_id'],
-        $_SESSION['pos_colaborador_nombre']
+        $_SESSION['pos_colaborador_nombre'],
+        $_SESSION['pos_usuario_completo']   // limpiar datos del colaborador anterior
     );
 }
 
