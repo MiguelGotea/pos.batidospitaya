@@ -126,8 +126,16 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['cargo_cod']) && (int) $_S
     }
 
     if (!$sucursalCargo27) {
-        // Sin sucursal asignada: invalidar sesión y regresar al login
+        // Sin sucursal asignada: invalidar sesión completamente (incluyendo cookie del navegador)
+        session_unset();
         session_destroy();
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params['path'], $params['domain'],
+                $params['secure'], $params['httponly']
+            );
+        }
         header('Location: /login.php?error=' . urlencode('Tu usuario no tiene sucursal asignada. Contacta a soporte técnico.'));
         exit();
     }
@@ -135,11 +143,20 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['cargo_cod']) && (int) $_S
     $validacionDispositivo = verificarDispositivoAutorizado($sucursalCargo27, 'acceso');
 
     if (!$validacionDispositivo['status']) {
-        // Dispositivo no autorizado: destruir sesión para evitar bucle de redirecciones.
-        // login.php detecta la sesión activa y redirige de vuelta, causando ERR_TOO_MANY_REDIRECTS.
+        // Dispositivo no autorizado: destruir sesión completamente.
+        // Es crítico invalidar también la cookie del navegador; de lo contrario el navegador
+        // la mantiene, login.php ve $_SESSION['usuario_id'] activo y redirige de vuelta,
+        // creando el bucle ERR_TOO_MANY_REDIRECTS.
         $mensajeError = $validacionDispositivo['msg'];
         session_unset();
         session_destroy();
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params['path'], $params['domain'],
+                $params['secure'], $params['httponly']
+            );
+        }
         header('Location: /login.php?error=' . urlencode($mensajeError));
         exit();
     }

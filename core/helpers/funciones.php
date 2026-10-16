@@ -250,6 +250,11 @@ function requerirCargo($cargoRequerido)
  */
 function redirigirAlLogin()
 {
+    // Si el usuario ya está autenticado, no mandarlo al login (evita bucles infinitos por falta de permisos en módulos)
+    if (isset($_SESSION['usuario_id'])) {
+        redirigirSegunCargo();
+    }
+
     $redirectUrl = $_SERVER['REQUEST_URI'] ?? '';
     $loginUrl = '/login.php';
     if (!empty($redirectUrl) && $redirectUrl !== '/login.php') {
