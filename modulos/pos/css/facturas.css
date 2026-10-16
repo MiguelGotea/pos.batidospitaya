@@ -907,3 +907,215 @@
     color: #64748b;
 }
 
+/* ============================================================
+   Cabecera de Cliente POS (Club Pitaya vs Cliente General)
+   ============================================================ */
+.card-cliente-pos {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(14, 84, 76, 0.05);
+}
+
+.custom-radio-cliente {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #475569;
+    user-select: none;
+}
+
+.custom-radio-cliente input[type="radio"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #94a3b8;
+    border-radius: 50%;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    margin: 0;
+}
+
+.custom-radio-cliente input[type="radio"]:checked {
+    border-color: #0E544C;
+    background-color: #0E544C;
+    box-shadow: inset 0 0 0 3px #fff;
+}
+
+.custom-radio-cliente input[type="radio"]:checked + .radio-mark + .radio-label,
+.custom-radio-cliente input[type="radio"]:checked ~ .radio-label {
+    color: #0E544C;
+}
+
+.form-label-pos {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+.form-control-pos {
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 0.92rem;
+    padding: 0.45rem 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control-pos:focus {
+    border-color: #51B8AC;
+    box-shadow: 0 0 0 3px rgba(81, 184, 172, 0.18);
+    outline: none;
+}
+
+.input-group-pos .form-control-pos {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-pos-search {
+    background-color: #F0FDF4;
+    border: 1.5px solid #cbd5e1;
+    border-left: none;
+    color: #0E544C;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding: 0 0.85rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.btn-pos-search:hover {
+    background-color: #0E544C;
+    color: #ffffff;
+    border-color: #0E544C;
+}
+
+.btn-pos-qr {
+    background: #51B8AC;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.42rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-pos-qr:hover {
+    background: #429b90;
+    color: #ffffff;
+}
+
+.btn-pos-qr:active {
+    transform: scale(0.98);
+}
+
+/* Indicadores de Puntos Box */
+.box-indicadores-puntos {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.65rem 0.9rem;
+}
+
+.box-indicadores-puntos .row-puntos {
+    font-size: 0.78rem;
+    margin-bottom: 0.25rem;
+}
+
+.box-indicadores-puntos .lbl-puntos {
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.02em;
+}
+
+.box-indicadores-puntos .val-puntos {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.85rem;
+}
+
+/* ============================================================
+   Modal Historial Clientes Club POS
+   ============================================================ */
+.modal-pos-custom {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modal-header-pos {
+    background: #0E544C;
+    color: #ffffff;
+    padding: 1.1rem 1.5rem;
+    border-bottom: none;
+}
+
+.modal-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+.modal-subtitle-pos {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.82);
+    display: block;
+}
+
+.cliente-resumen-banner {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.badge-puntos-total {
+    background-color: #0E544C;
+    color: #ffffff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+}
+
+.tabla-historial-pos thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.tabla-historial-pos tbody td {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.86rem;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.tabla-historial-pos tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.tabla-historial-pos .fila-anulada td {
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+

@@ -5,12 +5,13 @@
 // Estado local
 let detalleFactura = []; // array de {id_presentacion, nombre, unidad, cantidad, costo_total_iva}
 let todosProductos = []; // cache de productos elegibles
-let todosProveedores = []; // cache de proveedores para autocomplete
-let proveedorSeleccionadoIdx = -1; // índice para navegación por teclado
+let clienteActual = null; // objeto del socio Club Pitaya seleccionado
+let paginaHistorialActual = 1;
+let membresiaHistorialActual = '';
 
 $(document).ready(function () {
-    cargarProveedores();
     cargarProductosElegibles();
+    setupClienteEvents();
 
     // Búsqueda en panel derecho con debounce
     let timerBuscar;
@@ -19,113 +20,291 @@ $(document).ready(function () {
         timerBuscar = setTimeout(() => filtrarProductos($(this).val().trim()), 280);
     });
 
-    // Autocomplete Proveedores
-    setupProveedorAutocomplete();
+    // Guardar factura
+    $('#btnGuardar').on('click', function (e) {
+        e.preventDefault();
+        guardarFactura();
+    });
 
-    // Submit formulario
     $('#formFactura').on('submit', function (e) {
         e.preventDefault();
         guardarFactura();
     });
 });
 
-/* ---- Cargar proveedores ---- */
-function cargarProveedores() {
-    $.get('ajax/facturas_get_proveedores.php', function (res) {
-        if (res.success) {
-            todosProveedores = res.data;
+/* ============================================================
+   LÓGICA DE CLIENTES (CLUB PITAYA vs CLIENTE GENERAL)
+   ============================================================ */
+
+function setupClienteEvents() {
+    // Alternar tipo de cliente
+    $('input[name="tipo_cliente"]').on('change', function () {
+        const tipo = $(this).val();
+        cambiarTipoCliente(tipo);
+    });
+
+    // Buscar membresía al dar Enter
+    $('#membresiaCliente').on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarClienteClub(false);
         }
-    }, 'json');
+    });
+
+    // Botón de búsqueda / lupa en membresía
+    $('#btnBuscarMembresia').on('click', function (e) {
+        e.preventDefault();
+        const num = $('#membresiaCliente').val().trim();
+        // Si ya está cargado este cliente, abre directamente el modal
+        if (clienteActual && String(clienteActual.membresia) === num && num !== '') {
+            abrirModalHistorial(num, 1);
+        } else {
+            // Si no está cargado o cambió el número, busca y abre el modal
+            buscarClienteClub(true);
+        }
+    });
+
+    // Botón Leer por QR
+    $('#btnLeerQR').on('click', function (e) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Lector QR / Código',
+            text: 'Escanee la tarjeta del socio o ingrese el número de membresía:',
+            input: 'text',
+            inputPlaceholder: 'Número de membresía...',
+            showCancelButton: true,
+            confirmButtonText: 'Buscar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0E544C'
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                $('#membresiaCliente').val(result.value.trim());
+                buscarClienteClub(false);
+            }
+        });
+    });
 }
 
-/* ---- Lógica Autocomplete Proveedores ---- */
-function setupProveedorAutocomplete() {
-    const $input       = $('#proveedorSearch');
-    const $hidden      = $('#proveedorFactura');
-    const $suggestions = $('#proveedorSuggestions');
+function cambiarTipoCliente(tipo) {
+    if (tipo === 'general') {
+        $('#colMembresia').hide();
+        $('#colIndicadoresPuntos').hide();
+        $('#colNombreCliente').removeClass('col-md-5').addClass('col-md-12');
+        $('#nombreCliente').prop('readonly', false).val('').attr('placeholder', 'Escriba nombre del cliente casual...').css('background-color', '#fff');
+        $('#idClienteClub').val('');
+        $('#clienteFeedback').html('');
+        clienteActual = null;
+        actualizarPuntosFactura();
+    } else {
+        $('#colMembresia').show();
+        $('#colIndicadoresPuntos').show();
+        $('#colNombreCliente').removeClass('col-md-12').addClass('col-md-5');
+        $('#nombreCliente').prop('readonly', true).val(clienteActual ? clienteActual.nombre_completo : '').attr('placeholder', 'Nombre del cliente...').css('background-color', '#f8fafc');
+        if (clienteActual) {
+            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
+        } else {
+            $('#idClienteClub').val('');
+            $('#txtPuntosAnteriores').text('0');
+        }
+        actualizarPuntosFactura();
+    }
+}
 
-    $input.on('input', function () {
-        const q = $(this).val().trim().toLowerCase();
-        $hidden.val(''); // Reset id if typing
-        
-        if (q.length < 1) {
-            $suggestions.hide().empty();
+/* ---- Búsqueda de socio Club Pitaya ---- */
+function buscarClienteClub(abrirModalTrasBuscar = false) {
+    const membresia = $('#membresiaCliente').val().trim();
+    if (!membresia) {
+        Swal.fire({
+            title: 'Membresía requerida',
+            text: 'Por favor ingrese el número de membresía del socio.',
+            icon: 'warning',
+            confirmButtonColor: '#0E544C'
+        });
+        $('#membresiaCliente').focus();
+        return;
+    }
+
+    const $btn = $('#btnBuscarMembresia');
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+    $('#clienteFeedback').html('<span class="text-muted"><i class="bi bi-hourglass-split"></i> Buscando socio…</span>');
+
+    $.post('../../clientes/ajax/cliente_club_buscar.php', { membresia: membresia }, function (res) {
+        $btn.prop('disabled', false).html('<i class="bi bi-search"></i>');
+        if (res.success && res.cliente) {
+            clienteActual = res.cliente;
+            $('#nombreCliente').val(clienteActual.nombre_completo);
+            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
+            $('#clienteFeedback').html(`<span class="text-success fw-semibold"><i class="bi bi-check-circle"></i> Socio verificado (${clienteActual.nombre_sucursal || 'Central'})</span>`);
+            actualizarPuntosFactura();
+
+            if (abrirModalTrasBuscar) {
+                abrirModalHistorial(clienteActual.membresia, 1);
+            }
+        } else {
+            clienteActual = null;
+            $('#nombreCliente').val('');
+            $('#idClienteClub').val('');
+            $('#txtPuntosAnteriores').text('0');
+            $('#clienteFeedback').html(`<span class="text-danger"><i class="bi bi-x-circle"></i> ${res.message || 'No encontrado'}</span>`);
+            actualizarPuntosFactura();
+            Swal.fire({
+                title: 'No encontrado',
+                text: res.message || 'La membresía ingresada no existe.',
+                icon: 'error',
+                confirmButtonColor: '#0E544C'
+            });
+        }
+    }, 'json').fail(function () {
+        $btn.prop('disabled', false).html('<i class="bi bi-search"></i>');
+        $('#clienteFeedback').html('<span class="text-danger">Error de conexión al buscar socio.</span>');
+    });
+}
+
+/* ============================================================
+   MODAL DE HISTORIAL DE PRODUCTOS (6 COLUMNAS)
+   ============================================================ */
+
+function abrirModalHistorial(membresia, pagina = 1) {
+    if (!membresia) return;
+    membresiaHistorialActual = membresia;
+    paginaHistorialActual = pagina;
+
+    const modalEl = document.getElementById('modalHistorialCliente');
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+
+    $('#modalSubtituloCliente').text(`Membresía: ${membresia}`);
+    $('#tablaHistorialBody').html(`
+        <tr>
+            <td colspan="6" class="text-center py-4 text-muted">
+                <span class="spinner-border spinner-border-sm me-2"></span> Cargando historial de compras…
+            </td>
+        </tr>
+    `);
+
+    $.post('../../clientes/ajax/cliente_historial_productos.php', {
+        membresia: membresia,
+        pagina: pagina,
+        limite: 12
+    }, function (res) {
+        if (!res.success) {
+            $('#tablaHistorialBody').html(`
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'Error al obtener historial')}
+                    </td>
+                </tr>
+            `);
             return;
         }
 
-        const filtrados = todosProveedores.filter(p => 
-            (p.nombre || '').toLowerCase().includes(q) || 
-            (p.ruc_nit || '').toLowerCase().includes(q)
-        ).slice(0, 10); // Limit to 10 results
+        // Resumen superior
+        if (res.cliente) {
+            $('#modalNombreCliente').text(res.cliente.nombre_completo || '—');
+            $('#modalMembresiaCliente').text(res.cliente.membresia || membresia);
+            $('#modalSucursalCliente').text(res.cliente.sucursal_registro || 'Central');
+            $('#modalPuntosCliente').text(`${res.cliente.puntos_totales} pts`);
+        }
 
-        if (filtrados.length === 0) {
-            $suggestions.html('<div class="autocomplete-item text-muted">Sin resultados</div>').show();
+        // Tabla con las 6 columnas
+        if (!res.datos || res.datos.length === 0) {
+            $('#tablaHistorialBody').html(`
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox me-1"></i> Este socio no tiene compras registradas en el historial.
+                    </td>
+                </tr>
+            `);
+            $('#modalPaginacionInfo').text('Mostrando 0 registros');
+            $('#modalPaginacionList').empty();
             return;
         }
 
         let html = '';
-        filtrados.forEach((p, idx) => {
+        res.datos.forEach(row => {
+            const trClass = row.es_anulado ? 'class="fila-anulada"' : '';
             html += `
-            <div class="autocomplete-item" data-id="${p.id}" data-nombre="${escAttr(p.nombre)}">
-                <span class="prov-name">${escHtml(p.nombre)}</span>
-                ${p.ruc_nit ? `<span class="prov-ruc">RUC: ${escHtml(p.ruc_nit)}</span>` : ''}
-            </div>`;
+            <tr ${trClass}>
+                <td><strong>${escHtml(row.sucursal)}</strong></td>
+                <td><span class="text-muted">${escHtml(row.fecha_hora)}</span></td>
+                <td><span class="fw-semibold text-dark">${escHtml(row.producto_medida)}</span></td>
+                <td class="text-center"><span class="badge bg-light text-dark border">${row.cantidad}</span></td>
+                <td><small class="text-muted">${escHtml(row.promocion)}</small></td>
+                <td class="text-end fw-bold text-success">${row.puntos_acumulados.toFixed(2)}</td>
+            </tr>`;
         });
+        $('#tablaHistorialBody').html(html);
 
-        $suggestions.html(html).show();
-        proveedorSeleccionadoIdx = -1;
-    });
+        // Paginación
+        renderizarPaginacionModal(res.total_registros, res.pagina_actual, res.total_paginas);
 
-    // Delegación de click para selección
-    $suggestions.on('click', '.autocomplete-item', function () {
-        const id = $(this).data('id');
-        const nombre = $(this).data('nombre');
-        
-        if (!id) return;
-
-        $input.val(nombre);
-        $hidden.val(id);
-        $suggestions.hide().empty();
-    });
-
-    // Navegación con teclado
-    $input.on('keydown', function (e) {
-        const $items = $suggestions.find('.autocomplete-item:not(.text-muted)');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            proveedorSeleccionadoIdx = Math.min(proveedorSeleccionadoIdx + 1, $items.length - 1);
-            $items.removeClass('active').eq(proveedorSeleccionadoIdx).addClass('active');
-            // Scroll to item if needed
-            $items.eq(proveedorSeleccionadoIdx)[0].scrollIntoView({ block: 'nearest' });
-        } 
-        else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            proveedorSeleccionadoIdx = Math.max(proveedorSeleccionadoIdx - 1, -1);
-            $items.removeClass('active');
-            if (proveedorSeleccionadoIdx >= 0) {
-                $items.eq(proveedorSeleccionadoIdx).addClass('active');
-                $items.eq(proveedorSeleccionadoIdx)[0].scrollIntoView({ block: 'nearest' });
-            }
-        } 
-        else if (e.key === 'Enter') {
-            if (proveedorSeleccionadoIdx >= 0) {
-                e.preventDefault();
-                $items.eq(proveedorSeleccionadoIdx).click();
-            }
-        }
-        else if (e.key === 'Escape') {
-            $suggestions.hide().empty();
-        }
-    });
-
-    // Cerrar al hacer click fuera
-    $(document).on('click', function (e) {
-        if (!$(e.target).closest('.autocomplete-wrapper').length) {
-            $suggestions.hide().empty();
-        }
+    }, 'json').fail(function () {
+        $('#tablaHistorialBody').html(`
+            <tr>
+                <td colspan="6" class="text-center py-4 text-danger">
+                    <i class="bi bi-cloud-slash me-1"></i> Error de conexión al cargar el historial.
+                </td>
+            </tr>
+        `);
     });
 }
+
+function renderizarPaginacionModal(totalRegistros, pagActual, totalPaginas) {
+    $('#modalPaginacionInfo').text(`Mostrando página ${pagActual} de ${totalPaginas} (${totalRegistros} ítems totales)`);
+    const $list = $('#modalPaginacionList');
+    $list.empty();
+
+    if (totalPaginas <= 1) return;
+
+    // Botón Anterior
+    $list.append(`
+        <li class="page-item ${pagActual === 1 ? 'disabled' : ''}">
+            <button class="page-link" type="button" onclick="abrirModalHistorial('${membresiaHistorialActual}', ${pagActual - 1})">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </li>
+    `);
+
+    let start = Math.max(1, pagActual - 2);
+    let end = Math.min(totalPaginas, pagActual + 2);
+
+    for (let p = start; p <= end; p++) {
+        $list.append(`
+            <li class="page-item ${p === pagActual ? 'active' : ''}">
+                <button class="page-link" type="button" onclick="abrirModalHistorial('${membresiaHistorialActual}', ${p})">${p}</button>
+            </li>
+        `);
+    }
+
+    // Botón Siguiente
+    $list.append(`
+        <li class="page-item ${pagActual === totalPaginas ? 'disabled' : ''}">
+            <button class="page-link" type="button" onclick="abrirModalHistorial('${membresiaHistorialActual}', ${pagActual + 1})">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </li>
+    `);
+}
+
+function actualizarPuntosFactura() {
+    const isClub = $('input[name="tipo_cliente"]:checked').val() === 'club';
+    if (!isClub || !clienteActual) {
+        $('#txtPuntosEstaFactura').text('+0');
+        $('#txtTotalPuntos').text('0');
+        return;
+    }
+
+    // Puntos estimados: 1 punto por cada unidad de producto vendible en el ticket
+    const puntosEstaFactura = detalleFactura.reduce((s, d) => s + (parseFloat(d.cantidad) || 0), 0);
+    const puntosAnteriores = parseFloat(clienteActual.puntos_anteriores) || 0;
+    const totalPuntos = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
+
+    $('#txtPuntosEstaFactura').text(`+${puntosEstaFactura}`);
+    $('#txtTotalPuntos').text(totalPuntos.toFixed(2));
+}
+
 
 /* ---- Cargar productos elegibles (panel derecho) ---- */
 function cargarProductosElegibles() {
@@ -327,19 +506,31 @@ function actualizarTotal() {
     $('#totalFacturaMonto').text(
         'C$ ' + total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     );
+    actualizarPuntosFactura();
 }
 
-/* ---- Guardar factura ---- */
+/* ---- Guardar factura / orden ---- */
 function guardarFactura() {
-    const numero    = $('#numeroFactura').val().trim();
-    const fecha     = $('#fechaFactura').val();
-    const proveedor = $('#proveedorFactura').val();
-    const notas     = $('#notasFactura').val().trim();
+    const isClub        = $('input[name="tipo_cliente"]:checked').val() === 'club';
+    const idClienteClub = $('#idClienteClub').val();
+    const nombreCliente = $('#nombreCliente').val().trim();
+    const numero        = $('#numeroFactura').val().trim();
+    const fecha         = $('#fechaFactura').val();
 
-    if (!numero)           { alertError('El número de factura es obligatorio.'); return; }
-    if (!fecha)            { alertError('La fecha es obligatoria.'); return; }
-    if (!proveedor)        { alertError('Debe seleccionar un proveedor.'); return; }
-    if (detalleFactura.length === 0) { alertError('Debe agregar al menos un producto.'); return; }
+    if (isClub && !idClienteClub) {
+        alertError('Debe buscar un socio válido con membresía Club Pitaya, o cambiar a Cliente General.');
+        $('#membresiaCliente').focus();
+        return;
+    }
+    if (!isClub && !nombreCliente) {
+        alertError('Por favor ingrese el nombre del cliente.');
+        $('#nombreCliente').focus();
+        return;
+    }
+    if (detalleFactura.length === 0) {
+        alertError('Debe agregar al menos un producto a la factura.');
+        return;
+    }
 
     // Validar montos
     for (let i = 0; i < detalleFactura.length; i++) {
@@ -353,28 +544,38 @@ function guardarFactura() {
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Guardando…');
 
     $.post('ajax/facturas_guardar.php', {
-        numero_factura: numero,
-        fecha:          fecha,
-        id_proveedor:   proveedor,
-        notas:          notas,
-        detalle:        JSON.stringify(detalleFactura)
+        tipo_cliente:    isClub ? 'club' : 'general',
+        id_cliente_club: isClub ? idClienteClub : null,
+        nombre_cliente:  isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
+        numero_factura:  numero,
+        fecha:           fecha,
+        detalle:         JSON.stringify(detalleFactura)
     }, function (res) {
         if (res.success) {
             Swal.fire({
-                title:             '¡Factura guardada!',
-                text:              res.message,
+                title:             '¡Venta guardada!',
+                text:              res.message || 'La venta ha sido registrada con éxito.',
                 icon:              'success',
-                confirmButtonText: 'Ver historial',
+                confirmButtonText: 'Nueva Venta',
                 confirmButtonColor:'#51B8AC'
             }).then(() => {
-                window.location.href = 'facturas_historial.php';
+                // Limpiar detalle para la siguiente venta
+                detalleFactura = [];
+                actualizarTablaDetalle();
+                if (isClub && clienteActual) {
+                    // Refrescar datos y puntos del socio en pantalla
+                    buscarClienteClub(false);
+                } else {
+                    $('#nombreCliente').val('');
+                }
+                $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
             });
         } else {
             alertError(res.message);
             $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
         }
     }, 'json').fail(function () {
-        alertError('Error de conexión. Intenta de nuevo.');
+        alertError('Error de conexión al guardar la factura.');
         $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
     });
 }
