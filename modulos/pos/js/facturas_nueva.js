@@ -11,10 +11,21 @@ let membresiaHistorialActual = '';
 let grupoActivo = null;   // id del grupo activo en tabs del catálogo
 let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
 
+// Estado de Pagos y Propina
+let pagos = [];           // array de { metodo: 'efectivo'|'pos'|'transferencia', monto: float, recibido: float, cambio: float, referencia: string }
+let conPropina = false;   // estado del switch de propina
+const PORCENTAJE_PROPINA = 2; // 2% corporativo
+
 $(document).ready(function () {
     cargarProductosElegibles();
     setupClienteEvents();
     cambiarTipoCliente('general');
+
+    // Switch de Propina (2%)
+    $('#switchPropina').on('change', function () {
+        conPropina = this.checked;
+        actualizarTotal(true);
+    });
 
     // Búsqueda en catálogo con debounce + botón limpiar
     let timerBuscar;
@@ -598,12 +609,228 @@ function modificarCantidad(idx, delta) {
     actualizarTablaDetalle();
 }
 
-/* ---- Actualizar total mostrado ---- */
-function actualizarTotal() {
-    const total = detalleFactura.reduce((s, d) => s + (parseFloat(d.costo_total_iva) || 0), 0);
-    $('#totalFacturaMonto').text(
-        'C$ ' + total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    );
+/* ============================================================
+   LÓGICA DE MÉTODOS DE PAGO Y DESGLOSE FINANCIERO
+   ============================================================ */
+
+function calcularSubtotalFactura() {
+    return detalleFactura.reduce((s, d) => s + (parseFloat(d.costo_total_iva) || 0), 0);
+}
+
+function calcularMontoPropina(subtotal) {
+    return conPropina ? Math.round(subtotal * (PORCENTAJE_PROPINA / 100) * 100) / 100 : 0;
+}
+
+function calcularTotalAPagar() {
+    const subtotal = calcularSubtotalFactura();
+    const propina = calcularMontoPropina(subtotal);
+    return Math.round((subtotal + propina) * 100) / 100;
+}
+
+function sumarTotalPagos() {
+    return Math.round(pagos.reduce((s, p) => s + (parseFloat(p.monto) || 0), 0) * 100) / 100;
+}
+
+function agregarMetodoPago(metodo) {
+    if (metodo === 'cupon') return; // En espera de conexión con cupones
+    if (detalleFactura.length === 0) {
+        alertError('Primero debe agregar productos al pedido antes de seleccionar métodos de pago.');
+        return;
+    }
+
+    const existeIdx = pagos.findIndex(p => p.metodo === metodo);
+    if (existeIdx !== -1) {
+        $(`#inputMontoPago-${existeIdx}`).focus().select();
+        return;
+    }
+
+    const totalFactura = calcularTotalAPagar();
+    const pagado = sumarTotalPagos();
+    const pendiente = Math.max(0, Math.round((totalFactura - pagado) * 100) / 100);
+    const montoInicial = pendiente > 0 ? pendiente : 0;
+
+    pagos.push({
+        metodo:     metodo,
+        monto:      montoInicial,
+        recibido:   metodo === 'efectivo' ? montoInicial : 0,
+        cambio:     0,
+        referencia: ''
+    });
+
+    renderizarFilasPago();
+    actualizarTotal(false);
+
+    const nuevoIdx = pagos.length - 1;
+    setTimeout(() => {
+        $(`#inputMontoPago-${nuevoIdx}`).focus().select();
+    }, 50);
+}
+
+function quitarMetodoPago(idx) {
+    if (!pagos[idx]) return;
+    pagos.splice(idx, 1);
+
+    if (pagos.length === 1) {
+        pagos[0].monto = calcularTotalAPagar();
+        if (pagos[0].metodo === 'efectivo' && (pagos[0].recibido < pagos[0].monto)) {
+            pagos[0].recibido = pagos[0].monto;
+        }
+    }
+
+    renderizarFilasPago();
+    actualizarTotal(false);
+}
+
+function actualizarMontoPago(idx, val) {
+    if (!pagos[idx]) return;
+    const m = Math.max(0, parseFloat(val) || 0);
+    pagos[idx].monto = Math.round(m * 100) / 100;
+
+    if (pagos[idx].metodo === 'efectivo') {
+        const recibido = pagos[idx].recibido || pagos[idx].monto;
+        const cambio = Math.max(0, recibido - pagos[idx].monto);
+        pagos[idx].cambio = Math.round(cambio * 100) / 100;
+        $(`#badgeCambio-${idx}`).text(`Cambio: C$ ${pagos[idx].cambio.toFixed(2)}`);
+    }
+
+    actualizarTotal(false);
+}
+
+function actualizarRecibidoEfectivo(idx, val) {
+    if (!pagos[idx]) return;
+    const rec = Math.max(0, parseFloat(val) || 0);
+    pagos[idx].recibido = Math.round(rec * 100) / 100;
+    const cambio = Math.max(0, pagos[idx].recibido - (pagos[idx].monto || 0));
+    pagos[idx].cambio = Math.round(cambio * 100) / 100;
+    $(`#badgeCambio-${idx}`).text(`Cambio: C$ ${pagos[idx].cambio.toFixed(2)}`);
+}
+
+function actualizarReferenciaPago(idx, val) {
+    if (!pagos[idx]) return;
+    pagos[idx].referencia = val.trim();
+}
+
+function renderizarFilasPago() {
+    $('#btnPagoEfectivo').toggleClass('activo', pagos.some(p => p.metodo === 'efectivo'));
+    $('#btnPagoPOS').toggleClass('activo', pagos.some(p => p.metodo === 'pos'));
+    $('#btnPagoTransferencia').toggleClass('activo', pagos.some(p => p.metodo === 'transferencia'));
+
+    if (pagos.length === 0) {
+        $('#contenedorFilasPago').html('');
+        return;
+    }
+
+    let html = '';
+    pagos.forEach((p, idx) => {
+        let icono = 'bi-cash-stack';
+        let nombre = 'EFECTIVO';
+        if (p.metodo === 'pos') {
+            icono = 'bi-credit-card-2-front';
+            nombre = 'TARJETA (POS)';
+        } else if (p.metodo === 'transferencia') {
+            icono = 'bi-bank';
+            nombre = 'TRANSFERENCIA';
+        }
+
+        html += `
+        <div class="fila-pago-card" id="cardPago-${idx}">
+            <div class="fila-pago-header">
+                <div class="pago-metodo-info">
+                    <i class="bi ${icono}"></i>
+                    <span>${nombre}</span>
+                </div>
+                <div class="pago-campos-inline">
+                    <div class="input-monto-pago-wrap">
+                        <span class="prefijo-monto">C$</span>
+                        <input type="number" step="0.01" min="0" class="input-monto-pago"
+                               id="inputMontoPago-${idx}"
+                               value="${p.monto}"
+                               oninput="actualizarMontoPago(${idx}, this.value)">
+                    </div>
+                    <button type="button" class="btn-quitar-pago" onclick="quitarMetodoPago(${idx})" title="Quitar método">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </div>
+            </div>`;
+
+        if (p.metodo === 'efectivo') {
+            const cambio = p.cambio || Math.max(0, (p.recibido || p.monto) - p.monto);
+            html += `
+            <div class="fila-pago-subdetalle">
+                <div class="subdetalle-recibido">
+                    <span>Recibido: C$</span>
+                    <input type="number" step="0.01" min="0"
+                           value="${p.recibido || p.monto}"
+                           placeholder="0.00"
+                           oninput="actualizarRecibidoEfectivo(${idx}, this.value)">
+                </div>
+                <span class="badge-cambio-vuelto" id="badgeCambio-${idx}">
+                    Cambio: C$ ${cambio.toFixed(2)}
+                </span>
+            </div>`;
+        } else {
+            const placeholderRef = p.metodo === 'pos' ? 'N° Voucher / Autorización (opcional)...' : 'N° Referencia bancaria (opcional)...';
+            html += `
+            <div class="subdetalle-referencia">
+                <input type="text"
+                       placeholder="${placeholderRef}"
+                       value="${escAttr(p.referencia || '')}"
+                       oninput="actualizarReferenciaPago(${idx}, this.value)">
+            </div>`;
+        }
+
+        html += `</div>`;
+    });
+
+    $('#contenedorFilasPago').html(html);
+}
+
+/* ---- Actualizar total y cobertura ---- */
+function actualizarTotal(reajustarPagosAuto = true) {
+    const subtotal = calcularSubtotalFactura();
+    const propina = calcularMontoPropina(subtotal);
+    const total = Math.round((subtotal + propina) * 100) / 100;
+
+    $('#txtSubtotalFactura').text('C$ ' + subtotal.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    $('#txtMontoPropina').text('C$ ' + propina.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    $('#totalFacturaMonto').text('C$ ' + total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+    if (reajustarPagosAuto && pagos.length === 1) {
+        pagos[0].monto = total;
+        if (pagos[0].metodo === 'efectivo' && (pagos[0].recibido < total)) {
+            pagos[0].recibido = total;
+        }
+        renderizarFilasPago();
+    }
+
+    const $alerta = $('#alertaCoberturaPagos');
+    if (detalleFactura.length === 0) {
+        $alerta.hide();
+        actualizarPuntosFactura();
+        return;
+    }
+
+    if (pagos.length === 0) {
+        $alerta.removeClass('cobertura-completa cobertura-exceso').addClass('cobertura-pendiente').show()
+               .html('<i class="bi bi-info-circle me-1"></i> Seleccione un método de pago.');
+        actualizarPuntosFactura();
+        return;
+    }
+
+    const totalPagado = sumarTotalPagos();
+    const diff = Math.round((totalPagado - total) * 100) / 100;
+
+    if (diff === 0) {
+        $alerta.removeClass('cobertura-pendiente cobertura-exceso').addClass('cobertura-completa').show()
+               .html(`<i class="bi bi-check-circle-fill me-1"></i> Pagos completos (C$ ${total.toFixed(2)})`);
+    } else if (diff < 0) {
+        $alerta.removeClass('cobertura-completa cobertura-exceso').addClass('cobertura-pendiente').show()
+               .html(`<i class="bi bi-exclamation-triangle-fill me-1"></i> Falta por cubrir: C$ ${Math.abs(diff).toFixed(2)}`);
+    } else {
+        $alerta.removeClass('cobertura-completa cobertura-pendiente').addClass('cobertura-exceso').show()
+               .html(`<i class="bi bi-info-circle-fill me-1"></i> Pagos superan el total por C$ ${diff.toFixed(2)}`);
+    }
+
     actualizarPuntosFactura();
 }
 
@@ -630,12 +857,31 @@ function guardarFactura() {
         return;
     }
 
-    // Validar montos
+    // Validar montos de productos
     for (let i = 0; i < detalleFactura.length; i++) {
         const d = detalleFactura[i];
         if (d.cantidad <= 0) {
             alertError(`La cantidad debe ser mayor a 0 en "${d.nombre}".`); return;
         }
+    }
+
+    // Validar métodos de pago
+    if (pagos.length === 0) {
+        alertError('Debe seleccionar al menos un método de pago.');
+        return;
+    }
+
+    const totalFactura = calcularTotalAPagar();
+    const totalPagos = sumarTotalPagos();
+    const diff = Math.round((totalPagos - totalFactura) * 100) / 100;
+
+    if (diff < 0) {
+        alertError(`Los pagos no cubren el total de la factura. Falta cubrir C$ ${Math.abs(diff).toFixed(2)}.`);
+        return;
+    }
+    if (diff > 0) {
+        alertError(`Los pagos ingresados (C$ ${totalPagos.toFixed(2)}) superan el total a pagar (C$ ${totalFactura.toFixed(2)}). Ajuste los montos.`);
+        return;
     }
 
     const $btn = $('#btnGuardar');
@@ -647,7 +893,12 @@ function guardarFactura() {
         nombre_cliente:  isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
         numero_factura:  numero,
         fecha:           fecha,
-        detalle:         JSON.stringify(detalleFactura)
+        detalle:         JSON.stringify(detalleFactura),
+        pagos:           JSON.stringify(pagos),
+        subtotal:        calcularSubtotalFactura(),
+        propina:         calcularMontoPropina(calcularSubtotalFactura()),
+        con_propina:     conPropina ? 1 : 0,
+        total:           totalFactura
     }, function (res) {
         if (res.success) {
             Swal.fire({
@@ -660,6 +911,10 @@ function guardarFactura() {
                 // Reset completo para la siguiente venta
                 detalleFactura = [];
                 actualizarTablaDetalle();
+                pagos = [];
+                renderizarFilasPago();
+                conPropina = false;
+                $('#switchPropina').prop('checked', false);
                 $('#tipoClienteGeneral').prop('checked', true);
                 cambiarTipoCliente('general');
                 $('#buscarProducto').val('');

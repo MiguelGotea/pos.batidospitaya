@@ -63,13 +63,13 @@ $hoy = date('Y-m-d');
                     </div><!-- /panel-catalogo-productos -->
 
                     <!-- ====== COLUMNA DERECHA: Factura ====== -->
-                    <div class="panel-factura-derecho d-flex flex-column gap-3">
+                    <div class="panel-factura-derecho d-flex flex-column gap-2">
 
                         <!-- Cabecera de Cliente (Club Pitaya vs Cliente General) -->
                         <div class="card-factura card-cliente-pos">
-                            <div class="card-body-factura py-3">
+                            <div class="card-body-factura py-2">
                                 <form id="formFactura" class="form-cabecera m-0">
-                                    <div class="tipo-cliente-selector mb-3 d-flex align-items-center gap-4">
+                                    <div class="tipo-cliente-selector mb-2 d-flex align-items-center gap-3">
                                         <label class="custom-radio-cliente">
                                             <input type="radio" name="tipo_cliente" value="club" id="tipoClienteClub">
                                             <span class="radio-mark"></span>
@@ -160,11 +160,61 @@ $hoy = date('Y-m-d');
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="total-factura-bar">
-                                    <span class="total-factura-label">Total Factura:</span>
-                                    <span class="total-factura-monto" id="totalFacturaMonto">C$ 0.00</span>
+                                <!-- Sección Métodos de Pago y Desglose -->
+                                <div class="seccion-metodos-pago px-3 py-2 border-top">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <span class="titulo-seccion-pago">MÉTODO DE PAGO</span>
+                                        <small class="text-muted" style="font-size: .72rem;">Clic para agregar/combinar</small>
+                                    </div>
+                                    <div class="metodos-pago-grid mb-2">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo" onclick="agregarMetodoPago('efectivo')">
+                                            <i class="bi bi-cash-stack"></i>
+                                            <span>EFECTIVO</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoPOS" onclick="agregarMetodoPago('pos')">
+                                            <i class="bi bi-credit-card-2-front"></i>
+                                            <span>POS</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia" onclick="agregarMetodoPago('transferencia')">
+                                            <i class="bi bi-bank"></i>
+                                            <span>TRANSF.</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago btn-metodo-disabled" id="btnPagoCupon" title="Módulo de cupones próximamente">
+                                            <i class="bi bi-ticket-perforated"></i>
+                                            <span>CUPÓN</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Lista de pagos activos agregados -->
+                                    <div id="contenedorFilasPago" class="contenedor-filas-pago mb-2">
+                                        <!-- Se agregan dinámicamente -->
+                                    </div>
+
+                                    <!-- Desglose de totales y Propina -->
+                                    <div class="desglose-totales-pago">
+                                        <div class="fila-desglose">
+                                            <span class="lbl-desglose">Subtotal</span>
+                                            <span class="val-desglose" id="txtSubtotalFactura">C$ 0.00</span>
+                                        </div>
+                                        <div class="fila-desglose align-items-center">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="lbl-desglose mb-0">Propina (2%)</span>
+                                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                                    <input class="form-check-input switch-propina-pitaya" type="checkbox" id="switchPropina">
+                                                </div>
+                                            </div>
+                                            <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
+                                        </div>
+                                        <div class="fila-desglose fila-total-destacado border-top pt-2 mt-1">
+                                            <span class="lbl-total-pagar">TOTAL A PAGAR</span>
+                                            <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
+                                        </div>
+                                        <!-- Estado de cobertura de pagos -->
+                                        <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2" style="display: none;"></div>
+                                    </div>
                                 </div>
-                                <div class="p-3 border-top bg-light d-flex gap-2 justify-content-end">
+
+                                <div class="px-3 py-2 border-top bg-light d-flex gap-2 justify-content-end">
                                     <a href="facturas_historial.php" class="btn-cancelar-factura">
                                         <i class="bi bi-x-circle"></i> Cancelar
                                     </a>
