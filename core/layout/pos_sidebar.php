@@ -234,7 +234,8 @@ function renderPOSSidebar($activeModule = 'inicio')
         /* ==================== CONTENEDOR PRINCIPAL ==================== */
         /* Este estilo es global: aplica a todos los módulos que usen pos-sidebar */
         .pos-main-container {
-            margin-left: var(--sidebar-width); /* 70px */
+            margin-left: var(--sidebar-width);
+            /* 70px */
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             min-height: 100vh;
             background: #F6F6F6;
