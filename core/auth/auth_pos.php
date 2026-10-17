@@ -141,6 +141,7 @@ function posRequiereColaborador()
         header('Location: /index.php');
         exit();
     }
+    $_SESSION['last_activity'] = time();
 }
 
 // ---------------------------------------------------------------------------
@@ -310,14 +311,20 @@ function posValidarColaborador($clave)
         ];
     }
 
-    // Sesión de colaborador
+    // Sesión de colaborador y metadatos de sesión (8h ventana deslizante)
+    $ahora = time();
+    $fechaActual = date('Y-m-d');
+
     $_SESSION['pos_colaborador_id']     = $encontrado['CodOperario'];
     $_SESSION['pos_colaborador_nombre'] = trim($encontrado['Nombre'] . ' ' . $encontrado['Apellido']);
 
     // --- COMPATIBILIDAD LEGACY ---
-    // Sobrescribimos usuario_id con el del colaborador real que está operando
     $_SESSION['usuario_id']     = $encontrado['CodOperario'];
     $_SESSION['usuario_nombre'] = $_SESSION['pos_colaborador_nombre'];
+    $_SESSION['login_time']     = $ahora;
+    $_SESSION['login_date']     = $fechaActual;
+    $_SESSION['last_activity']  = $ahora;
+
     // Buscamos su cargo real para permisos (compatibilidad con tienePermiso)
     $stmtCargo = ejecutarConsulta("SELECT CodNivelesCargos FROM AsignacionNivelesCargos WHERE CodOperario = ? AND (Fin IS NULL OR Fin >= CURDATE()) ORDER BY Fecha DESC LIMIT 1", [$encontrado['CodOperario']]);
     if ($stmtCargo) {
@@ -363,6 +370,8 @@ function posRequiereColaboradorAjax()
         echo json_encode(['ok' => false, 'mensaje' => 'Sesión expirada o no autorizada.', 'relogin' => true]);
         exit();
     }
+    // Renovar ventana de actividad activa
+    $_SESSION['last_activity'] = time();
 }
 
 /**

@@ -2,15 +2,36 @@
    facturas.css — Módulo Registro de Facturas POS
    ============================================================ */
 
+/* ---- Contenedor Fluido para POS Facturas ---- */
+.pos-content-fluid {
+    max-width: 100% !important;
+    padding: 1rem 1.75rem 2rem 1.75rem !important;
+    margin: 0 !important;
+}
+
 /* ---- Layout Split ---- */
 .facturas-layout {
     display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 1.25rem;
+    grid-template-columns: 1fr 520px;
+    gap: 1.5rem;
     align-items: start;
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 1600px) {
+    .facturas-layout {
+        grid-template-columns: 1fr 560px;
+        gap: 1.75rem;
+    }
+}
+
+@media (max-width: 1280px) {
+    .facturas-layout {
+        grid-template-columns: 1fr 480px;
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 991px) {
     .facturas-layout {
         grid-template-columns: 1fr;
     }
@@ -229,8 +250,8 @@
     border-color: #94a3b8;
 }
 
-/* ---- Panel lateral: Productos elegibles ---- */
-.panel-productos-elegibles {
+/* ---- Panel derecho: Factura (sticky) ---- */
+.panel-factura-derecho {
     position: sticky;
     top: 1rem;
 }
@@ -958,7 +979,87 @@
     color: #64748b;
     letter-spacing: 0.05em;
     margin-bottom: 0.35rem;
-    display: block;
+    display: flex;
+    align-items: center;
+    height: 18px;
+    line-height: 1;
+}
+
+.check-verificado-badge {
+    color: #16a34a;
+    font-size: 0.85rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.35rem;
+}
+
+/* ---- Notas por producto en factura (ancho completo) ---- */
+.tabla-detalle-factura tbody tr.fila-producto-principal {
+    border-bottom: none;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-principal td {
+    border-bottom: none;
+    padding-bottom: 0.2rem;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-nota {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-nota td {
+    border-bottom: none;
+    padding-top: 0;
+    padding-bottom: 0.65rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.item-nota-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.item-nota-lbl {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+
+.item-nota-input {
+    flex: 1;
+    width: 100%;
+    font-size: 0.78rem;
+    color: #1e293b;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 0.25rem 0.65rem;
+    line-height: 1.35;
+    transition: all 0.15s ease;
+}
+
+.item-nota-input:hover {
+    border-color: #94a3b8;
+    background-color: #fff;
+}
+
+.item-nota-input:focus {
+    border: 1px solid #51B8AC;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(81, 184, 172, 0.15);
+    outline: none;
+}
+
+.item-nota-input::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.74rem;
 }
 
 .form-control-pos {
@@ -1100,6 +1201,10 @@
     letter-spacing: 0.04em;
     padding: 0.75rem 0.85rem;
     border-bottom: 2px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .tabla-historial-pos tbody td {
@@ -1118,4 +1223,297 @@
     text-decoration: line-through;
 }
 
+/* ---- Paginación Corporativa POS (Pitaya) ---- */
+.pagination .page-link {
+    color: #0E544C;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px !important;
+    padding: 0.32rem 0.65rem;
+    font-weight: 600;
+    font-size: 0.82rem;
+    background-color: #fff;
+    min-width: 32px;
+    text-align: center;
+    transition: all 0.15s ease;
+}
 
+.pagination .page-link:hover {
+    background-color: #E6F4F1;
+    border-color: #51B8AC;
+    color: #0E544C;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(81, 184, 172, 0.2);
+    color: #0E544C;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0E544C !important;
+    border-color: #0E544C !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #cbd5e1;
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   CATÁLOGO DE PRODUCTOS — Panel izquierdo
+   ============================================================ */
+
+/* ---- Contenedor principal del catálogo ---- */
+.panel-catalogo-productos {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    overflow: hidden;
+    min-height: 560px;
+}
+
+/* ---- Buscador superior ---- */
+.catalogo-header {
+    padding: .7rem 1rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.buscador-catalogo-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: .35rem .75rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.buscador-catalogo-wrap:focus-within {
+    border-color: #51B8AC;
+    box-shadow: 0 0 0 3px rgba(81,184,172,.15);
+}
+
+.buscador-catalogo-icon {
+    color: #94a3b8;
+    font-size: .9rem;
+    flex-shrink: 0;
+}
+
+.buscador-catalogo-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: .875rem;
+    background: transparent;
+    color: #1e293b;
+}
+
+.buscador-catalogo-input::placeholder {
+    color: #94a3b8;
+}
+
+.buscador-catalogo-clear {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 .2rem;
+    line-height: 1;
+    font-size: .8rem;
+    transition: color .15s;
+    flex-shrink: 0;
+}
+
+.buscador-catalogo-clear:hover {
+    color: #475569;
+}
+
+/* ---- Barra de tabs de grupos ---- */
+.grupos-tabs-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: #fff;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 0 .5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.grupos-tabs-bar::-webkit-scrollbar { display: none; }
+
+/* ---- Tab individual ---- */
+.tab-grupo {
+    padding: .65rem 1.1rem;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: .84rem;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s, background .15s;
+    letter-spacing: .01em;
+    border-radius: 6px 6px 0 0;
+}
+
+.tab-grupo:hover {
+    color: #0E544C;
+    background: rgba(14,84,76,.04);
+}
+
+.tab-grupo.active {
+    color: #0E544C;
+    border-bottom-color: #0E544C;
+    background: rgba(14,84,76,.06);
+}
+
+/* ---- Área de contenido del catálogo ---- */
+.catalogo-content-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 1.15rem;
+    max-height: calc(100vh - 210px);
+}
+
+/* ---- Columnas de subgrupos ---- */
+.subgrupos-columnas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.subgrupo-col {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    min-width: 150px;
+    max-width: 210px;
+    flex: 1 1 160px;
+}
+
+.subgrupo-header {
+    font-size: .74rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding-bottom: .45rem;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: .15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Card de producto (catálogo) ---- */
+.producto-card-pos {
+    background: linear-gradient(135deg, #1A9A89 0%, #0E544C 100%);
+    color: #fff;
+    border-radius: 8px;
+    padding: .65rem .85rem;
+    font-size: .84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s, background .15s;
+    line-height: 1.35;
+    user-select: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+}
+
+.producto-card-pos:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14,84,76,.3);
+    background: linear-gradient(135deg, #21B9A5 0%, #0E544C 100%);
+}
+
+.producto-card-pos:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* ---- Grid de resultados de búsqueda ---- */
+.busqueda-resultados-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .6rem;
+}
+
+/* ---- Barra compacta de puntos Club Pitaya ---- */
+.puntos-compact-bar {
+    display: flex;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    overflow: hidden;
+    margin-top: .4rem;
+}
+
+.puntos-stat-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: .45rem .5rem;
+    border-right: 1px solid #e2e8f0;
+    min-width: 0;
+    gap: .15rem;
+}
+
+.puntos-stat-item:last-child {
+    border-right: none;
+}
+
+.puntos-total {
+    background: rgba(14, 84, 76, .07);
+}
+
+.pstat-lbl {
+    font-size: .65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.pstat-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0E544C;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+/* ---- Responsive adjustments ---- */
+@media (max-width: 991px) {
+    .panel-factura-derecho {
+        position: static;
+    }
+    .panel-catalogo-productos {
+        min-height: 420px;
+    }
+    .catalogo-content-area {
+        max-height: 480px;
+    }
+}
