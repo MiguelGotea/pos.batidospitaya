@@ -5,19 +5,27 @@
 // Estado local
 let detalleFactura = []; // array de {id_presentacion, nombre, unidad, cantidad, costo_total_iva}
 let todosProductos = []; // cache de productos elegibles
-let clienteActual = null; // objeto del socio Club Pitaya seleccionado
+let clienteActual = null; // objeto del miembro Club Pitaya seleccionado
 let paginaHistorialActual = 1;
 let membresiaHistorialActual = '';
+let grupoActivo = null;   // id del grupo activo en tabs del catálogo
+let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
 
 $(document).ready(function () {
     cargarProductosElegibles();
     setupClienteEvents();
+    cambiarTipoCliente('general');
 
-    // Búsqueda en panel derecho con debounce
+    // Búsqueda en catálogo con debounce + botón limpiar
     let timerBuscar;
     $('#buscarProducto').on('input', function () {
         clearTimeout(timerBuscar);
-        timerBuscar = setTimeout(() => filtrarProductos($(this).val().trim()), 280);
+        const q = $(this).val().trim();
+        $('#btnLimpiarBusqueda').toggle(q.length > 0);
+        timerBuscar = setTimeout(() => filtrarProductos(q), 280);
+    });
+    $('#btnLimpiarBusqueda').on('click', function () {
+        $('#buscarProducto').val('').trigger('input').focus();
     });
 
     // Guardar factura
@@ -43,11 +51,31 @@ function setupClienteEvents() {
         cambiarTipoCliente(tipo);
     });
 
+    // Prevenir submit nativo del formulario
+    $('#formFactura').on('submit', function (e) {
+        e.preventDefault();
+    });
+
     // Buscar membresía al dar Enter
     $('#membresiaCliente').on('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             buscarClienteClub(false);
+        }
+    }).on('input', function () {
+        const num = $(this).val().trim();
+        if (!clienteActual || String(clienteActual.membresia) !== num) {
+            $('#clienteCheckVerificado').hide();
+            $('#idClienteClub').val('');
+            $('#nombreCliente').val('');
+            $('#txtPuntosAnteriores').text('0');
+            actualizarPuntosFactura();
+        } else {
+            $('#clienteCheckVerificado').show();
+            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#nombreCliente').val(clienteActual.nombre_completo);
+            $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
+            actualizarPuntosFactura();
         }
     });
 
@@ -63,61 +91,45 @@ function setupClienteEvents() {
             buscarClienteClub(true);
         }
     });
-
-    // Botón Leer por QR
-    $('#btnLeerQR').on('click', function (e) {
-        e.preventDefault();
-        Swal.fire({
-            title: 'Lector QR / Código',
-            text: 'Escanee la tarjeta del socio o ingrese el número de membresía:',
-            input: 'text',
-            inputPlaceholder: 'Número de membresía...',
-            showCancelButton: true,
-            confirmButtonText: 'Buscar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#0E544C'
-        }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                $('#membresiaCliente').val(result.value.trim());
-                buscarClienteClub(false);
-            }
-        });
-    });
 }
 
 function cambiarTipoCliente(tipo) {
     if (tipo === 'general') {
         $('#colMembresia').hide();
+        $('#membresiaCliente').val('');
         $('#colIndicadoresPuntos').hide();
-        $('#colNombreCliente').removeClass('col-md-5').addClass('col-md-12');
+        $('#clienteCheckVerificado').hide();
+        $('#colNombreCliente').removeClass('col-sm-7 col-7').addClass('col-12');
         $('#nombreCliente').prop('readonly', false).val('').attr('placeholder', 'Escriba nombre del cliente casual...').css('background-color', '#fff');
         $('#idClienteClub').val('');
-        $('#clienteFeedback').html('');
         clienteActual = null;
         actualizarPuntosFactura();
     } else {
         $('#colMembresia').show();
         $('#colIndicadoresPuntos').show();
-        $('#colNombreCliente').removeClass('col-md-12').addClass('col-md-5');
+        $('#colNombreCliente').removeClass('col-12').addClass('col-sm-7 col-12');
         $('#nombreCliente').prop('readonly', true).val(clienteActual ? clienteActual.nombre_completo : '').attr('placeholder', 'Nombre del cliente...').css('background-color', '#f8fafc');
         if (clienteActual) {
+            $('#clienteCheckVerificado').show();
             $('#idClienteClub').val(clienteActual.id_clienteclub);
             $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
         } else {
+            $('#clienteCheckVerificado').hide();
             $('#idClienteClub').val('');
             $('#txtPuntosAnteriores').text('0');
         }
         actualizarPuntosFactura();
+        setTimeout(() => $('#membresiaCliente').focus(), 50);
     }
 }
 
-/* ---- Búsqueda de socio Club Pitaya ---- */
+/* ---- Búsqueda de miembro Club Pitaya ---- */
 function buscarClienteClub(abrirModalTrasBuscar = false) {
     const membresia = $('#membresiaCliente').val().trim();
     if (!membresia) {
         Swal.fire({
             title: 'Membresía requerida',
-            text: 'Por favor ingrese el número de membresía del socio.',
+            text: 'Por favor ingrese el número de membresía del cliente.',
             icon: 'warning',
             confirmButtonColor: '#0E544C'
         });
@@ -127,38 +139,57 @@ function buscarClienteClub(abrirModalTrasBuscar = false) {
 
     const $btn = $('#btnBuscarMembresia');
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
-    $('#clienteFeedback').html('<span class="text-muted"><i class="bi bi-hourglass-split"></i> Buscando socio…</span>');
 
-    $.post('../../clientes/ajax/cliente_club_buscar.php', { membresia: membresia }, function (res) {
+    $.post('/modulos/clientes/ajax/cliente_club_buscar.php', { membresia: membresia }, function (res) {
         $btn.prop('disabled', false).html('<i class="bi bi-search"></i>');
-        if (res.success && res.cliente) {
+
+        if (res && res.relogin) {
+            Swal.fire({
+                title: 'Sesión expirada',
+                text: res.mensaje || 'Tu sesión en el POS ha expirado. Por favor recarga para ingresar tu clave.',
+                icon: 'warning',
+                confirmButtonColor: '#0E544C'
+            }).then(() => {
+                window.location.reload();
+            });
+            return;
+        }
+
+        if (res && res.success && res.cliente) {
             clienteActual = res.cliente;
             $('#nombreCliente').val(clienteActual.nombre_completo);
             $('#idClienteClub').val(clienteActual.id_clienteclub);
             $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
-            $('#clienteFeedback').html(`<span class="text-success fw-semibold"><i class="bi bi-check-circle"></i> Socio verificado (${clienteActual.nombre_sucursal || 'Central'})</span>`);
+            $('#clienteCheckVerificado').fadeIn(200);
             actualizarPuntosFactura();
 
             if (abrirModalTrasBuscar) {
                 abrirModalHistorial(clienteActual.membresia, 1);
             }
         } else {
+            const msgError = (res && (res.message || res.mensaje)) ? (res.message || res.mensaje) : 'La membresía ingresada no existe.';
             clienteActual = null;
             $('#nombreCliente').val('');
             $('#idClienteClub').val('');
             $('#txtPuntosAnteriores').text('0');
-            $('#clienteFeedback').html(`<span class="text-danger"><i class="bi bi-x-circle"></i> ${res.message || 'No encontrado'}</span>`);
+            $('#clienteCheckVerificado').hide();
             actualizarPuntosFactura();
             Swal.fire({
                 title: 'No encontrado',
-                text: res.message || 'La membresía ingresada no existe.',
+                text: msgError,
                 icon: 'error',
                 confirmButtonColor: '#0E544C'
             });
         }
     }, 'json').fail(function () {
         $btn.prop('disabled', false).html('<i class="bi bi-search"></i>');
-        $('#clienteFeedback').html('<span class="text-danger">Error de conexión al buscar socio.</span>');
+        $('#clienteCheckVerificado').hide();
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor para buscar la membresía.',
+            icon: 'error',
+            confirmButtonColor: '#0E544C'
+        });
     });
 }
 
@@ -184,7 +215,7 @@ function abrirModalHistorial(membresia, pagina = 1) {
         </tr>
     `);
 
-    $.post('../../clientes/ajax/cliente_historial_productos.php', {
+    $.post('/modulos/clientes/ajax/cliente_historial_productos.php', {
         membresia: membresia,
         pagina: pagina,
         limite: 12
@@ -213,7 +244,7 @@ function abrirModalHistorial(membresia, pagina = 1) {
             $('#tablaHistorialBody').html(`
                 <tr>
                     <td colspan="6" class="text-center py-4 text-muted">
-                        <i class="bi bi-inbox me-1"></i> Este socio no tiene compras registradas en el historial.
+                        <i class="bi bi-inbox me-1"></i> Este miembro no tiene compras registradas en el historial.
                     </td>
                 </tr>
             `);
@@ -225,14 +256,19 @@ function abrirModalHistorial(membresia, pagina = 1) {
         let html = '';
         res.datos.forEach(row => {
             const trClass = row.es_anulado ? 'class="fila-anulada"' : '';
+            const promoRaw = (row.promocion || '').trim();
+            const promoHtml = (promoRaw !== '' && promoRaw !== '.')
+                ? `<small class="text-muted">${escHtml(promoRaw)}</small>`
+                : `<span class="text-muted opacity-50">—</span>`;
+
             html += `
             <tr ${trClass}>
                 <td><strong>${escHtml(row.sucursal)}</strong></td>
                 <td><span class="text-muted">${escHtml(row.fecha_hora)}</span></td>
                 <td><span class="fw-semibold text-dark">${escHtml(row.producto_medida)}</span></td>
                 <td class="text-center"><span class="badge bg-light text-dark border">${row.cantidad}</span></td>
-                <td><small class="text-muted">${escHtml(row.promocion)}</small></td>
-                <td class="text-end fw-bold text-success">${row.puntos_acumulados.toFixed(2)}</td>
+                <td>${promoHtml}</td>
+                <td class="text-end fw-bold text-success font-monospace">${row.puntos_acumulados.toFixed(2)}</td>
             </tr>`;
         });
         $('#tablaHistorialBody').html(html);
@@ -306,16 +342,16 @@ function actualizarPuntosFactura() {
 }
 
 
-/* ---- Cargar productos elegibles (panel derecho) ---- */
+/* ---- Cargar productos elegibles (catálogo izquierdo) ---- */
 function cargarProductosElegibles() {
-    $('#listaProductosElegibles').html(`
+    $('#catalogoPanel').html(`
         <p class="no-productos-msg">
             <span class="spinner-border spinner-border-sm me-1"></span> Cargando…
         </p>`);
 
-    $.get('ajax/facturas_get_productos_elegibles.php', function (res) {
+    $.get('/modulos/pos/ajax/facturas_get_productos_elegibles.php', function (res) {
         if (!res.success || res.data.length === 0) {
-            $('#listaProductosElegibles').html(`
+            $('#catalogoPanel').html(`
                 <p class="no-productos-msg">
                     <i class="bi bi-exclamation-circle me-1"></i>
                     No hay productos vendibles activos en este momento.
@@ -323,45 +359,84 @@ function cargarProductosElegibles() {
             return;
         }
         todosProductos = res.data;
-        renderizarListaProductos(todosProductos);
+        renderizarCatalogoPorGrupos(todosProductos);
     }, 'json').fail(function () {
-        $('#listaProductosElegibles').html(`<p class="no-productos-msg text-danger">Error al cargar productos.</p>`);
+        $('#catalogoPanel').html(`<p class="no-productos-msg text-danger">Error al cargar productos.</p>`);
     });
 }
 
-/* ---- Renderizar lista de productos elegibles ---- */
-function renderizarListaProductos(lista) {
-    if (!lista || lista.length === 0) {
-        $('#listaProductosElegibles').html(`<p class="no-productos-msg">Sin resultados.</p>`);
-        return;
-    }
-
-    let html = '';
+/* ---- Renderizar catálogo por grupos (tabs + subgrupos + cards) ---- */
+function renderizarCatalogoPorGrupos(lista) {
+    _grupos = new Map();
     lista.forEach(p => {
-        const precioUnit = parseFloat(p.precio_venta || 0);
-        const precioFmt = precioUnit > 0 ? `C$ ${precioUnit.toFixed(2)}` : 'Sin precio';
-        const categoriaTxt = `${escHtml(p.grupo || 'Otros')}${p.subgrupo ? ' · ' + escHtml(p.subgrupo) : ''}`;
-
-        html += `
-        <div class="producto-card-elegible" data-id="${p.id}">
-            <div class="prod-info">
-                <span class="prod-nombre">${escHtml(p.Nombre)}</span>
-                <span class="prod-presentacion">${categoriaTxt} · <strong style="color:#0E544C;">${precioFmt}</strong></span>
-            </div>
-            <button class="btn-agregar-prod" onclick="agregarProducto(${p.id}, '${escAttr(p.Nombre)}', '${escAttr(p.nombre_unidad || '')}', ${precioUnit})">
-                <i class="bi bi-plus-lg"></i> Agregar
-            </button>
-        </div>`;
+        const gId     = parseInt(p.id_grupo)    || 0;
+        const gNombre = p.grupo    || 'Otros';
+        if (!_grupos.has(gId)) {
+            _grupos.set(gId, { id: gId, nombre: gNombre, subgrupos: new Map() });
+        }
+        const grupo   = _grupos.get(gId);
+        const sId     = parseInt(p.id_subgrupo) || 0;
+        const sNombre = p.subgrupo || 'General';
+        if (!grupo.subgrupos.has(sId)) {
+            grupo.subgrupos.set(sId, { id: sId, nombre: sNombre, productos: [] });
+        }
+        grupo.subgrupos.get(sId).productos.push(p);
     });
-    $('#listaProductosElegibles').html(html);
+
+    // Render tabs
+    let tabsHtml = '';
+    let firstGrupoId = null;
+    _grupos.forEach(g => {
+        if (firstGrupoId === null) firstGrupoId = g.id;
+        tabsHtml += `<button class="tab-grupo" data-grupo="${g.id}" type="button">${escHtml(g.nombre)}</button>`;
+    });
+    $('#gruposTabs').html(tabsHtml);
+
+    // Delegated tab click (re-bind limpio)
+    $('#gruposTabs').off('click', '.tab-grupo').on('click', '.tab-grupo', function () {
+        cambiarGrupo(parseInt($(this).data('grupo')));
+    });
+
+    if (firstGrupoId !== null) cambiarGrupo(firstGrupoId);
 }
 
-/* ---- Filtrar localmente ---- */
+/* ---- Cambiar grupo activo en el catálogo ---- */
+function cambiarGrupo(grupoId) {
+    grupoActivo = grupoId;
+    $('#gruposTabs .tab-grupo').removeClass('active');
+    $(`#gruposTabs .tab-grupo[data-grupo="${grupoId}"]`).addClass('active');
+
+    const grupo = _grupos ? _grupos.get(grupoId) : null;
+    if (!grupo) return;
+
+    let html = '<div class="subgrupos-columnas">';
+    grupo.subgrupos.forEach(sg => {
+        html += `<div class="subgrupo-col">`;
+        html += `<div class="subgrupo-header">${escHtml(sg.nombre)}</div>`;
+        sg.productos.forEach(p => {
+            const precio = parseFloat(p.precio_venta || 0);
+            html += `<div class="producto-card-pos" tabindex="0" role="button"
+                          onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
+                          onkeypress="if(event.key==='Enter')agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
+                     >${escHtml(p.Nombre)}</div>`;
+        });
+        html += `</div>`;
+    });
+    html += '</div>';
+    $('#catalogoPanel').html(html);
+}
+
+/* ---- Filtrar localmente (overlay de búsqueda) ---- */
 function filtrarProductos(q) {
     if (q === '') {
-        renderizarListaProductos(todosProductos);
+        if (grupoActivo !== null && _grupos) {
+            cambiarGrupo(grupoActivo);
+        } else if (todosProductos.length > 0) {
+            renderizarCatalogoPorGrupos(todosProductos);
+        }
         return;
     }
+
     const ql = q.toLowerCase();
     const filtrados = todosProductos.filter(p =>
         (p.Nombre         || '').toLowerCase().includes(ql) ||
@@ -370,44 +445,62 @@ function filtrarProductos(q) {
         (p.grupo          || '').toLowerCase().includes(ql) ||
         (p.subgrupo       || '').toLowerCase().includes(ql)
     );
-    renderizarListaProductos(filtrados);
+
+    if (!filtrados.length) {
+        $('#catalogoPanel').html(`<p class="no-productos-msg"><i class="bi bi-search me-1"></i> Sin resultados para "<strong>${escHtml(q)}</strong>".</p>`);
+        return;
+    }
+
+    let html = '<div class="busqueda-resultados-grid">';
+    filtrados.forEach(p => {
+        const precio = parseFloat(p.precio_venta || 0);
+        html += `<div class="producto-card-pos" tabindex="0" role="button"
+                      onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
+                 >${escHtml(p.Nombre)}</div>`;
+    });
+    html += '</div>';
+    $('#catalogoPanel').html(html);
 }
 
 /* ---- Agregar producto al detalle ---- */
 function agregarProducto(id, nombre, unidad, precio = 0) {
-    // Verificar si ya está en el detalle
+    const precioNum = parseFloat(precio) || 0;
     const existe = detalleFactura.find(d => d.id_presentacion === id);
+
     if (existe) {
-        // Animar la fila existente para indicar que ya está
+        existe.cantidad += 1;
+        existe.costo_total_iva = Math.round(existe.cantidad * existe.precio_unitario * 100) / 100;
+        actualizarTablaDetalle();
+
         const fila = $(`#fila-${id}`);
         fila.addClass('table-warning');
-        setTimeout(() => fila.removeClass('table-warning'), 800);
-        fila.find('.input-cantidad').focus();
+        setTimeout(() => fila.removeClass('table-warning'), 600);
         return;
     }
 
-    const precioNum = parseFloat(precio) || 0;
     detalleFactura.push({
         id_presentacion: id,
         nombre:          nombre,
         unidad:          unidad,
+        precio_unitario: precioNum,
         cantidad:        1,
-        costo_total_iva: precioNum
+        costo_total_iva: precioNum,
+        notas:           ''
     });
 
     actualizarTablaDetalle();
 }
 
-/* ---- Renderizar tabla de detalle (izquierda) ---- */
+/* ---- Renderizar tabla de detalle (columna derecha) ---- */
 function actualizarTablaDetalle() {
     $('#contadorProductos').text(`${detalleFactura.length} ítem(s)`);
 
     if (detalleFactura.length === 0) {
         $('#tablaDetalleBody').html(`
             <tr id="filaVacia">
-                <td colspan="5" class="empty-detalle">
+                <td colspan="4" class="empty-detalle">
                     <i class="bi bi-box-seam me-2"></i>
-                    Selecciona productos desde el panel derecho
+                    Selecciona productos desde el catálogo
                 </td>
             </tr>`);
         actualizarTotal();
@@ -416,43 +509,51 @@ function actualizarTablaDetalle() {
 
     let html = '';
     detalleFactura.forEach((item, idx) => {
-        const costoUnit = (item.cantidad > 0)
-            ? (item.costo_total_iva / item.cantidad).toFixed(4)
-            : '0.0000';
+        const precioTotalLinea = (item.costo_total_iva || 0);
+        const precioUnit = (item.precio_unitario || 0);
 
         html += `
-        <tr id="fila-${item.id_presentacion}" data-idx="${idx}">
+        <tr id="fila-${item.id_presentacion}" class="fila-producto-principal" data-idx="${idx}">
             <td>
-                <strong style="font-size:.875rem;">${escHtml(item.nombre)}</strong>
-                <small class="d-block text-muted">${escHtml(item.unidad)}</small>
+                <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
+                ${item.unidad ? `<small class="d-block text-muted" style="font-size:.76rem;">${escHtml(item.unidad)}</small>` : ''}
             </td>
-            <td class="text-end" style="width:140px;">
+            <td class="text-center" style="width:125px;">
                 <div class="qty-control">
                     <button type="button" class="qty-btn" onclick="modificarCantidad(${idx}, -1)" title="Disminuir">
                         <i class="bi bi-dash-lg"></i>
                     </button>
                     <input type="number" class="qty-input input-cantidad"
-                           value="${item.cantidad}" min="0.01" step="0.01"
+                           value="${item.cantidad}" min="1" step="1"
                            data-idx="${idx}"
-                           oninput="actualizarItem(${idx}, 'cantidad', this.value)">
+                           onchange="actualizarItem(${idx}, 'cantidad', this.value)">
                     <button type="button" class="qty-btn" onclick="modificarCantidad(${idx}, 1)" title="Aumentar">
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
             </td>
-            <td class="text-end" style="min-width:130px;">
-                <input type="number" class="input-tabla input-costo"
-                       value="${item.costo_total_iva}" min="0" step="0.01"
-                       data-idx="${idx}"
-                       onchange="actualizarItem(${idx}, 'costo_total_iva', this.value)">
+            <td class="text-end" style="white-space: nowrap;">
+                <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">
+                    C$ ${precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </strong>
+                ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
             </td>
-            <td class="costo-unitario-cell" id="unitario-${item.id_presentacion}">
-                C$ ${parseFloat(costoUnit).toLocaleString('es-NI', {minimumFractionDigits: 4})}
-            </td>
-            <td class="text-center">
+            <td class="text-center" style="width:40px;">
                 <button class="btn-eliminar-fila" onclick="eliminarItem(${idx})" title="Quitar">
                     <i class="bi bi-x-circle-fill"></i>
                 </button>
+            </td>
+        </tr>
+        <tr class="fila-producto-nota" data-idx="${idx}">
+            <td colspan="4">
+                <div class="item-nota-row">
+                    <span class="item-nota-lbl">Notas:</span>
+                    <input type="text" class="item-nota-input"
+                           placeholder="Escribir nota del producto (ej. sin pajilla, poco hielo, mensaje en vaso)..."
+                           value="${escAttr(item.notas || '')}"
+                           data-idx="${idx}"
+                           oninput="actualizarNotaItem(${idx}, this.value)">
+                </div>
             </td>
         </tr>`;
     });
@@ -461,21 +562,22 @@ function actualizarTablaDetalle() {
     actualizarTotal();
 }
 
+/* ---- Actualizar nota individual sin re-renderizar para no perder foco ---- */
+function actualizarNotaItem(idx, valor) {
+    if (detalleFactura[idx]) {
+        detalleFactura[idx].notas = valor;
+    }
+}
+
 /* ---- Actualizar valor de un campo en el detalle ---- */
 function actualizarItem(idx, campo, valor) {
-    detalleFactura[idx][campo] = parseFloat(valor) || 0;
-
-    // Recalcular costo unitario en vivo
-    const item = detalleFactura[idx];
-    const costoUnit = (item.cantidad > 0)
-        ? (item.costo_total_iva / item.cantidad)
-        : 0;
-
-    $(`#unitario-${item.id_presentacion}`).text(
-        'C$ ' + costoUnit.toLocaleString('es-NI', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
-    );
-
-    actualizarTotal();
+    if (!detalleFactura[idx]) return;
+    if (campo === 'cantidad') {
+        const cant = Math.max(1, parseInt(valor) || 1);
+        detalleFactura[idx].cantidad = cant;
+        detalleFactura[idx].costo_total_iva = Math.round(cant * (detalleFactura[idx].precio_unitario || 0) * 100) / 100;
+    }
+    actualizarTablaDetalle();
 }
 
 /* ---- Eliminar ítem del detalle ---- */
@@ -486,17 +588,13 @@ function eliminarItem(idx) {
 
 /* ---- Modificar cantidad con botones +/- ---- */
 function modificarCantidad(idx, delta) {
+    if (!detalleFactura[idx]) return;
     const item = detalleFactura[idx];
-    let nuevaCant = (parseFloat(item.cantidad) || 0) + delta;
-    
-    if (nuevaCant < 0) nuevaCant = 0;
-    
-    // Si queremos que el mínimo sea 1 si se intenta bajar de 1, se puede ajustar. 
-    // Pero permitiremos 0 si el usuario lo desea bajar todo.
-    
-    actualizarItem(idx, 'cantidad', nuevaCant);
-    
-    // Forzamos actualización de la tabla para refrescar el input visualmente
+    let nueva = (parseInt(item.cantidad) || 1) + delta;
+    if (nueva < 1) nueva = 1;
+
+    item.cantidad = nueva;
+    item.costo_total_iva = Math.round(nueva * (item.precio_unitario || 0) * 100) / 100;
     actualizarTablaDetalle();
 }
 
@@ -518,7 +616,7 @@ function guardarFactura() {
     const fecha         = $('#fechaFactura').val();
 
     if (isClub && !idClienteClub) {
-        alertError('Debe buscar un socio válido con membresía Club Pitaya, o cambiar a Cliente General.');
+        alertError('Debe ingresar un miembro válido del Club Pitaya, o cambiar a Cliente General.');
         $('#membresiaCliente').focus();
         return;
     }
@@ -543,7 +641,7 @@ function guardarFactura() {
     const $btn = $('#btnGuardar');
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Guardando…');
 
-    $.post('ajax/facturas_guardar.php', {
+    $.post('/modulos/pos/ajax/facturas_guardar.php', {
         tipo_cliente:    isClub ? 'club' : 'general',
         id_cliente_club: isClub ? idClienteClub : null,
         nombre_cliente:  isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
@@ -559,14 +657,17 @@ function guardarFactura() {
                 confirmButtonText: 'Nueva Venta',
                 confirmButtonColor:'#51B8AC'
             }).then(() => {
-                // Limpiar detalle para la siguiente venta
+                // Reset completo para la siguiente venta
                 detalleFactura = [];
                 actualizarTablaDetalle();
-                if (isClub && clienteActual) {
-                    // Refrescar datos y puntos del socio en pantalla
-                    buscarClienteClub(false);
-                } else {
-                    $('#nombreCliente').val('');
+                $('#tipoClienteGeneral').prop('checked', true);
+                cambiarTipoCliente('general');
+                $('#buscarProducto').val('');
+                $('#btnLimpiarBusqueda').hide();
+                if (grupoActivo !== null && _grupos) {
+                    cambiarGrupo(grupoActivo);
+                } else if (todosProductos.length > 0) {
+                    renderizarCatalogoPorGrupos(todosProductos);
                 }
                 $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
             });
