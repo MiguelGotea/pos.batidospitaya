@@ -155,6 +155,38 @@ function renderPOSHeader($titulo = '') {
             </a>
         </div>
     </header>
+
+    <script>
+    (function() {
+        // Heartbeat Keep-Alive del POS: mantiene la sesión del cajero activa en segundo plano
+        const PING_INTERVAL_MS = 3 * 60 * 1000; // cada 3 minutos
+        let lastPing = Date.now();
+
+        function ejecutarPingPOS() {
+            fetch('/core/auth/ping.php', {
+                method: 'GET',
+                cache: 'no-store',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                lastPing = Date.now();
+            })
+            .catch(err => {
+                console.debug('[POS Heartbeat] Fallo temporal:', err);
+            });
+        }
+
+        setInterval(ejecutarPingPOS, PING_INTERVAL_MS);
+
+        // Si la pestaña vuelve a primer plano tras más de 60s, renovar de inmediato
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && (Date.now() - lastPing) > 60000) {
+                ejecutarPingPOS();
+            }
+        });
+    })();
+    </script>
     <?php
     return ob_get_clean();
 }

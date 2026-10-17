@@ -58,7 +58,7 @@ try {
         ':sucursal'   => (string)$sucursalCodigo,
         ':cajero'     => $usuarioId,
         ':tipo'       => $tipoCliente,
-        ':id_cliente' => $idClienteClub,
+        ':id_cliente' => ($tipoCliente === 'club') ? $idClienteClub : null,
         ':nombre_gen' => ($tipoCliente === 'general') ? $nombreCliente : null,
         ':subtotal'   => round($subtotal, 2),
         ':total'      => round($subtotal, 2)
@@ -67,8 +67,8 @@ try {
 
     // ---- 2. Insertar en pos_ventas_factura_lineas ----
     $sqlLinea = "INSERT INTO pos_ventas_factura_lineas
-                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_unitario_final, precio_linea_total)
-                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_final, :precio_total)";
+                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_unitario_final, precio_linea_total, notas)
+                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_final, :precio_total, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     foreach ($detalle as $item) {
@@ -76,6 +76,7 @@ try {
         $costoTotalIva  = (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;
         $nombreSnap     = isset($item['nombre']) ? trim($item['nombre']) : 'Producto';
+        $notasItem      = !empty($item['notas']) ? trim($item['notas']) : null;
 
         $stmtLinea->execute([
             ':id_fac'        => $idFactura,
@@ -84,7 +85,8 @@ try {
             ':cant'          => $cantidad,
             ':precio_snap'   => $precioUnitario,
             ':precio_final'  => $precioUnitario,
-            ':precio_total'  => $costoTotalIva
+            ':precio_total'  => $costoTotalIva,
+            ':notas'         => $notasItem
         ]);
     }
 
