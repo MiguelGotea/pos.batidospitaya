@@ -179,7 +179,7 @@ $hoy = date('Y-m-d');
                                             <i class="bi bi-bank"></i>
                                             <span>TRANSF.</span>
                                         </button>
-                                        <button type="button" class="btn-metodo-pago btn-metodo-disabled" id="btnPagoCupon" title="Módulo de cupones próximamente">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoCupon" onclick="agregarMetodoPago('cupon')" title="Agregar pago con cupón de descuento">
                                             <i class="bi bi-ticket-perforated"></i>
                                             <span>CUPÓN</span>
                                         </button>
@@ -304,6 +304,46 @@ $hoy = date('Y-m-d');
                 </div>
                 <div class="modal-footer bg-white border-0 py-3">
                     <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== MODAL: Personalización de Receta ====== -->
+    <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg modal-pos-custom">
+                <div class="modal-header modal-header-pos">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-icon-badge">
+                            <i class="bi bi-sliders2"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Personalizar Producto</h5>
+                            <span class="modal-subtitle-pos" id="mpSubtitulo">Ajusta ingredientes, endulzante y extras</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-0 bg-light" id="mpCuerpo">
+                    <!-- Contenido generado por JS -->
+                    <div class="d-flex align-items-center justify-content-center py-5">
+                        <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
+                        <span class="text-muted">Cargando receta…</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <!-- Indicador de ajuste de precio por extras -->
+                    <span class="text-muted small" id="mpAjustePrecio" style="display:none;">
+                        <i class="bi bi-plus-circle text-success me-1"></i>
+                        Extras: <strong id="mpMontoExtras">C$ 0.00</strong>
+                    </span>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn-guardar-factura px-4" id="mpBtnGuardar">
+                            <i class="bi bi-check2-circle me-1"></i> Aplicar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

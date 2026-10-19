@@ -96,47 +96,101 @@ try {
 
     // ---- 2. Insertar en pos_ventas_factura_lineas ----
     $sqlLinea = "INSERT INTO pos_ventas_factura_lineas
-                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_unitario_final, precio_linea_total, notas)
-                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_final, :precio_total, :notas)";
+                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total, notas)
+                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_extras, :precio_final, :precio_total, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     foreach ($detalle as $item) {
         $cantidad       = (float)$item['cantidad'];
         $costoTotalIva  = (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;
+        $precioBase     = isset($item['precio_unitario_base']) ? (float)$item['precio_unitario_base'] : $precioUnitario;
         $nombreSnap     = isset($item['nombre']) ? trim($item['nombre']) : 'Producto';
-        $notasItem      = !empty($item['notas']) ? trim($item['notas']) : null;
+        $notasItem      = !empty($item['notas']) ? trim($item['notas']) : '';
+
+        // Procesar resumen de personalización para auditoría y cocina
+        $montoExtras = 0;
+        $resumenPers = [];
+        if (!empty($item['personalizacion']) && is_array($item['personalizacion'])) {
+            $p = $item['personalizacion'];
+            if (!empty($p['endulzante_nombre'])) {
+                $resumenPers[] = "Endulzante: " . trim($p['endulzante_nombre']);
+            }
+            if (!empty($p['ingredientes_quitados']) && is_array($p['ingredientes_quitados'])) {
+                $quits = array_column($p['ingredientes_quitados'], 'nombre_componente');
+                if (!empty($quits)) $resumenPers[] = "Sin: " . implode(', ', $quits);
+            }
+            if (!empty($p['ingredientes_sustituidos']) && is_array($p['ingredientes_sustituidos'])) {
+                $susts = [];
+                foreach ($p['ingredientes_sustituidos'] as $s) {
+                    $susts[] = ($s['nombre_nuevo'] ?? 'Otro');
+                }
+                if (!empty($susts)) $resumenPers[] = "Cambio por: " . implode(', ', $susts);
+            }
+            if (!empty($p['extras_agregados']) && is_array($p['extras_agregados'])) {
+                $exts = array_column($p['extras_agregados'], 'nombre');
+                if (!empty($exts)) $resumenPers[] = "Extra: " . implode(', ', $exts);
+            }
+            $montoExtras = isset($p['monto_extras']) ? (float)$p['monto_extras'] : 0;
+        }
+
+        $textoPers = !empty($resumenPers) ? "[" . implode(" | ", $resumenPers) . "]" : "";
+        $notasFinal = trim(($notasItem ? $notasItem . " " : "") . $textoPers);
+        if ($notasFinal === "") $notasFinal = null;
 
         $stmtLinea->execute([
             ':id_fac'        => $idFactura,
             ':id_pres'       => (int)$item['id_presentacion'],
             ':nombre_snap'   => $nombreSnap,
             ':cant'          => $cantidad,
-            ':precio_snap'   => $precioUnitario,
+            ':precio_snap'   => $precioBase,
+            ':precio_extras' => $montoExtras,
             ':precio_final'  => $precioUnitario,
             ':precio_total'  => $costoTotalIva,
-            ':notas'         => $notasItem
+            ':notas'         => $notasFinal
         ]);
     }
 
     // ---- 3. Insertar en pos_ventas_factura_pagos ----
+    /* =====================================================================================
+     * GESTIÓN DE MÉTODOS DE PAGO Y CUPONES:
+     * 
+     * [MODO PRUEBAS ACTUAL]:
+     * - Se registra el pago de tipo 'cupon' con su id_cupon, codigo_cupon y monto en pos_ventas_factura_pagos.
+     * - NO se ejecuta UPDATE a cupones_sucursales (NO se marca aplicado = 1).
+     * - Esto permite a administración y supervisores probar libremente los cupones reales sin quemar datos.
+     * 
+     * [CUANDO SE PASE OFICIALMENTE A PRODUCCIÓN]:
+     * - Descomentar la siguiente instrucción dentro de la transacción para marcarlo como usado:
+     * 
+     *   if ($metodo === 'cupon' && !empty($idCupon)) {
+     *       $stmtBurn = $conn->prepare("UPDATE cupones_sucursales SET aplicado = 1, cod_pedido = :id_fac, hora_activacion = NOW() WHERE id = :id_cup");
+     *       $stmtBurn->execute([':id_fac' => $idFactura, ':id_cup' => $idCupon]);
+     *   }
+     * ===================================================================================== */
     $sqlPago = "INSERT INTO pos_ventas_factura_pagos
-                (id_factura, metodo, moneda, monto_original, monto_cordoba, tipo_cambio_aplicado, referencia)
-                VALUES (:id_fac, :metodo, 'NIO', :monto_orig, :monto_cor, NULL, :ref)";
+                (id_factura, metodo, moneda, monto_original, monto_cordoba, tipo_cambio_aplicado, id_cupon, codigo_cupon, referencia)
+                VALUES (:id_fac, :metodo, 'NIO', :monto_orig, :monto_cor, NULL, :id_cupon, :codigo_cupon, :ref)";
     $stmtPago = $conn->prepare($sqlPago);
 
     foreach ($pagos as $p) {
-        $metodo = in_array($p['metodo'] ?? '', ['efectivo', 'pos', 'transferencia', 'cupon']) ? $p['metodo'] : 'efectivo';
-        $montoPago = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
-        $refPago = !empty($p['referencia']) ? trim($p['referencia']) : null;
+        $metodo      = in_array($p['metodo'] ?? '', ['efectivo', 'pos', 'transferencia', 'cupon']) ? $p['metodo'] : 'efectivo';
+        $montoPago   = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
+        $refPago     = !empty($p['referencia']) ? trim($p['referencia']) : null;
+        $idCupon     = ($metodo === 'cupon' && !empty($p['id_cupon'])) ? (int)$p['id_cupon'] : null;
+        $codigoCupon = ($metodo === 'cupon') ? $refPago : null;
 
         $stmtPago->execute([
-            ':id_fac'     => $idFactura,
-            ':metodo'     => $metodo,
-            ':monto_orig' => $montoPago,
-            ':monto_cor'  => $montoPago,
-            ':ref'        => $refPago
+            ':id_fac'       => $idFactura,
+            ':metodo'       => $metodo,
+            ':monto_orig'   => $montoPago,
+            ':monto_cor'    => $montoPago,
+            ':id_cupon'     => $idCupon,
+            ':codigo_cupon' => $codigoCupon,
+            ':ref'          => $refPago
         ]);
+
+        // MODO PRUEBAS: Aquí se activará el UPDATE a cupones_sucursales cuando el sistema se lance oficialmente.
     }
 
     // ---- 4. Registrar puntos si es socio Club Pitaya ----

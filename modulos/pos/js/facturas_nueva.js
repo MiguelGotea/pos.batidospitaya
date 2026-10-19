@@ -3,7 +3,7 @@
    =================================================== */
 
 // Estado local
-let detalleFactura = []; // array de {id_presentacion, nombre, unidad, cantidad, costo_total_iva}
+let detalleFactura = []; // array de {id_presentacion, nombre, unidad, cantidad, precio_unitario_base, precio_unitario, costo_total_iva, personalizacion: {...}}
 let todosProductos = []; // cache de productos elegibles
 let clienteActual = null; // objeto del miembro Club Pitaya seleccionado
 let paginaHistorialActual = 1;
@@ -426,10 +426,10 @@ function cambiarGrupo(grupoId) {
         html += `<div class="subgrupo-header">${escHtml(sg.nombre)}</div>`;
         sg.productos.forEach(p => {
             const precio = parseFloat(p.precio_venta || 0);
-            html += `<div class="producto-card-pos" tabindex="0" role="button"
-                          onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
-                          onkeypress="if(event.key==='Enter')agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
-                     >${escHtml(p.Nombre)}</div>`;
+            html += `<div class="producto-card-pos ${parseInt(p.es_personalizable) ? 'producto-personalizable' : ''}" tabindex="0" role="button"
+                          onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
+                          onkeypress="if(event.key==='Enter')agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
+                     >${escHtml(p.Nombre)}${parseInt(p.es_personalizable) ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
         });
         html += `</div>`;
     });
@@ -465,22 +465,24 @@ function filtrarProductos(q) {
     let html = '<div class="busqueda-resultados-grid">';
     filtrados.forEach(p => {
         const precio = parseFloat(p.precio_venta || 0);
-        html += `<div class="producto-card-pos" tabindex="0" role="button"
-                      onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio})"
-                 >${escHtml(p.Nombre)}</div>`;
+        html += `<div class="producto-card-pos ${parseInt(p.es_personalizable) ? 'producto-personalizable' : ''}" tabindex="0" role="button"
+                      onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
+                 >${escHtml(p.Nombre)}${parseInt(p.es_personalizable) ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
     });
     html += '</div>';
     $('#catalogoPanel').html(html);
 }
 
 /* ---- Agregar producto al detalle ---- */
-function agregarProducto(id, nombre, unidad, precio = 0) {
+function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
     const precioNum = parseFloat(precio) || 0;
     const existe = detalleFactura.find(d => d.id_presentacion === id);
 
     if (existe) {
+        // Si ya existe, solo incrementa cantidad (no vuelve a abrir modal)
         existe.cantidad += 1;
-        existe.costo_total_iva = Math.round(existe.cantidad * existe.precio_unitario * 100) / 100;
+        const precioUnit = existe.precio_unitario || 0;
+        existe.costo_total_iva = Math.round(existe.cantidad * precioUnit * 100) / 100;
         actualizarTablaDetalle();
 
         const fila = $(`#fila-${id}`);
@@ -489,17 +491,34 @@ function agregarProducto(id, nombre, unidad, precio = 0) {
         return;
     }
 
-    detalleFactura.push({
-        id_presentacion: id,
-        nombre:          nombre,
-        unidad:          unidad,
-        precio_unitario: precioNum,
-        cantidad:        1,
-        costo_total_iva: precioNum,
-        notas:           ''
-    });
+    const nuevoItem = {
+        id_presentacion:      id,
+        nombre:               nombre,
+        unidad:               unidad,
+        precio_unitario_base: precioNum, // precio original sin extras
+        precio_unitario:      precioNum, // precio efectivo (base + extras)
+        cantidad:             1,
+        costo_total_iva:      precioNum,
+        notas:                '',
+        es_personalizable:    parseInt(esPersonalizable) === 1,
+        personalizacion: {
+            ingredientes_quitados:   [],  // [{ id_componente, nombre_componente }]
+            ingredientes_sustituidos:[],  // [{ id_componente, nombre_original, id_nuevo, nombre_nuevo }]
+            endulzante_id:           null,
+            endulzante_nombre:       '',
+            extras_agregados:        [],  // [{ id, nombre, precio }]
+            monto_extras:            0
+        }
+    };
 
+    detalleFactura.push(nuevoItem);
     actualizarTablaDetalle();
+
+    /* Al agregar por primera vez, si tiene receta, abrir modal de personalización */
+    if (parseInt(esPersonalizable) === 1) {
+        const idx = detalleFactura.length - 1;
+        setTimeout(() => abrirModalPersonalizacion(idx), 150);
+    }
 }
 
 /* ---- Renderizar tabla de detalle (columna derecha) ---- */
@@ -523,11 +542,30 @@ function actualizarTablaDetalle() {
         const precioTotalLinea = (item.costo_total_iva || 0);
         const precioUnit = (item.precio_unitario || 0);
 
+        /* Resumen de personalización visible en la fila */
+        const pers = item.personalizacion || {};
+        let resumenPers = '';
+        if (pers.endulzante_nombre) resumenPers += `<span class="badge-pers-item"><i class="bi bi-water"></i> ${escHtml(pers.endulzante_nombre)}</span>`;
+        if (pers.ingredientes_quitados && pers.ingredientes_quitados.length)
+            resumenPers += `<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> Sin: ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`;
+        if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length)
+            resumenPers += `<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> Cambio: ${pers.ingredientes_sustituidos.map(i=>escHtml(i.nombre_nuevo)).join(', ')}</span>`;
+        if (pers.extras_agregados && pers.extras_agregados.length)
+            resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
+
         html += `
         <tr id="fila-${item.id_presentacion}" class="fila-producto-principal" data-idx="${idx}">
             <td>
-                <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
-                ${item.unidad ? `<small class="d-block text-muted" style="font-size:.76rem;">${escHtml(item.unidad)}</small>` : ''}
+                <div class="d-flex align-items-start gap-1">
+                    <div class="flex-grow-1">
+                        <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
+                        ${item.unidad ? `<small class="d-block text-muted" style="font-size:.76rem;">${escHtml(item.unidad)}</small>` : ''}
+                        ${resumenPers ? `<div class="mt-1 d-flex flex-wrap gap-1">${resumenPers}</div>` : ''}
+                    </div>
+                    ${item.es_personalizable ? `<button type="button" class="btn-personalizar-fila" onclick="abrirModalPersonalizacion(${idx})" title="Personalizar receta">
+                        <i class="bi bi-sliders2"></i>
+                    </button>` : ''}
+                </div>
             </td>
             <td class="text-center" style="width:125px;">
                 <div class="qty-control">
@@ -548,6 +586,7 @@ function actualizarTablaDetalle() {
                     C$ ${precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </strong>
                 ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
+                ${(pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
             </td>
             <td class="text-center" style="width:40px;">
                 <button class="btn-eliminar-fila" onclick="eliminarItem(${idx})" title="Quitar">
@@ -632,7 +671,6 @@ function sumarTotalPagos() {
 }
 
 function agregarMetodoPago(metodo) {
-    if (metodo === 'cupon') return; // En espera de conexión con cupones
     if (detalleFactura.length === 0) {
         alertError('Primero debe agregar productos al pedido antes de seleccionar métodos de pago.');
         return;
@@ -640,7 +678,11 @@ function agregarMetodoPago(metodo) {
 
     const existeIdx = pagos.findIndex(p => p.metodo === metodo);
     if (existeIdx !== -1) {
-        $(`#inputMontoPago-${existeIdx}`).focus().select();
+        if (metodo === 'cupon') {
+            $(`#inputCodigoCupon-${existeIdx}`).focus().select();
+        } else {
+            $(`#inputMontoPago-${existeIdx}`).focus().select();
+        }
         return;
     }
 
@@ -649,31 +691,62 @@ function agregarMetodoPago(metodo) {
     const pendiente = Math.max(0, Math.round((totalFactura - pagado) * 100) / 100);
     const montoInicial = pendiente > 0 ? pendiente : 0;
 
-    pagos.push({
-        metodo:     metodo,
-        monto:      montoInicial,
-        recibido:   metodo === 'efectivo' ? montoInicial : 0,
-        cambio:     0,
-        referencia: ''
-    });
+    /* ============================================================
+       REGISTRO DEL MÉTODO DE PAGO
+       Para 'cupon':
+       - Inicialmente monto = 0 hasta que sea validado contra la BD.
+       - validado = false
+       - id_cupon = null
+       ============================================================ */
+    if (metodo === 'cupon') {
+        pagos.push({
+            metodo:        'cupon',
+            monto:         0,
+            recibido:      0,
+            cambio:        0,
+            referencia:    '',    // Almacena el número/código del cupón
+            id_cupon:      null,  // ID de la tabla cupones_sucursales
+            validado:      false, // Bandera de validación en tiempo real
+            monto_cupon:   0,     // Monto nominal de descuento del cupón
+            observaciones: ''
+        });
+    } else {
+        pagos.push({
+            metodo:     metodo,
+            monto:      montoInicial,
+            recibido:   metodo === 'efectivo' ? montoInicial : 0,
+            cambio:     0,
+            referencia: ''
+        });
+    }
 
     renderizarFilasPago();
     actualizarTotal(false);
 
     const nuevoIdx = pagos.length - 1;
     setTimeout(() => {
-        $(`#inputMontoPago-${nuevoIdx}`).focus().select();
+        if (metodo === 'cupon') {
+            $(`#inputCodigoCupon-${nuevoIdx}`).focus().select();
+        } else {
+            $(`#inputMontoPago-${nuevoIdx}`).focus().select();
+        }
     }, 50);
 }
 
 function quitarMetodoPago(idx) {
     if (!pagos[idx]) return;
+    const eraCupon = pagos[idx].metodo === 'cupon';
     pagos.splice(idx, 1);
 
-    if (pagos.length === 1) {
-        pagos[0].monto = calcularTotalAPagar();
-        if (pagos[0].metodo === 'efectivo' && (pagos[0].recibido < pagos[0].monto)) {
-            pagos[0].recibido = pagos[0].monto;
+    // Si queda un único método (ej: Efectivo o POS), reajustarlo para cubrir el 100%
+    if (pagos.length === 1 && pagos[0].metodo !== 'cupon') {
+        const total = calcularTotalAPagar();
+        pagos[0].monto = total;
+        if (pagos[0].metodo === 'efectivo') {
+            if ((pagos[0].recibido || 0) < total) {
+                pagos[0].recibido = total;
+            }
+            pagos[0].cambio = Math.max(0, (pagos[0].recibido || total) - total);
         }
     }
 
@@ -710,10 +783,118 @@ function actualizarReferenciaPago(idx, val) {
     pagos[idx].referencia = val.trim();
 }
 
+/* ============================================================
+   VALIDACIÓN DE CUPONES (AJAX A validar_cupon.php)
+   ============================================================
+   NOTA TÉCNICA Y PASE A PRODUCCIÓN:
+   - Consulta ajax/validar_cupon.php en Modo Pruebas (solo lectura).
+   - Aplica el monto nominal del cupón hasta cubrir el total de la orden.
+   - Reajusta automáticamente el saldo de métodos combinados (Efectivo/POS).
+   ============================================================ */
+function validarCupon(idx) {
+    if (!pagos[idx] || pagos[idx].metodo !== 'cupon') return;
+    const p = pagos[idx];
+
+    // Si ya estaba validado y hace clic de nuevo, permite editar el código
+    if (p.validado) {
+        p.validado = false;
+        p.monto = 0;
+        p.monto_cupon = 0;
+        p.id_cupon = null;
+        renderizarFilasPago();
+        actualizarTotal(false);
+        $(`#inputCodigoCupon-${idx}`).focus().select();
+        return;
+    }
+
+    const input = document.getElementById(`inputCodigoCupon-${idx}`);
+    const codigo = input ? input.value.trim() : (p.referencia || '');
+    if (!codigo) {
+        alertWarning('Por favor ingresa el código del cupón antes de validar.');
+        if (input) input.focus();
+        return;
+    }
+
+    p.referencia = codigo;
+    const $btn = $(`#btnValidarCupon-${idx}`);
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Validando...');
+
+    $.ajax({
+        url: 'ajax/validar_cupon.php',
+        type: 'POST',
+        data: { codigo: codigo },
+        dataType: 'json',
+        success: function (res) {
+            $btn.prop('disabled', false);
+            if (res.success && res.data) {
+                const cup = res.data;
+                p.validado = true;
+                p.id_cupon = cup.id_cupon;
+                p.referencia = cup.numero_cupon;
+                p.monto_cupon = parseFloat(cup.monto) || 0;
+                p.observaciones = cup.observaciones || '';
+
+                // El cupón descuenta su monto nominal o el total de la factura
+                const totalFactura = calcularTotalAPagar();
+                p.monto = Math.min(p.monto_cupon, totalFactura);
+
+                // Reajustar métodos de pago mixtos (por ejemplo, reducir el efectivo pendiente)
+                reajustarPagosConCupon(idx);
+
+                renderizarFilasPago();
+                actualizarTotal(false);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Cupón Aplicado!',
+                        html: `Monto de <strong>C$ ${p.monto.toFixed(2)}</strong> aplicado con cupón <code>${escHtml(p.referencia)}</code>.<br><small class="text-muted">(Fase Pruebas: el estado real del cupón en BD permanece activo)</small>`,
+                        timer: 2800,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
+            } else {
+                p.validado = false;
+                p.monto = 0;
+                p.id_cupon = null;
+                renderizarFilasPago();
+                actualizarTotal(false);
+                alertError(res.message || 'Cupón inválido o caducado.');
+            }
+        },
+        error: function () {
+            $btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> VALIDAR');
+            alertError('Error de conexión al validar el cupón.');
+        }
+    });
+}
+
+/* ---- Reajustar pagos combinados al aplicar un cupón ---- */
+function reajustarPagosConCupon(cuponIdx) {
+    const totalFactura = calcularTotalAPagar();
+    const cuponMonto = pagos[cuponIdx] ? pagos[cuponIdx].monto : 0;
+    const restante = Math.max(0, Math.round((totalFactura - cuponMonto) * 100) / 100);
+
+    // Buscar si hay otro método de pago (como efectivo o POS)
+    const otrosPagos = pagos.filter((p, i) => i !== cuponIdx && p.metodo !== 'cupon');
+    if (otrosPagos.length === 1) {
+        otrosPagos[0].monto = restante;
+        if (otrosPagos[0].metodo === 'efectivo') {
+            if ((otrosPagos[0].recibido || 0) < restante || otrosPagos[0].recibido === totalFactura) {
+                otrosPagos[0].recibido = restante;
+            }
+            otrosPagos[0].cambio = Math.max(0, (otrosPagos[0].recibido || restante) - restante);
+        }
+    }
+}
+
 function renderizarFilasPago() {
     $('#btnPagoEfectivo').toggleClass('activo', pagos.some(p => p.metodo === 'efectivo'));
     $('#btnPagoPOS').toggleClass('activo', pagos.some(p => p.metodo === 'pos'));
     $('#btnPagoTransferencia').toggleClass('activo', pagos.some(p => p.metodo === 'transferencia'));
+    $('#btnPagoCupon').toggleClass('activo', pagos.some(p => p.metodo === 'cupon'));
 
     if (pagos.length === 0) {
         $('#contenedorFilasPago').html('');
@@ -722,6 +903,48 @@ function renderizarFilasPago() {
 
     let html = '';
     pagos.forEach((p, idx) => {
+        /* ============================================================
+           FILA DE PAGO: CUPÓN (Diseño idéntico al boceto)
+           ============================================================ */
+        if (p.metodo === 'cupon') {
+            html += `
+            <div class="fila-pago-card fila-pago-cupon ${p.validado ? 'cupon-validado' : ''}" id="cardPago-${idx}">
+                <div class="fila-pago-header align-items-center">
+                    <div class="pago-metodo-info">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <span>CÓDIGO DE CUPÓN</span>
+                    </div>
+                    <div class="pago-cupon-inline-actions">
+                        <div class="input-codigo-cupon-wrap">
+                            <input type="text" class="input-codigo-cupon"
+                                   id="inputCodigoCupon-${idx}"
+                                   placeholder="Ej: PROMO2024"
+                                   value="${escAttr(p.referencia || '')}"
+                                   ${p.validado ? 'readonly' : ''}
+                                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); validarCupon(${idx}); }">
+                        </div>
+                        <button type="button" class="btn-validar-cupon ${p.validado ? 'btn-cupon-exito' : ''}"
+                                id="btnValidarCupon-${idx}"
+                                onclick="validarCupon(${idx})"
+                                title="${p.validado ? 'Clic para editar código' : 'Validar cupón en línea'}">
+                            ${p.validado ? '<i class="bi bi-check2-circle me-1"></i> VALIDADO' : '<i class="bi bi-check-lg me-1"></i> VALIDAR'}
+                        </button>
+                        <div class="cupon-monto-display">
+                            <span class="monto-valor">C$ ${p.monto.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <button type="button" class="btn-quitar-pago" onclick="quitarMetodoPago(${idx})" title="Quitar cupón">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                ${p.observaciones ? `<div class="cupon-subnota text-muted small px-3 pb-2"><i class="bi bi-info-circle me-1"></i>${escHtml(p.observaciones)}</div>` : ''}
+            </div>`;
+            return;
+        }
+
+        /* ============================================================
+           FILAS DE PAGO: EFECTIVO / POS / TRANSFERENCIA
+           ============================================================ */
         let icono = 'bi-cash-stack';
         let nombre = 'EFECTIVO';
         if (p.metodo === 'pos') {
@@ -871,6 +1094,13 @@ function guardarFactura() {
         return;
     }
 
+    // Validar que cualquier cupón agregado esté verificado con éxito
+    const cuponSinValidar = pagos.find(p => p.metodo === 'cupon' && !p.validado);
+    if (cuponSinValidar) {
+        alertError('Tiene un cupón pendiente de validar. Ingrese el código y presione VALIDAR o elimínelo.');
+        return;
+    }
+
     const totalFactura = calcularTotalAPagar();
     const totalPagos = sumarTotalPagos();
     const diff = Math.round((totalPagos - totalFactura) * 100) / 100;
@@ -941,6 +1171,10 @@ function alertError(msg) {
     Swal.fire({ title: 'Error', text: msg, icon: 'error', confirmButtonColor: '#0E544C' });
 }
 
+function alertWarning(msg) {
+    Swal.fire({ title: 'Atención', text: msg, icon: 'warning', confirmButtonColor: '#0E544C' });
+}
+
 function escHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -953,3 +1187,330 @@ function escHtml(str) {
 function escAttr(str) {
     return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
+
+
+/* ============================================================
+   MODAL DE PERSONALIZACIÓN DE RECETA (Paso 2 POS)
+   ============================================================
+
+   Estado local del modal — se trabaja sobre una COPIA del item
+   hasta que el usuario presione "Aplicar".
+
+   NOTAS PARA DESARROLLO FUTURO / PASE A PRODUCCIÓN:
+   - Los ingredientes quitados/sustituidos no alteran el precio
+     (sin costo adicional por sustitución).
+   - Solo los extras tienen precio propio y suman al precio_unitario.
+   - Cuando se integre el sistema de órdenes en producción, la
+     personalización debe enviarse al backend como JSON dentro del
+     detalle de la factura y registrarse en una tabla de
+     personalizaciones (aún por diseñar).
+   - La sección de "Combos Sugeridos" está como placeholder visual
+     (TODO: funcionalidad cuando se defina la lógica de combos).
+   ============================================================ */
+
+// Índice del item actualmente en edición en el modal
+let _mpIdx = -1;
+
+// Copia de trabajo de la personalización (se confirma solo al dar "Aplicar")
+let _mpDraft = null;
+
+// Cache de datos de receta por id_presentacion
+const _mpCache = {};
+
+/* ---- Abrir modal y cargar datos de receta ---- */
+function abrirModalPersonalizacion(idx) {
+    const item = detalleFactura[idx];
+    if (!item) return;
+
+    _mpIdx = idx;
+
+    // Clonar personalización actual como borrador de trabajo
+    _mpDraft = JSON.parse(JSON.stringify(item.personalizacion || {
+        ingredientes_quitados:    [],
+        ingredientes_sustituidos: [],
+        endulzante_id:            null,
+        endulzante_nombre:        '',
+        extras_agregados:         [],
+        monto_extras:             0
+    }));
+
+    // Actualizar título del modal
+    $('#modalPersonalizacionLabel').text('Personalizar: ' + item.nombre);
+    $('#mpSubtitulo').text('Ajusta ingredientes, endulzante y extras');
+    $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
+    $('#mpAjustePrecio').hide();
+
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
+    modal.show();
+
+    // Si ya está en caché, no volver a pedir
+    if (_mpCache[item.id_presentacion]) {
+        _mpRenderContenido(_mpCache[item.id_presentacion]);
+        return;
+    }
+
+    $.ajax({
+        url: 'ajax/get_receta_producto.php',
+        type: 'GET',
+        data: { id_presentacion: item.id_presentacion },
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                _mpCache[item.id_presentacion] = res;
+                _mpRenderContenido(res);
+            } else {
+                $('#mpCuerpo').html(`<div class="alert alert-warning m-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'No se pudieron cargar los datos de receta.')}</div>`);
+            }
+        },
+        error: function () {
+            $('#mpCuerpo').html('<div class="alert alert-danger m-3"><i class="bi bi-cloud-slash me-1"></i> Error de conexión al cargar la receta.</div>');
+        }
+    });
+}
+
+/* ---- Renderizar contenido del modal con los datos de receta ---- */
+function _mpRenderContenido(datos) {
+    let html = '<div class="mp-body-inner p-3">';
+
+    /* ---- SECCIÓN: Ingredientes de la Receta ---- */
+    if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.length > 0) {
+        html += `
+        <div class="mp-seccion">
+            <div class="mp-seccion-header">
+                <i class="bi bi-list-check"></i> Ingredientes de la Receta
+                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Puedes quitar o sustituir ingredientes (sin costo adicional)</small>
+            </div>
+            <div class="mp-ingredientes-lista">`;
+
+        datos.ingredientes.forEach(ing => {
+            const idComp    = ing.id_componente;
+            const quitado   = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
+            const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);
+
+            // Opciones para dropdown de sustitución
+            let optsHtml = '<option value="">— Sin cambio —</option>';
+            (datos.ingredientes_alternativos || []).forEach(alt => {
+                const sel = sustituido && sustituido.id_nuevo === alt.id ? 'selected' : '';
+                optsHtml += `<option value="${alt.id}" ${sel}>${escHtml(alt.Nombre)}</option>`;
+            });
+
+            html += `
+            <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}">
+                <div class="mp-ing-nombre">
+                    <strong>${escHtml(ing.nombre_ingrediente)}</strong>
+                    <small class="text-muted">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
+                </div>
+                <div class="mp-ing-controles">
+                    <!-- Dropdown de sustitución -->
+                    <select class="mp-select-sustituir form-select form-select-sm" data-comp="${idComp}" data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
+                            onchange="_mpSustituirIngrediente(this)" ${quitado ? 'disabled' : ''}>
+                        ${optsHtml}
+                    </select>
+                    <!-- Toggle quitar -->
+                    <button type="button" class="btn-mp-quitar ${quitado ? 'activo' : ''}" data-comp="${idComp}"
+                            onclick="_mpToggleQuitarIngrediente(this, '${escAttr(ing.nombre_ingrediente)}')"
+                            title="${quitado ? 'Restaurar' : 'Quitar este ingrediente'}">
+                        ${quitado ? '<i class="bi bi-plus-circle"></i>' : '<i class="bi bi-x-circle"></i>'}
+                    </button>
+                </div>
+            </div>`;
+        });
+
+        html += '</div></div>';
+    } else if (!datos.tiene_receta) {
+        html += '<div class="alert alert-light m-0 mb-3 border"><i class="bi bi-info-circle me-1 text-muted"></i> Este producto no tiene receta registrada. Solo puedes agregar extras o dejar una nota.</div>';
+    }
+
+    /* ---- SECCIÓN: Endulzante ---- */
+    if (datos.endulzantes && datos.endulzantes.length > 0) {
+        // Si no se ha elegido endulzante aún y la receta tiene uno sugerido, preseleccionarlo
+        if (!_mpDraft.endulzante_id && datos.endulzante_default_id) {
+            const sugerido = datos.endulzantes.find(e => e.id === datos.endulzante_default_id);
+            if (sugerido) {
+                _mpDraft.endulzante_id = sugerido.id;
+                _mpDraft.endulzante_nombre = sugerido.nombre;
+            }
+        }
+
+        html += `
+        <div class="mp-seccion">
+            <div class="mp-seccion-header"><i class="bi bi-droplet-half"></i> Endulzante</div>
+            <div class="mp-endulzante-grid">`;
+
+        datos.endulzantes.forEach(end => {
+            const seleccionado = _mpDraft.endulzante_id === end.id;
+            const esSugerido   = datos.endulzante_default_id === end.id;
+            html += `
+            <button type="button" class="btn-mp-endulzante ${seleccionado ? 'activo' : ''}" data-id="${end.id}" data-nombre="${escAttr(end.nombre)}"
+                    onclick="_mpSeleccionarEndulzante(this)">
+                <i class="bi bi-water"></i>
+                ${escHtml(end.nombre)}
+                ${esSugerido ? '<span class="mp-badge-sugerido">Sugerido</span>' : ''}
+            </button>`;
+        });
+
+        html += '</div></div>';
+    }
+
+    /* ---- SECCIÓN: Extras ---- */
+    if (datos.extras && datos.extras.length > 0) {
+        html += `
+        <div class="mp-seccion">
+            <div class="mp-seccion-header">
+                <i class="bi bi-plus-square"></i> Extras
+                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Los extras sí alteran el precio</small>
+            </div>
+            <div class="mp-extras-grid">`;
+
+        datos.extras.forEach(ext => {
+            const agregado = _mpDraft.extras_agregados.some(e => e.id === ext.id);
+            html += `
+            <button type="button" class="btn-mp-extra ${agregado ? 'activo' : ''}" data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}"
+                    onclick="_mpToggleExtra(this)">
+                <span class="mp-extra-nombre">${escHtml(ext.nombre)}</span>
+                <span class="mp-extra-precio">+C$ ${parseFloat(ext.precio).toFixed(2)}</span>
+            </button>`;
+        });
+
+        html += '</div></div>';
+    }
+
+    /* ---- SECCIÓN: Combos Sugeridos (placeholder — funcionalidad pendiente) ---- */
+    /* TODO: Cuando se definan los combos del menú, mostrar sugerencias relacionadas aquí.
+       Pendiente: diseñar tabla de combos y lógica de sugerencias por producto. */
+    html += `
+    <div class="mp-seccion mp-seccion-placeholder">
+        <div class="mp-seccion-header"><i class="bi bi-box-seam"></i> Combos Sugeridos <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">(Próximamente)</small></div>
+        <div class="mp-placeholder-msg"><i class="bi bi-clock-history me-1"></i> Función disponible cuando se configuren los combos del menú.</div>
+    </div>`;
+
+    html += '</div>'; // cierre mp-body-inner
+    $('#mpCuerpo').html(html);
+    _mpActualizarResumenExtras();
+}
+
+/* ---- Toggle: quitar / restaurar ingrediente ---- */
+function _mpToggleQuitarIngrediente(btn, nombreComponente) {
+    const idComp = parseInt(btn.dataset.comp);
+    const row = btn.closest('.mp-ingrediente-row');
+    const selectSustituto = row.querySelector('.mp-select-sustituir');
+
+    const yaQuitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
+
+    if (yaQuitado) {
+        // Restaurar
+        _mpDraft.ingredientes_quitados = _mpDraft.ingredientes_quitados.filter(q => q.id_componente !== idComp);
+        row.classList.remove('mp-ingrediente-quitado');
+        btn.classList.remove('activo');
+        btn.innerHTML = '<i class="bi bi-x-circle"></i>';
+        btn.title = 'Quitar este ingrediente';
+        if (selectSustituto) selectSustituto.disabled = false;
+    } else {
+        // Quitar
+        _mpDraft.ingredientes_quitados.push({ id_componente: idComp, nombre_componente: nombreComponente });
+        // Si había sustitución, la cancelamos
+        _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
+        if (selectSustituto) { selectSustituto.value = ''; selectSustituto.disabled = true; }
+
+        row.classList.add('mp-ingrediente-quitado');
+        btn.classList.add('activo');
+        btn.innerHTML = '<i class="bi bi-plus-circle"></i>';
+        btn.title = 'Restaurar ingrediente';
+    }
+}
+
+/* ---- Sustituir ingrediente por otro del catálogo ---- */
+function _mpSustituirIngrediente(select) {
+    const idComp      = parseInt(select.dataset.comp);
+    const nombreOrig  = select.dataset.nombreOrig;
+    const idNuevo     = select.value ? parseInt(select.value) : null;
+    const nombreNuevo = select.value ? select.options[select.selectedIndex].text : '';
+
+    // Quitar sustitución previa de este componente
+    _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
+
+    if (idNuevo) {
+        _mpDraft.ingredientes_sustituidos.push({
+            id_componente:  idComp,
+            nombre_original: nombreOrig,
+            id_nuevo:        idNuevo,
+            nombre_nuevo:    nombreNuevo
+        });
+    }
+}
+
+/* ---- Seleccionar endulzante ---- */
+function _mpSeleccionarEndulzante(btn) {
+    const idEnd = parseInt(btn.dataset.id);
+    const nombre = btn.dataset.nombre;
+
+    // Toggle: si ya estaba seleccionado, deseleccionar
+    if (_mpDraft.endulzante_id === idEnd) {
+        _mpDraft.endulzante_id     = null;
+        _mpDraft.endulzante_nombre = '';
+        btn.classList.remove('activo');
+    } else {
+        _mpDraft.endulzante_id     = idEnd;
+        _mpDraft.endulzante_nombre = nombre;
+        // Quitar clase activo de todos los botones
+        document.querySelectorAll('.btn-mp-endulzante').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+    }
+}
+
+/* ---- Toggle extra (agregar/quitar) ---- */
+function _mpToggleExtra(btn) {
+    const idExt    = parseInt(btn.dataset.id);
+    const nombre   = btn.dataset.nombre;
+    const precio   = parseFloat(btn.dataset.precio) || 0;
+    const yaAgregado = _mpDraft.extras_agregados.some(e => e.id === idExt);
+
+    if (yaAgregado) {
+        _mpDraft.extras_agregados = _mpDraft.extras_agregados.filter(e => e.id !== idExt);
+        btn.classList.remove('activo');
+    } else {
+        _mpDraft.extras_agregados.push({ id: idExt, nombre, precio });
+        btn.classList.add('activo');
+    }
+
+    _mpActualizarResumenExtras();
+}
+
+/* ---- Recalcular monto de extras en el footer del modal ---- */
+function _mpActualizarResumenExtras() {
+    const total = _mpDraft.extras_agregados.reduce((s, e) => s + (parseFloat(e.precio) || 0), 0);
+    _mpDraft.monto_extras = Math.round(total * 100) / 100;
+
+    if (total > 0) {
+        $('#mpMontoExtras').text('C$ ' + total.toFixed(2));
+        $('#mpAjustePrecio').show();
+    } else {
+        $('#mpAjustePrecio').hide();
+    }
+}
+
+/* ---- Aplicar personalización al item del ticket ---- */
+$('#mpBtnGuardar').on('click', function () {
+    if (_mpIdx < 0 || !detalleFactura[_mpIdx]) return;
+
+    const item = detalleFactura[_mpIdx];
+    item.personalizacion = JSON.parse(JSON.stringify(_mpDraft));
+
+    // Ajustar precio_unitario: precio base + monto de extras
+    item.precio_unitario = Math.round(((item.precio_unitario_base || 0) + (_mpDraft.monto_extras || 0)) * 100) / 100;
+    item.costo_total_iva = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
+
+    actualizarTablaDetalle();
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion')).hide();
+
+    // Toast de confirmación
+    Swal.fire({
+        icon: 'success',
+        title: 'Personalización aplicada',
+        toast: true,
+        position: 'top-end',
+        timer: 1800,
+        showConfirmButton: false
+    });
+});
