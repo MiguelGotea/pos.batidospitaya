@@ -32,35 +32,116 @@ $hoy = date('Y-m-d');
             <div class="container-fluid px-0">
                 <div class="facturas-layout">
 
-                    <!-- ====== COLUMNA IZQUIERDA: Catálogo de Productos ====== -->
-                    <div class="panel-catalogo-productos">
+                    <!-- ====== COLUMNA IZQUIERDA: Catálogo, Membresía y Promociones ====== -->
+                    <div class="col-catalogo-promos d-flex flex-column gap-3">
 
-                        <!-- Buscador rápido -->
-                        <div class="catalogo-header">
-                            <div class="buscador-catalogo-wrap">
-                                <i class="bi bi-search buscador-catalogo-icon"></i>
-                                <input type="text" id="buscarProducto" class="buscador-catalogo-input"
-                                    placeholder="Buscar producto por nombre, código..." autocomplete="off">
-                                <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button" style="display:none;">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
+                        <!-- Panel Catálogo de Productos -->
+                        <div class="panel-catalogo-productos">
+
+                            <!-- Buscador rápido -->
+                            <div class="catalogo-header">
+                                <div class="buscador-catalogo-wrap">
+                                    <i class="bi bi-search buscador-catalogo-icon"></i>
+                                    <input type="text" id="buscarProducto" class="buscador-catalogo-input"
+                                        placeholder="Buscar producto por nombre, código..." autocomplete="off">
+                                    <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button" style="display:none;">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
                             </div>
+
+                            <!-- Tabs de Grupos -->
+                            <div class="grupos-tabs-bar" id="gruposTabs">
+                                <span class="spinner-border spinner-border-sm text-secondary m-2"></span>
+                            </div>
+
+                            <!-- Área de productos (subgrupos + cards o resultados de búsqueda) -->
+                            <div class="catalogo-content-area" id="catalogoPanel">
+                                <p class="no-productos-msg">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                    Cargando catálogo…
+                                </p>
+                            </div>
+
+                        </div><!-- /panel-catalogo-productos -->
+
+                        <!-- Banner de Quick Add para Membresía Club Pitaya -->
+                        <div class="banner-club-pitaya-pos" id="bannerClubPitaya">
+                            <div class="banner-club-info">
+                                <div class="banner-club-icon">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                                <div class="banner-club-text">
+                                    <h6 class="banner-club-titulo mb-0">Vender Membresía Club Pitaya</h6>
+                                    <span class="banner-club-sub">¡Suma Puntos Ahora! Beneficios exclusivos para el cliente.</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia" title="Agregar membresía a la orden">
+                                QUICK ADD <i class="bi bi-plus-lg ms-1"></i>
+                            </button>
                         </div>
 
-                        <!-- Tabs de Grupos -->
-                        <div class="grupos-tabs-bar" id="gruposTabs">
-                            <span class="spinner-border spinner-border-sm text-secondary m-2"></span>
-                        </div>
+                        <!-- Sección de Promociones Recomendadas y Aplicables -->
+                        <div class="seccion-promociones-pos" id="seccionPromociones">
+                            <div class="promociones-header-pos mb-2">
+                                <span class="promociones-main-title">PROMOCIONES</span>
+                            </div>
 
-                        <!-- Área de productos (subgrupos + cards o resultados de búsqueda) -->
-                        <div class="catalogo-content-area" id="catalogoPanel">
-                            <p class="no-productos-msg">
-                                <span class="spinner-border spinner-border-sm me-1"></span>
-                                Cargando catálogo…
-                            </p>
-                        </div>
+                            <!-- Grupo 1: Recomendados -->
+                            <div class="promociones-bloque mb-3">
+                                <div class="promociones-sub-label">RECOMENDADOS</div>
+                                <div class="promociones-grid-recomendados">
+                                    <!-- Card 1 -->
+                                    <div class="promo-card promo-card-teal" data-promo="2x1-pitaya-blast" role="button" tabindex="0">
+                                        <div class="promo-badge promo-badge-teal">FIJADO</div>
+                                        <div class="promo-title">2x1 Pitaya Blast</div>
+                                        <div class="promo-sub">Válido hasta las 6 PM.</div>
+                                    </div>
+                                    <!-- Card 2 -->
+                                    <div class="promo-card promo-card-amber" data-promo="combo-familiar" role="button" tabindex="0">
+                                        <div class="promo-badge promo-badge-amber">FIJADO</div>
+                                        <div class="promo-title">Combo Familiar</div>
+                                        <div class="promo-sub">-20% en 4+ batidos.</div>
+                                    </div>
+                                    <!-- Card 3 -->
+                                    <div class="promo-card promo-card-neutral" data-promo="hora-feliz">
+                                        <div class="promo-badge promo-badge-neutral">PRÓXIMAMENTE</div>
+                                        <div class="promo-title">Hora Feliz</div>
+                                        <div class="promo-sub">Descuentos desde las 7 PM.</div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    </div><!-- /panel-catalogo-productos -->
+                            <!-- Grupo 2: Aplicables -->
+                            <div class="promociones-bloque">
+                                <div class="promociones-sub-label">APLICABLES</div>
+                                <div class="promociones-grid-aplicables">
+                                    <!-- Card Aplicable 1 -->
+                                    <div class="promo-card-dark promo-card-oro">
+                                        <div class="promo-dark-header">
+                                            <span class="badge-rango-oro"><i class="bi bi-gem me-1"></i> ORO</span>
+                                        </div>
+                                        <div class="promo-dark-title">Desc. Miembro (15%)</div>
+                                        <button type="button" class="btn-aplicar-promo btn-aplicar-oro" onclick="demostrarPromocion('Desc. Miembro (15%)')">
+                                            APLICAR <i class="bi bi-check2 ms-1"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Card Aplicable 2 -->
+                                    <div class="promo-card-dark promo-card-canje">
+                                        <div class="promo-dark-header">
+                                            <span class="badge-rango-canje"><i class="bi bi-coin me-1"></i> CANJE</span>
+                                        </div>
+                                        <div class="promo-dark-title">Canje de 10 Puntos</div>
+                                        <button type="button" class="btn-aplicar-promo btn-aplicar-outline" onclick="demostrarPromocion('Canje de 10 Puntos')">
+                                            APLICAR <i class="bi bi-check2 ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div><!-- /seccion-promociones-pos -->
+
+                    </div><!-- /col-catalogo-promos -->
 
                     <!-- ====== COLUMNA DERECHA: Factura ====== -->
                     <div class="panel-factura-derecho d-flex flex-column gap-2">

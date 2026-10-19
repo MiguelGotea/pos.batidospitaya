@@ -1514,3 +1514,74 @@ $('#mpBtnGuardar').on('click', function () {
         showConfirmButton: false
     });
 });
+
+/* ============================================================
+   BANNER CLUB PITAYA (QUICK ADD) Y SECCIÓN DE PROMOCIONES
+   (Fase de maquetación y prototipado visual - listo para reglas)
+   ============================================================ */
+
+/* ---- Quick Add Membresía Club Pitaya ---- */
+$('#btnQuickAddMembresia').on('click', function () {
+    // Si el tipo de cliente no es club, activar Club Pitaya
+    if ($('#tipoClienteGeneral').is(':checked')) {
+        $('#tipoClienteClub').prop('checked', true);
+        cambiarTipoCliente('club');
+    }
+
+    // Agregar la línea de Membresía al ticket tal como en el mockup
+    const idMembresiaVirtual = -1;
+    const existe = detalleFactura.find(d => d.id_presentacion === idMembresiaVirtual);
+    if (!existe) {
+        detalleFactura.unshift({
+            id_presentacion:      idMembresiaVirtual,
+            nombre:               'Membresía Club Pitaya',
+            unidad:               'N/A',
+            precio_unitario_base: 150,
+            precio_unitario:      150,
+            cantidad:             1,
+            costo_total_iva:      150,
+            notas:                'Ingresar número de membresía',
+            es_personalizable:    false,
+            personalizacion:      {}
+        });
+        actualizarTablaDetalle();
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Membresía agregada a la orden',
+            text: 'Membresía Club Pitaya (C$ 150.00) agregada al ticket para venta rápida.',
+            toast: true,
+            position: 'top-end',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    } else {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Membresía ya agregada',
+            text: 'La membresía ya se encuentra en el ticket actual.',
+            toast: true,
+            position: 'top-end',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+});
+
+/* ---- Demostración de Promociones Recomendadas / Aplicables ---- */
+function demostrarPromocion(nombrePromo) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Promoción: ' + nombrePromo,
+        text: 'Módulo de promociones en fase de prototipo visual. Las reglas automáticas de descuento y canje se aplicarán en la siguiente etapa.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#0E544C'
+    });
+}
+
+// Clic en tarjetas recomendadas interactivas
+$(document).on('click', '.promo-card:not(.promo-card-neutral)', function () {
+    const titulo = $(this).find('.promo-title').text();
+    demostrarPromocion(titulo);
+});
+

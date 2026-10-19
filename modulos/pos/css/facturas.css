@@ -2189,3 +2189,277 @@
     font-style: italic;
 }
 
+/* ============================================================
+   BANNER CLUB PITAYA (QUICK ADD) Y SECCIÓN DE PROMOCIONES
+   ============================================================ */
+
+/* ---- Banner Club Pitaya ---- */
+.banner-club-pitaya-pos {
+    background: linear-gradient(135deg, #0E544C 0%, #134e4a 100%);
+    border-radius: 12px;
+    padding: 0.9rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 4px 14px rgba(14, 84, 76, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.banner-club-pitaya-pos:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(14, 84, 76, 0.22);
+}
+
+.banner-club-info {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.banner-club-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fde047;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.banner-club-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.banner-club-sub {
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.82);
+    display: block;
+    margin-top: 2px;
+}
+
+.btn-quick-add-membresia {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.btn-quick-add-membresia:hover {
+    background: #ffffff;
+    color: #0E544C;
+    border-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ---- Sección Promociones ---- */
+.seccion-promociones-pos {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.promociones-main-title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #0E544C;
+    display: block;
+}
+
+.promociones-sub-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+/* Grid Recomendados */
+.promociones-grid-recomendados {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.promo-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    position: relative;
+}
+.promo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.promo-card-teal {
+    border-left: 4px solid #0E544C;
+    background: #f0fdfa;
+}
+.promo-card-teal:hover {
+    border-color: #0E544C;
+}
+
+.promo-card-amber {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+}
+.promo-card-amber:hover {
+    border-color: #f59e0b;
+}
+
+.promo-card-neutral {
+    border-left: 4px solid #94a3b8;
+    background: #f8fafc;
+    opacity: 0.75;
+    cursor: default;
+}
+.promo-card-neutral:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.promo-badge {
+    align-self: flex-start;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+.promo-badge-teal {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+.promo-badge-amber {
+    background: #fef3c7;
+    color: #b45309;
+}
+.promo-badge-neutral {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.promo-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 0.15rem;
+}
+
+.promo-sub {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+/* Grid Aplicables */
+.promociones-grid-aplicables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.75rem;
+}
+
+.promo-card-dark {
+    background: #0E544C;
+    border-radius: 9px;
+    padding: 0.75rem 0.9rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.65rem;
+    box-shadow: 0 3px 8px rgba(14, 84, 76, 0.18);
+    transition: transform 0.15s ease;
+}
+.promo-card-dark:hover {
+    transform: translateY(-2px);
+}
+
+.badge-rango-oro {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #fde047;
+    text-transform: uppercase;
+}
+
+.badge-rango-canje {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #86efac;
+    text-transform: uppercase;
+}
+
+.promo-dark-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.25;
+}
+
+.btn-aplicar-promo {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.btn-aplicar-oro {
+    background: #51B8AC;
+    color: #073832;
+    border: none;
+}
+.btn-aplicar-oro:hover {
+    background: #38a599;
+    color: #ffffff;
+}
+
+.btn-aplicar-outline {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.btn-aplicar-outline:hover {
+    background: #ffffff;
+    color: #0E544C;
+    border-color: #ffffff;
+}
+
