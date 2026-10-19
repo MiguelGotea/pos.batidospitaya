@@ -114,6 +114,18 @@ function cambiarTipoCliente(tipo) {
         $('#nombreCliente').prop('readonly', false).val('').attr('placeholder', 'Escriba nombre del cliente casual...').css('background-color', '#fff');
         $('#idClienteClub').val('');
         clienteActual = null;
+        // Revertir canjes activos si se pasa a Cliente General
+        let habiaCanjeados = false;
+        detalleFactura.forEach(item => {
+            if (item.es_canjeado) {
+                item.es_canjeado = false;
+                item.es_canje_puntos = 0;
+                item.bloquea_puntos = 0;
+                item.costo_total_iva = Math.round(item.cantidad * (item.precio_unitario || 0) * 100) / 100;
+                habiaCanjeados = true;
+            }
+        });
+        actualizarTablaDetalle();
         actualizarPuntosFactura();
     } else {
         $('#colMembresia').show();
@@ -129,6 +141,7 @@ function cambiarTipoCliente(tipo) {
             $('#idClienteClub').val('');
             $('#txtPuntosAnteriores').text('0');
         }
+        actualizarTablaDetalle();
         actualizarPuntosFactura();
         setTimeout(() => $('#membresiaCliente').focus(), 50);
     }
@@ -526,6 +539,10 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
 function actualizarTablaDetalle() {
     $('#contadorProductos').text(`${detalleFactura.length} ítem(s)`);
 
+    const isClub = $('input[name="tipo_cliente"]:checked').val() === 'club';
+    const idClienteClub = $('#idClienteClub').val();
+    const esClubValido = isClub && Boolean(idClienteClub) && Boolean(clienteActual);
+
     if (detalleFactura.length === 0) {
         $('#tablaDetalleBody').html(`
             <tr id="filaVacia">
@@ -600,8 +617,9 @@ function actualizarTablaDetalle() {
                 `}
             </td>
             <td class="text-center" style="width:65px;">
-                <label class="switch-canje-pos" title="${item.es_canjeado ? 'Desmarcar canje' : 'Marcar como producto canjeado (C$ 0.00)'}">
-                    <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
+                <label class="switch-canje-pos ${!esClubValido ? 'switch-canje-deshabilitado' : ''}"
+                       title="${!esClubValido ? 'Canje disponible únicamente para miembros verificados del Club Pitaya' : (item.es_canjeado ? 'Desmarcar canje' : 'Marcar como producto canjeado (C$ 0.00)')}">
+                    <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} ${!esClubValido ? 'disabled' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
                     <span class="slider-canje-pos"></span>
                 </label>
             </td>
@@ -632,6 +650,24 @@ function actualizarTablaDetalle() {
 /* ---- Toggle Canjeado: Pone el producto a C$ 0.00 con precio original tachado ---- */
 function toggleCanjeadoItem(idx, checked) {
     if (!detalleFactura[idx]) return;
+
+    const isClub = $('input[name="tipo_cliente"]:checked').val() === 'club';
+    const idClienteClub = $('#idClienteClub').val();
+    const esClubValido = isClub && Boolean(idClienteClub) && Boolean(clienteActual);
+
+    // Si intenta canjear sin ser cliente club verificado
+    if (checked && !esClubValido) {
+        actualizarTablaDetalle();
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cliente Club Requerido',
+            text: 'La opción de canjear productos con puntos aplica únicamente para miembros verificados del Club Pitaya.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#0E544C'
+        });
+        return;
+    }
+
     const item = detalleFactura[idx];
     item.es_canjeado = checked;
 

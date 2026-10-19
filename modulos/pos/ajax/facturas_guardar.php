@@ -101,7 +101,8 @@ try {
     $stmtLinea = $conn->prepare($sqlLinea);
 
     foreach ($detalle as $item) {
-        $esCanjeado     = !empty($item['es_canjeado']) ? 1 : 0;
+        $isClubCliente  = ($tipoCliente === 'club' && !empty($idClienteClub));
+        $esCanjeado     = ($isClubCliente && !empty($item['es_canjeado'])) ? 1 : 0;
         $cantidad       = (float)$item['cantidad'];
         $costoTotalIva  = $esCanjeado ? 0 : (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;

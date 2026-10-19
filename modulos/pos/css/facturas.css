@@ -2537,4 +2537,15 @@
     font-weight: 800;
 }
 
+/* Switch deshabilitado (cuando no es Cliente Club verificado) */
+.switch-canje-pos.switch-canje-deshabilitado {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+}
+.switch-canje-pos.switch-canje-deshabilitado .slider-canje-pos {
+    cursor: not-allowed !important;
+    background-color: #e2e8f0;
+}
+
+
 
