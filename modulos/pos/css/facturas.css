@@ -2,15 +2,41 @@
    facturas.css — Módulo Registro de Facturas POS
    ============================================================ */
 
+/* ---- Ajuste de espaciado debajo del Header para POS Facturas ---- */
+.pos-main-header {
+    margin-bottom: 8px !important;
+}
+
+/* ---- Contenedor Fluido para POS Facturas ---- */
+.pos-content-fluid {
+    max-width: 100% !important;
+    padding: 0.25rem 1.75rem 1.25rem 1.75rem !important;
+    margin: 0 !important;
+}
+
 /* ---- Layout Split ---- */
 .facturas-layout {
     display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 1.25rem;
+    grid-template-columns: 1fr 520px;
+    gap: 1.5rem;
     align-items: start;
 }
 
-@media (max-width: 1100px) {
+@media (min-width: 1600px) {
+    .facturas-layout {
+        grid-template-columns: 1fr 560px;
+        gap: 1.75rem;
+    }
+}
+
+@media (max-width: 1280px) {
+    .facturas-layout {
+        grid-template-columns: 1fr 480px;
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 991px) {
     .facturas-layout {
         grid-template-columns: 1fr;
     }
@@ -28,22 +54,22 @@
 .card-factura .card-header-factura {
     background: #0E544C;
     color: #fff;
-    padding: .85rem 1.2rem;
+    padding: .55rem 1rem;
     display: flex;
     align-items: center;
     gap: .55rem;
     font-weight: 600;
-    font-size: .95rem;
+    font-size: .86rem;
     letter-spacing: .02em;
 }
 
 .card-factura .card-header-factura i {
-    font-size: 1.1rem;
+    font-size: 1rem;
     opacity: .85;
 }
 
 .card-factura .card-body-factura {
-    padding: 1.1rem 1.2rem;
+    padding: .75rem 1rem;
 }
 
 /* ---- Formulario cabecera ---- */
@@ -99,11 +125,11 @@
 .tabla-detalle-factura thead th {
     background: #f8fafc;
     border-bottom: 2px solid #e2e8f0;
-    padding: .6rem .75rem;
+    padding: .45rem .65rem;
     font-weight: 700;
     color: #374151;
     text-transform: uppercase;
-    font-size: .75rem;
+    font-size: .72rem;
     letter-spacing: .05em;
     white-space: nowrap;
 }
@@ -118,7 +144,7 @@
 }
 
 .tabla-detalle-factura tbody td {
-    padding: .5rem .75rem;
+    padding: .4rem .65rem;
     vertical-align: middle;
     color: #374151;
 }
@@ -186,9 +212,9 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: .5rem 1.5rem;
+    padding: .38rem 1.15rem;
     font-weight: 600;
-    font-size: .9rem;
+    font-size: .84rem;
     display: inline-flex;
     align-items: center;
     gap: .4rem;
@@ -213,9 +239,9 @@
     color: #475569;
     border: 1.5px solid #cbd5e1;
     border-radius: 8px;
-    padding: .5rem 1.2rem;
+    padding: .38rem .95rem;
     font-weight: 600;
-    font-size: .9rem;
+    font-size: .84rem;
     display: inline-flex;
     align-items: center;
     gap: .4rem;
@@ -229,8 +255,8 @@
     border-color: #94a3b8;
 }
 
-/* ---- Panel lateral: Productos elegibles ---- */
-.panel-productos-elegibles {
+/* ---- Panel derecho: Factura (sticky) ---- */
+.panel-factura-derecho {
     position: sticky;
     top: 1rem;
 }
@@ -919,9 +945,9 @@
 .custom-radio-cliente {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #475569;
@@ -930,8 +956,8 @@
 
 .custom-radio-cliente input[type="radio"] {
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #94a3b8;
     border-radius: 50%;
     outline: none;
@@ -953,19 +979,99 @@
 }
 
 .form-label-pos {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #64748b;
     letter-spacing: 0.05em;
-    margin-bottom: 0.35rem;
-    display: block;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    height: 16px;
+    line-height: 1;
+}
+
+.check-verificado-badge {
+    color: #16a34a;
+    font-size: 0.85rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.35rem;
+}
+
+/* ---- Notas por producto en factura (ancho completo) ---- */
+.tabla-detalle-factura tbody tr.fila-producto-principal {
+    border-bottom: none;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-principal td {
+    border-bottom: none;
+    padding-bottom: 0.2rem;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-nota {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-nota td {
+    border-bottom: none;
+    padding-top: 0;
+    padding-bottom: 0.35rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+}
+
+.item-nota-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+}
+
+.item-nota-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+
+.item-nota-input {
+    flex: 1;
+    width: 100%;
+    font-size: 0.75rem;
+    color: #1e293b;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+    line-height: 1.3;
+    transition: all 0.15s ease;
+}
+
+.item-nota-input:hover {
+    border-color: #94a3b8;
+    background-color: #fff;
+}
+
+.item-nota-input:focus {
+    border: 1px solid #51B8AC;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(81, 184, 172, 0.15);
+    outline: none;
+}
+
+.item-nota-input::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.72rem;
 }
 
 .form-control-pos {
-    border-radius: 8px;
+    border-radius: 7px;
     border: 1.5px solid #cbd5e1;
-    font-size: 0.92rem;
-    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -1100,6 +1206,10 @@
     letter-spacing: 0.04em;
     padding: 0.75rem 0.85rem;
     border-bottom: 2px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .tabla-historial-pos tbody td {
@@ -1117,5 +1227,1325 @@
     color: #94a3b8;
     text-decoration: line-through;
 }
+
+/* ---- Paginación Corporativa POS (Pitaya) ---- */
+.pagination .page-link {
+    color: #0E544C;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px !important;
+    padding: 0.32rem 0.65rem;
+    font-weight: 600;
+    font-size: 0.82rem;
+    background-color: #fff;
+    min-width: 32px;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.pagination .page-link:hover {
+    background-color: #E6F4F1;
+    border-color: #51B8AC;
+    color: #0E544C;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 3px rgba(81, 184, 172, 0.2);
+    color: #0E544C;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0E544C !important;
+    border-color: #0E544C !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #cbd5e1;
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   CATÁLOGO DE PRODUCTOS — Panel izquierdo
+   ============================================================ */
+
+/* ---- Contenedor principal del catálogo ---- */
+.panel-catalogo-productos {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    overflow: hidden;
+    min-height: 560px;
+}
+
+/* ---- Buscador superior ---- */
+.catalogo-header {
+    padding: .7rem 1rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.buscador-catalogo-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: .35rem .75rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.buscador-catalogo-wrap:focus-within {
+    border-color: #51B8AC;
+    box-shadow: 0 0 0 3px rgba(81,184,172,.15);
+}
+
+.buscador-catalogo-icon {
+    color: #94a3b8;
+    font-size: .9rem;
+    flex-shrink: 0;
+}
+
+.buscador-catalogo-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: .875rem;
+    background: transparent;
+    color: #1e293b;
+}
+
+.buscador-catalogo-input::placeholder {
+    color: #94a3b8;
+}
+
+.buscador-catalogo-clear {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 .2rem;
+    line-height: 1;
+    font-size: .8rem;
+    transition: color .15s;
+    flex-shrink: 0;
+}
+
+.buscador-catalogo-clear:hover {
+    color: #475569;
+}
+
+/* ---- Barra de tabs de grupos ---- */
+.grupos-tabs-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: #fff;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 0 .5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.grupos-tabs-bar::-webkit-scrollbar { display: none; }
+
+/* ---- Tab individual ---- */
+.tab-grupo {
+    padding: .65rem 1.1rem;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: .84rem;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s, background .15s;
+    letter-spacing: .01em;
+    border-radius: 6px 6px 0 0;
+}
+
+.tab-grupo:hover {
+    color: #0E544C;
+    background: rgba(14,84,76,.04);
+}
+
+.tab-grupo.active {
+    color: #0E544C;
+    border-bottom-color: #0E544C;
+    background: rgba(14,84,76,.06);
+}
+
+/* ---- Área de contenido del catálogo ---- */
+.catalogo-content-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 1.15rem;
+    max-height: calc(100vh - 210px);
+}
+
+/* ---- Columnas de subgrupos ---- */
+.subgrupos-columnas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.subgrupo-col {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    min-width: 150px;
+    max-width: 210px;
+    flex: 1 1 160px;
+}
+
+.subgrupo-header {
+    font-size: .74rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding-bottom: .45rem;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: .15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Card de producto (catálogo) ---- */
+.producto-card-pos {
+    background: linear-gradient(135deg, #1A9A89 0%, #0E544C 100%);
+    color: #fff;
+    border-radius: 8px;
+    padding: .65rem .85rem;
+    font-size: .84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s, background .15s;
+    line-height: 1.35;
+    user-select: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+}
+
+.producto-card-pos:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(14,84,76,.3);
+    background: linear-gradient(135deg, #21B9A5 0%, #0E544C 100%);
+}
+
+.producto-card-pos:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* ---- Grid de resultados de búsqueda ---- */
+.busqueda-resultados-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .6rem;
+}
+
+/* ---- Barra compacta de puntos Club Pitaya ---- */
+.puntos-compact-bar {
+    display: flex;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    overflow: hidden;
+    margin-top: .4rem;
+}
+
+.puntos-stat-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: .45rem .5rem;
+    border-right: 1px solid #e2e8f0;
+    min-width: 0;
+    gap: .15rem;
+}
+
+.puntos-stat-item:last-child {
+    border-right: none;
+}
+
+.puntos-total {
+    background: rgba(14, 84, 76, .07);
+}
+
+.pstat-lbl {
+    font-size: .65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.pstat-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0E544C;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+/* ============================================================
+   SECCIÓN MÉTODOS DE PAGO Y DESGLOSE FINANCIERO POS
+   ============================================================ */
+
+.seccion-metodos-pago {
+    background: #ffffff;
+}
+
+.titulo-seccion-pago {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.metodos-pago-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+}
+
+.btn-metodo-pago {
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 0.35rem 0.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    min-height: 38px;
+}
+
+.btn-metodo-pago i {
+    font-size: 0.95rem;
+    line-height: 1;
+    color: #0E544C;
+    transition: transform 0.15s;
+}
+
+.btn-metodo-pago:hover:not(.btn-metodo-disabled) {
+    background: #ffffff;
+    border-color: #51B8AC;
+    color: #0E544C;
+    box-shadow: 0 2px 6px rgba(81, 184, 172, 0.15);
+}
+
+.btn-metodo-pago:hover:not(.btn-metodo-disabled) i {
+    transform: scale(1.1);
+}
+
+.btn-metodo-pago.activo {
+    background: #E6F4F1;
+    border-color: #0E544C;
+    color: #0E544C;
+    box-shadow: 0 0 0 1px #0E544C;
+}
+
+.btn-metodo-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f1f5f9;
+    border-style: dashed;
+}
+
+/* ---- Filas dinámicas de pagos agregados ---- */
+.contenedor-filas-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.fila-pago-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 0.4rem 0.6rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fila-pago-card:focus-within {
+    border-color: #51B8AC;
+    box-shadow: 0 0 0 2px rgba(81, 184, 172, 0.15);
+    background: #ffffff;
+}
+
+.fila-pago-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+}
+
+.pago-metodo-info {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.pago-metodo-info i {
+    font-size: 0.88rem;
+    color: #0E544C;
+}
+
+.pago-campos-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.input-monto-pago-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 5px;
+    padding: 0.15rem 0.35rem;
+    gap: 0.2rem;
+}
+
+.input-monto-pago-wrap .prefijo-monto {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.input-monto-pago {
+    border: none;
+    outline: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 78px;
+    text-align: right;
+    background: transparent;
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-quitar-pago {
+    background: transparent;
+    border: none;
+    color: #dc2626;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0.15rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 0.1s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-quitar-pago:hover {
+    color: #b91c1c;
+    transform: scale(1.15);
+}
+
+/* Sub-fila de cálculo de cambio para efectivo */
+.fila-pago-subdetalle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+    padding-top: 0.3rem;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 0.72rem;
+}
+
+.subdetalle-recibido {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.subdetalle-recibido input {
+    width: 75px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 0.12rem 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: right;
+    outline: none;
+}
+
+.subdetalle-recibido input:focus {
+    border-color: #51B8AC;
+}
+
+.badge-cambio-vuelto {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid #bbf7d0;
+}
+
+/* Sub-fila de referencia/voucher */
+.subdetalle-referencia {
+    width: 100%;
+    margin-top: 0.35rem;
+    padding-top: 0.3rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.subdetalle-referencia input {
+    width: 100%;
+    border: 1px dashed #cbd5e1;
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.72rem;
+    color: #334155;
+    background: #ffffff;
+    outline: none;
+}
+
+.subdetalle-referencia input:focus {
+    border: 1px solid #51B8AC;
+}
+
+/* ---- Estilo específico para botón de Cupón activo ---- */
+.btn-metodo-pago#btnPagoCupon.activo {
+    background: #0F5132;
+    border-color: #0F5132;
+    color: #ffffff;
+    box-shadow: 0 0 0 1px #0F5132;
+}
+
+.btn-metodo-pago#btnPagoCupon.activo i {
+    color: #ffffff;
+}
+
+/* ---- Estilos para fila de pago con Cupón ---- */
+.fila-pago-cupon {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+}
+
+.fila-pago-cupon.cupon-validado {
+    border-color: #198754;
+    background: #f0fdf4;
+}
+
+.pago-cupon-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.input-codigo-cupon-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.input-codigo-cupon {
+    border: 1.5px solid #cbd5e1;
+    border-radius: 5px;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 105px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.input-codigo-cupon:focus {
+    border-color: #0E544C;
+}
+
+.input-codigo-cupon[readonly] {
+    background: #f8fafc;
+    color: #0F5132;
+    border-color: #86efac;
+}
+
+.btn-validar-cupon {
+    background: #0E544C;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.22rem 0.55rem;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-validar-cupon:hover {
+    background: #093b35;
+}
+
+.btn-validar-cupon.btn-cupon-exito {
+    background: #198754;
+}
+
+.btn-validar-cupon.btn-cupon-exito:hover {
+    background: #157347;
+}
+
+.cupon-monto-display {
+    min-width: 72px;
+    text-align: right;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.cupon-subnota {
+    font-size: 0.68rem;
+    color: #0F5132 !important;
+    border-top: 1px dashed #bbf7d0;
+    margin-top: 0.35rem;
+    padding-top: 0.25rem;
+}
+
+/* ---- Desglose financiero ---- */
+.desglose-totales-pago {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 0.45rem 0.65rem;
+}
+
+.fila-desglose {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-bottom: 0.2rem;
+}
+
+.fila-desglose:last-child {
+    margin-bottom: 0;
+}
+
+.lbl-desglose {
+    font-weight: 600;
+}
+
+.val-desglose {
+    font-weight: 700;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+}
+
+.switch-propina-pitaya {
+    cursor: pointer;
+    width: 2.1rem !important;
+    height: 1.1rem !important;
+    transform: scale(0.85);
+    margin: 0 !important;
+}
+
+.switch-propina-pitaya:checked {
+    background-color: #0E544C !important;
+    border-color: #0E544C !important;
+}
+
+.switch-propina-pitaya:focus {
+    box-shadow: 0 0 0 3px rgba(14, 84, 76, 0.15) !important;
+    border-color: #51B8AC !important;
+}
+
+.fila-total-destacado {
+    margin-bottom: 0;
+}
+
+.lbl-total-pagar {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.02em;
+}
+
+.val-total-pagar {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0E544C;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.alerta-cobertura {
+    padding: 0.25rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.alerta-cobertura.cobertura-completa {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.alerta-cobertura.cobertura-pendiente {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.alerta-cobertura.cobertura-exceso {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+/* ---- Responsive adjustments ---- */
+@media (max-width: 991px) {
+    .panel-factura-derecho {
+        position: static;
+    }
+    .panel-catalogo-productos {
+        min-height: 420px;
+    }
+    .catalogo-content-area {
+        max-height: 480px;
+    }
+}
+
+/* ============================================================
+   MODAL DE PERSONALIZACIÓN DE RECETA
+   ============================================================ */
+
+/* ---- Botón lápiz en cada fila del ticket ---- */
+.btn-personalizar-fila {
+    background: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+    padding: 3px 6px;
+    font-size: .8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s, color .15s, border-color .15s;
+    line-height: 1;
+}
+.btn-personalizar-fila:hover {
+    background: #f0fdf4;
+    color: #0E544C;
+    border-color: #0E544C;
+}
+
+/* ---- Badges de personalización en la fila ---- */
+.badge-pers-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: .72rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+.badge-pers-item i { font-size: .7rem; }
+.badge-pers-quitar { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.badge-pers-sustituir { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badge-pers-extra { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+
+/* ---- Producto personalizable en catálogo (sutil resaltado) ---- */
+.producto-card-pos.producto-personalizable {
+    border-color: rgba(14, 84, 76, 0.25);
+}
+.producto-card-pos.producto-personalizable:hover {
+    border-color: rgba(14, 84, 76, 0.5);
+}
+
+/* ---- Cuerpo interno del modal ---- */
+.mp-body-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ---- Sección genérica ---- */
+.mp-seccion {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.mp-seccion-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: .65rem 1rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.mp-seccion-header i { color: #0E544C; }
+
+/* ---- Lista de ingredientes ---- */
+.mp-ingredientes-lista {
+    padding: .5rem .75rem;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+}
+
+.mp-ingrediente-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .45rem .5rem;
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: opacity .2s, background .2s;
+}
+.mp-ingrediente-row.mp-ingrediente-quitado {
+    opacity: .45;
+    background: #fef2f2;
+    border-color: #fecaca;
+    text-decoration: line-through;
+}
+
+.mp-ing-nombre {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+.mp-ing-nombre strong { font-size: .83rem; color: #1e293b; }
+.mp-ing-nombre small { font-size: .74rem; color: #64748b; }
+
+.mp-ing-controles {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-shrink: 0;
+}
+
+.mp-select-sustituir {
+    font-size: .78rem !important;
+    min-width: 140px;
+    max-width: 180px;
+    border-color: #cbd5e1 !important;
+    color: #334155;
+    border-radius: 6px !important;
+}
+
+.btn-mp-quitar {
+    background: none;
+    border: 1px solid #fca5a5;
+    color: #ef4444;
+    border-radius: 6px;
+    padding: 3px 7px;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    line-height: 1;
+}
+.btn-mp-quitar:hover,
+.btn-mp-quitar.activo { background: #fef2f2; color: #b91c1c; border-color: #f87171; }
+.btn-mp-quitar.activo { background: #fee2e2; }
+
+/* ---- Grid de Endulzantes ---- */
+.mp-endulzante-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .75rem;
+}
+
+.btn-mp-endulzante {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .38rem .85rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 20px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    position: relative;
+}
+.btn-mp-endulzante:hover { border-color: #0E544C; color: #0E544C; background: #f0fdf4; }
+.btn-mp-endulzante.activo {
+    background: #0E544C;
+    color: #fff;
+    border-color: #0E544C;
+}
+.btn-mp-endulzante i { font-size: .75rem; }
+
+.mp-badge-sugerido {
+    font-size: .65rem;
+    background: rgba(255,255,255,.25);
+    padding: 1px 5px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+.btn-mp-endulzante.activo .mp-badge-sugerido { background: rgba(255,255,255,.2); }
+.btn-mp-endulzante:not(.activo) .mp-badge-sugerido {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* ---- Grid de Extras ---- */
+.mp-extras-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .75rem;
+}
+
+.btn-mp-extra {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: .45rem .85rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .78rem;
+    cursor: pointer;
+    transition: all .15s;
+    gap: .15rem;
+    min-width: 90px;
+    text-align: center;
+}
+.btn-mp-extra:hover { border-color: #166534; color: #166534; background: #f0fdf4; }
+.btn-mp-extra.activo {
+    background: #166534;
+    color: #fff;
+    border-color: #166534;
+}
+.mp-extra-nombre { font-weight: 600; }
+.mp-extra-precio { font-size: .72rem; opacity: .85; }
+
+/* ---- Placeholder de Combos Sugeridos ---- */
+.mp-seccion-placeholder .mp-seccion-header { opacity: .6; }
+.mp-placeholder-msg {
+    padding: .75rem 1rem;
+    font-size: .8rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* ============================================================
+   BANNER CLUB PITAYA (QUICK ADD) Y SECCIÓN DE PROMOCIONES
+   ============================================================ */
+
+/* ---- Banner Club Pitaya ---- */
+.banner-club-pitaya-pos {
+    background: linear-gradient(135deg, #0E544C 0%, #134e4a 100%);
+    border-radius: 12px;
+    padding: 0.9rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 4px 14px rgba(14, 84, 76, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.banner-club-pitaya-pos:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(14, 84, 76, 0.22);
+}
+
+.banner-club-info {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.banner-club-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fde047;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.banner-club-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.banner-club-sub {
+    font-size: 0.76rem;
+    color: rgba(255, 255, 255, 0.82);
+    display: block;
+    margin-top: 2px;
+}
+
+.btn-quick-add-membresia {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+.btn-quick-add-membresia:hover {
+    background: #ffffff;
+    color: #0E544C;
+    border-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ---- Sección Promociones ---- */
+.seccion-promociones-pos {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.promociones-main-title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #0E544C;
+    display: block;
+}
+
+.promociones-sub-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+/* Grid Recomendados */
+.promociones-grid-recomendados {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+
+.promo-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    position: relative;
+}
+.promo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.promo-card-teal {
+    border-left: 4px solid #0E544C;
+    background: #f0fdfa;
+}
+.promo-card-teal:hover {
+    border-color: #0E544C;
+}
+
+.promo-card-amber {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+}
+.promo-card-amber:hover {
+    border-color: #f59e0b;
+}
+
+.promo-card-neutral {
+    border-left: 4px solid #94a3b8;
+    background: #f8fafc;
+    opacity: 0.75;
+    cursor: default;
+}
+.promo-card-neutral:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.promo-badge {
+    align-self: flex-start;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.2;
+}
+.promo-badge-teal {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+.promo-badge-amber {
+    background: #fef3c7;
+    color: #b45309;
+}
+.promo-badge-neutral {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.promo-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 0.15rem;
+}
+
+.promo-sub {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+/* Grid Aplicables */
+.promociones-grid-aplicables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.75rem;
+}
+
+.promo-card-dark {
+    background: #0E544C;
+    border-radius: 9px;
+    padding: 0.75rem 0.9rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.65rem;
+    box-shadow: 0 3px 8px rgba(14, 84, 76, 0.18);
+    transition: transform 0.15s ease;
+}
+.promo-card-dark:hover {
+    transform: translateY(-2px);
+}
+
+.badge-rango-oro {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #fde047;
+    text-transform: uppercase;
+}
+
+.badge-rango-canje {
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #86efac;
+    text-transform: uppercase;
+}
+
+.promo-dark-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.25;
+}
+
+.btn-aplicar-promo {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+
+.btn-aplicar-oro {
+    background: #51B8AC;
+    color: #073832;
+    border: none;
+}
+.btn-aplicar-oro:hover {
+    background: #38a599;
+    color: #ffffff;
+}
+
+.btn-aplicar-outline {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.btn-aplicar-outline:hover {
+    background: #ffffff;
+    color: #0E544C;
+    border-color: #ffffff;
+}
+
+/* ============================================================
+   SWITCH CANJEADO (PRODUCTO EN C$ 0.00 CON PRECIO TACHADO)
+   ============================================================ */
+
+.switch-canje-pos {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.switch-canje-pos input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-canje-pos {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: background-color 0.2s ease;
+    border-radius: 20px;
+}
+
+.slider-canje-pos:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: transform 0.2s ease;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.switch-canje-pos input:checked + .slider-canje-pos {
+    background-color: #0E544C;
+}
+
+.switch-canje-pos input:checked + .slider-canje-pos:before {
+    transform: translateX(16px);
+}
+
+.switch-canje-pos input:focus + .slider-canje-pos {
+    box-shadow: 0 0 0 2px rgba(14, 84, 76, 0.2);
+}
+
+/* Fila canjeada resaltado sutil */
+.fila-producto-principal.fila-canjeada td {
+    background-color: rgba(240, 253, 244, 0.5) !important;
+}
+
+.precio-tachado-canje {
+    text-decoration: line-through;
+    color: #94a3b8 !important;
+    font-size: 0.74rem;
+    font-weight: 500;
+}
+
+.precio-cero-canje {
+    color: #166534 !important;
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+/* Switch deshabilitado (cuando no es Cliente Club verificado) */
+.switch-canje-pos.switch-canje-deshabilitado {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+}
+.switch-canje-pos.switch-canje-deshabilitado .slider-canje-pos {
+    cursor: not-allowed !important;
+    background-color: #e2e8f0;
+}
+
 
 

@@ -141,6 +141,7 @@ function posRequiereColaborador()
         header('Location: /index.php');
         exit();
     }
+    $_SESSION['last_activity'] = time();
 }
 
 // ---------------------------------------------------------------------------
@@ -251,21 +252,31 @@ function posValidarColaborador($clave)
     $sucursal = $_SESSION['pos_store_sucursal'];
     $hoy      = date('Y-m-d');
 
-    // Buscar colaboradores activos (excluir cargo 27 = encargados de sucursal)
+    // Buscar colaboradores activos (excluir cargo 27 = encargados de sucursal, excepto cargos de administración/TI/pruebas)
     $stmt = ejecutarConsulta("
         SELECT
             o.CodOperario,
             o.Nombre,
+            o.Nombre2,
             o.Apellido,
+            o.Apellido2,
             o.clave,
             o.clave_hash
         FROM Operarios o
         WHERE o.Operativo = 1
-          AND o.CodOperario NOT IN (
-              SELECT DISTINCT anc.CodOperario
-              FROM AsignacionNivelesCargos anc
-              WHERE anc.CodNivelesCargos = 27
-                AND (anc.Fin IS NULL OR anc.Fin >= CURDATE())
+          AND (
+              o.CodOperario NOT IN (
+                  SELECT DISTINCT anc.CodOperario
+                  FROM AsignacionNivelesCargos anc
+                  WHERE anc.CodNivelesCargos = 27
+                    AND (anc.Fin IS NULL OR anc.Fin >= CURDATE())
+              )
+              OR o.CodOperario IN (
+                  SELECT DISTINCT anc2.CodOperario
+                  FROM AsignacionNivelesCargos anc2
+                  WHERE anc2.CodNivelesCargos IN (11, 16, 49)
+                    AND (anc2.Fin IS NULL OR anc2.Fin >= CURDATE())
+              )
           )
     ", []);
 
@@ -291,39 +302,66 @@ function posValidarColaborador($clave)
         return ['status' => false, 'msg' => 'Clave incorrecta.'];
     }
 
-    // Verificar marcación activa HOY en esta sucursal
-    $stmtMarc = ejecutarConsulta("
-        SELECT id
-        FROM marcaciones
-        WHERE CodOperario    = ?
-          AND fecha           = ?
-          AND sucursal_codigo = ?
-          AND hora_ingreso    IS NOT NULL
-          AND (hora_salida IS NULL OR hora_salida = '')
-        LIMIT 1
-    ", [$encontrado['CodOperario'], $hoy, $sucursal]);
+    // Buscamos sus cargos activos para verificar excepciones de marcación y permisos
+    $stmtCargo = ejecutarConsulta("
+        SELECT CodNivelesCargos 
+        FROM AsignacionNivelesCargos 
+        WHERE CodOperario = ? 
+          AND (Fin IS NULL OR Fin >= CURDATE()) 
+        ORDER BY Fecha DESC
+    ", [$encontrado['CodOperario']]);
 
-    if (!$stmtMarc || !$stmtMarc->fetch()) {
-        return [
-            'status' => false,
-            'msg'    => 'Acceso denegado: No tienes una marcación de entrada activa hoy en esta sucursal.',
-        ];
+    $cargosColaborador = [];
+    $cargoPrincipal = 2; // 2 = operario por defecto
+    if ($stmtCargo) {
+        $filasCargo = $stmtCargo->fetchAll();
+        foreach ($filasCargo as $fc) {
+            $cargosColaborador[] = (int)$fc['CodNivelesCargos'];
+        }
+        if (!empty($filasCargo)) {
+            $cargoPrincipal = (int)$filasCargo[0]['CodNivelesCargos'];
+        }
     }
 
-    // Sesión de colaborador
+    // Cargos de prueba exentos de restricción de marcación (11: Gerencia General, 16: TI/Sistemas, 49: Desarrollador)
+    $cargosExentosMarcacion = [11, 16, 49];
+    $esExentoMarcacion = !empty(array_intersect($cargosExentosMarcacion, $cargosColaborador));
+
+    if (!$esExentoMarcacion) {
+        // Verificar marcación activa HOY en esta sucursal
+        $stmtMarc = ejecutarConsulta("
+            SELECT id
+            FROM marcaciones
+            WHERE CodOperario    = ?
+              AND fecha           = ?
+              AND sucursal_codigo = ?
+              AND hora_ingreso    IS NOT NULL
+              AND (hora_salida IS NULL OR hora_salida = '')
+            LIMIT 1
+        ", [$encontrado['CodOperario'], $hoy, $sucursal]);
+
+        if (!$stmtMarc || !$stmtMarc->fetch()) {
+            return [
+                'status' => false,
+                'msg'    => 'Acceso denegado: No tienes una marcación de entrada activa hoy en esta sucursal.',
+            ];
+        }
+    }
+
+    // Sesión de colaborador y metadatos de sesión (8h ventana deslizante)
+    $ahora = time();
+    $fechaActual = date('Y-m-d');
+
     $_SESSION['pos_colaborador_id']     = $encontrado['CodOperario'];
-    $_SESSION['pos_colaborador_nombre'] = trim($encontrado['Nombre'] . ' ' . $encontrado['Apellido']);
+    $_SESSION['pos_colaborador_nombre'] = obtenerNombreCompletoOperario($encontrado);
 
     // --- COMPATIBILIDAD LEGACY ---
-    // Sobrescribimos usuario_id con el del colaborador real que está operando
     $_SESSION['usuario_id']     = $encontrado['CodOperario'];
     $_SESSION['usuario_nombre'] = $_SESSION['pos_colaborador_nombre'];
-    // Buscamos su cargo real para permisos (compatibilidad con tienePermiso)
-    $stmtCargo = ejecutarConsulta("SELECT CodNivelesCargos FROM AsignacionNivelesCargos WHERE CodOperario = ? AND (Fin IS NULL OR Fin >= CURDATE()) ORDER BY Fecha DESC LIMIT 1", [$encontrado['CodOperario']]);
-    if ($stmtCargo) {
-        $cargoRow = $stmtCargo->fetch();
-        $_SESSION['cargo_cod'] = $cargoRow['CodNivelesCargos'] ?? 2; // 2 = operario por defecto
-    }
+    $_SESSION['login_time']     = $ahora;
+    $_SESSION['login_date']     = $fechaActual;
+    $_SESSION['last_activity']  = $ahora;
+    $_SESSION['cargo_cod']      = $cargoPrincipal;
 
     return ['status' => true];
 }
@@ -363,6 +401,8 @@ function posRequiereColaboradorAjax()
         echo json_encode(['ok' => false, 'mensaje' => 'Sesión expirada o no autorizada.', 'relogin' => true]);
         exit();
     }
+    // Renovar ventana de actividad activa
+    $_SESSION['last_activity'] = time();
 }
 
 /**

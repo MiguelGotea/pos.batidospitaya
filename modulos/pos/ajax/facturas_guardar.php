@@ -11,6 +11,11 @@ try {
     $idClienteClub  = !empty($_POST['id_cliente_club']) ? (int)$_POST['id_cliente_club'] : null;
     $nombreCliente  = isset($_POST['nombre_cliente']) ? trim($_POST['nombre_cliente']) : null;
     $detalle        = isset($_POST['detalle']) ? json_decode($_POST['detalle'], true) : [];
+    $pagos          = isset($_POST['pagos']) ? json_decode($_POST['pagos'], true) : [];
+    $conPropina     = isset($_POST['con_propina']) && (int)$_POST['con_propina'] === 1 ? 1 : 0;
+    $propina        = isset($_POST['propina']) ? round((float)$_POST['propina'], 2) : 0.00;
+    $porcentajeProp = $conPropina ? 2.00 : 0.00;
+    if (!$conPropina) $propina = 0.00;
 
     $usuarioId      = $_SESSION['pos_colaborador_id'] ?? 1;
     $sucursalCodigo = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? '1');
@@ -29,7 +34,7 @@ try {
         throw new Exception('Error procesando el detalle de productos.');
     }
 
-    // ---- Validar montos y calcular totales ----
+    // ---- Validar montos de productos y calcular subtotales ----
     $subtotal = 0;
     $totalPuntosGanados = 0;
 
@@ -43,52 +48,158 @@ try {
         if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la línea " . ($i + 1) . ".");
 
         $subtotal += $costoTotalIva;
-        $totalPuntosGanados += $cantidad; // 1 punto por unidad en este prototipo
+        $totalPuntosGanados += $cantidad;
+    }
+
+    $subtotalCalculado     = round($subtotal, 2);
+    $totalFacturaCalculado = round($subtotalCalculado + $propina, 2);
+
+    // ---- Validar métodos de pago ----
+    if (empty($pagos) || !is_array($pagos) || count($pagos) === 0) {
+        throw new Exception('Debe registrar al menos un método de pago.');
+    }
+
+    $totalPagos = 0;
+    foreach ($pagos as $i => $p) {
+        $monto = isset($p['monto']) ? (float)$p['monto'] : 0;
+        if ($monto <= 0) {
+            throw new Exception("El monto del método de pago #" . ($i + 1) . " debe ser mayor a 0.");
+        }
+        $totalPagos += $monto;
+    }
+
+    if (round($totalPagos, 2) < $totalFacturaCalculado) {
+        throw new Exception("Los pagos registrados (C$ " . number_format($totalPagos, 2) . ") no cubren el total a pagar (C$ " . number_format($totalFacturaCalculado, 2) . ").");
     }
 
     $conn->beginTransaction();
 
     // ---- 1. Insertar en pos_ventas_facturas ----
     $sqlHeader = "INSERT INTO pos_ventas_facturas
-                  (cod_sucursal, cod_cajero, tipo_cliente, id_cliente_club, nombre_cliente_general, subtotal, total, estado, fecha_hora)
-                  VALUES (:sucursal, :cajero, :tipo, :id_cliente, :nombre_gen, :subtotal, :total, 'bloqueada', NOW())";
+                  (cod_sucursal, cod_cajero, tipo_cliente, id_cliente_club, nombre_cliente_general, subtotal, propina, porcentaje_propina, con_propina, total, estado, fecha_hora)
+                  VALUES (:sucursal, :cajero, :tipo, :id_cliente, :nombre_gen, :subtotal, :propina, :porc_prop, :con_prop, :total, 'bloqueada', NOW())";
     
     $stmtHeader = $conn->prepare($sqlHeader);
     $stmtHeader->execute([
         ':sucursal'   => (string)$sucursalCodigo,
         ':cajero'     => $usuarioId,
         ':tipo'       => $tipoCliente,
-        ':id_cliente' => $idClienteClub,
+        ':id_cliente' => ($tipoCliente === 'club') ? $idClienteClub : null,
         ':nombre_gen' => ($tipoCliente === 'general') ? $nombreCliente : null,
-        ':subtotal'   => round($subtotal, 2),
-        ':total'      => round($subtotal, 2)
+        ':subtotal'   => $subtotalCalculado,
+        ':propina'    => $propina,
+        ':porc_prop'  => $porcentajeProp,
+        ':con_prop'   => $conPropina,
+        ':total'      => $totalFacturaCalculado
     ]);
     $idFactura = (int)$conn->lastInsertId();
 
     // ---- 2. Insertar en pos_ventas_factura_lineas ----
     $sqlLinea = "INSERT INTO pos_ventas_factura_lineas
-                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_unitario_final, precio_linea_total)
-                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_final, :precio_total)";
+                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total, es_canje_puntos, notas)
+                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_extras, :precio_final, :precio_total, :es_canje, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     foreach ($detalle as $item) {
+        $isClubCliente  = ($tipoCliente === 'club' && !empty($idClienteClub));
+        $esCanjeado     = ($isClubCliente && !empty($item['es_canjeado'])) ? 1 : 0;
         $cantidad       = (float)$item['cantidad'];
-        $costoTotalIva  = (float)$item['costo_total_iva'];
+        $costoTotalIva  = $esCanjeado ? 0 : (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;
+        $precioBase     = isset($item['precio_unitario_base']) ? (float)$item['precio_unitario_base'] : $precioUnitario;
         $nombreSnap     = isset($item['nombre']) ? trim($item['nombre']) : 'Producto';
+        $notasItem      = !empty($item['notas']) ? trim($item['notas']) : '';
+
+        // Procesar resumen de personalización para auditoría y cocina
+        $montoExtras = 0;
+        $resumenPers = [];
+        if ($esCanjeado) {
+            $resumenPers[] = "PRODUCTO CANJEADO (Puntos)";
+        }
+        if (!empty($item['personalizacion']) && is_array($item['personalizacion'])) {
+            $p = $item['personalizacion'];
+            if (!empty($p['endulzante_nombre'])) {
+                $resumenPers[] = "Endulzante: " . trim($p['endulzante_nombre']);
+            }
+            if (!empty($p['ingredientes_quitados']) && is_array($p['ingredientes_quitados'])) {
+                $quits = array_column($p['ingredientes_quitados'], 'nombre_componente');
+                if (!empty($quits)) $resumenPers[] = "Sin: " . implode(', ', $quits);
+            }
+            if (!empty($p['ingredientes_sustituidos']) && is_array($p['ingredientes_sustituidos'])) {
+                $susts = [];
+                foreach ($p['ingredientes_sustituidos'] as $s) {
+                    $susts[] = ($s['nombre_nuevo'] ?? 'Otro');
+                }
+                if (!empty($susts)) $resumenPers[] = "Cambio por: " . implode(', ', $susts);
+            }
+            if (!empty($p['extras_agregados']) && is_array($p['extras_agregados'])) {
+                $exts = array_column($p['extras_agregados'], 'nombre');
+                if (!empty($exts)) $resumenPers[] = "Extra: " . implode(', ', $exts);
+            }
+            $montoExtras = isset($p['monto_extras']) ? (float)$p['monto_extras'] : 0;
+        }
+
+        $textoPers = !empty($resumenPers) ? "[" . implode(" | ", $resumenPers) . "]" : "";
+        $notasFinal = trim(($notasItem ? $notasItem . " " : "") . $textoPers);
+        if ($notasFinal === "") $notasFinal = null;
 
         $stmtLinea->execute([
             ':id_fac'        => $idFactura,
             ':id_pres'       => (int)$item['id_presentacion'],
             ':nombre_snap'   => $nombreSnap,
             ':cant'          => $cantidad,
-            ':precio_snap'   => $precioUnitario,
+            ':precio_snap'   => $precioBase,
+            ':precio_extras' => $montoExtras,
             ':precio_final'  => $precioUnitario,
-            ':precio_total'  => $costoTotalIva
+            ':precio_total'  => $costoTotalIva,
+            ':es_canje'      => $esCanjeado,
+            ':notas'         => $notasFinal
         ]);
     }
 
-    // ---- 3. Registrar puntos si es socio Club Pitaya ----
+    // ---- 3. Insertar en pos_ventas_factura_pagos ----
+    /* =====================================================================================
+     * GESTIÓN DE MÉTODOS DE PAGO Y CUPONES:
+     * 
+     * [MODO PRUEBAS ACTUAL]:
+     * - Se registra el pago de tipo 'cupon' con su id_cupon, codigo_cupon y monto en pos_ventas_factura_pagos.
+     * - NO se ejecuta UPDATE a cupones_sucursales (NO se marca aplicado = 1).
+     * - Esto permite a administración y supervisores probar libremente los cupones reales sin quemar datos.
+     * 
+     * [CUANDO SE PASE OFICIALMENTE A PRODUCCIÓN]:
+     * - Descomentar la siguiente instrucción dentro de la transacción para marcarlo como usado:
+     * 
+     *   if ($metodo === 'cupon' && !empty($idCupon)) {
+     *       $stmtBurn = $conn->prepare("UPDATE cupones_sucursales SET aplicado = 1, cod_pedido = :id_fac, hora_activacion = NOW() WHERE id = :id_cup");
+     *       $stmtBurn->execute([':id_fac' => $idFactura, ':id_cup' => $idCupon]);
+     *   }
+     * ===================================================================================== */
+    $sqlPago = "INSERT INTO pos_ventas_factura_pagos
+                (id_factura, metodo, moneda, monto_original, monto_cordoba, tipo_cambio_aplicado, id_cupon, codigo_cupon, referencia)
+                VALUES (:id_fac, :metodo, 'NIO', :monto_orig, :monto_cor, NULL, :id_cupon, :codigo_cupon, :ref)";
+    $stmtPago = $conn->prepare($sqlPago);
+
+    foreach ($pagos as $p) {
+        $metodo      = in_array($p['metodo'] ?? '', ['efectivo', 'pos', 'transferencia', 'cupon']) ? $p['metodo'] : 'efectivo';
+        $montoPago   = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
+        $refPago     = !empty($p['referencia']) ? trim($p['referencia']) : null;
+        $idCupon     = ($metodo === 'cupon' && !empty($p['id_cupon'])) ? (int)$p['id_cupon'] : null;
+        $codigoCupon = ($metodo === 'cupon') ? $refPago : null;
+
+        $stmtPago->execute([
+            ':id_fac'       => $idFactura,
+            ':metodo'       => $metodo,
+            ':monto_orig'   => $montoPago,
+            ':monto_cor'    => $montoPago,
+            ':id_cupon'     => $idCupon,
+            ':codigo_cupon' => $codigoCupon,
+            ':ref'          => $refPago
+        ]);
+
+        // MODO PRUEBAS: Aquí se activará el UPDATE a cupones_sucursales cuando el sistema se lance oficialmente.
+    }
+
+    // ---- 4. Registrar puntos si es socio Club Pitaya ----
     if ($tipoCliente === 'club' && $idClienteClub && $totalPuntosGanados > 0) {
         $sqlPuntos = "INSERT INTO pos_ventas_factura_puntos_club
                       (id_factura, id_cliente_club, puntos_ganados, puntos_canjeados, observaciones)

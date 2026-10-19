@@ -12,13 +12,19 @@ try {
         throw new Exception('Debe ingresar un número de membresía.');
     }
 
-    // 1. Buscar datos del cliente
+    // 1. Buscar datos del cliente (soporta string o int con o sin ceros)
+    $membresiaLimpia = preg_replace('/\D/', '', $membresia);
+    $membresiaInt = !empty($membresiaLimpia) ? (int)$membresiaLimpia : 0;
+
     $sqlCliente = "SELECT id_clienteclub, membresia, nombre, apellido, nombre_sucursal, puntos_iniciales, fecha_registro
                    FROM clientesclub 
-                   WHERE membresia = :membresia 
+                   WHERE membresia = :membresia OR membresia = :membresia_int
                    LIMIT 1";
     $stmtCliente = $conn->prepare($sqlCliente);
-    $stmtCliente->execute([':membresia' => $membresia]);
+    $stmtCliente->execute([
+        ':membresia'     => $membresia,
+        ':membresia_int' => $membresiaInt
+    ]);
     $cliente = $stmtCliente->fetch(PDO::FETCH_ASSOC);
 
     if (!$cliente) {
@@ -27,20 +33,28 @@ try {
 
     $puntosIniciales = floatval($cliente['puntos_iniciales'] ?? 0);
 
-    // 2. Calcular puntos del historial Access (excluyendo grupos 25 y 11 y anulados)
-    $sqlTotalPuntos = "SELECT COALESCE(SUM(
-                            CASE 
-                                WHEN VentasGlobalesAccessCSV.Anulado = 0 THEN (VentasGlobalesAccessCSV.Cantidad * VentasGlobalesAccessCSV.Puntos)
-                                ELSE 0 
-                            END
-                        ), 0) as total_puntos
-                       FROM VentasGlobalesAccessCSV
-                       LEFT JOIN DBBatidos ON VentasGlobalesAccessCSV.CodProducto = DBBatidos.CodBatido
-                       WHERE VentasGlobalesAccessCSV.CodCliente = :membresia
-                       AND (DBBatidos.CodGrupo IS NULL OR (DBBatidos.CodGrupo != 25 AND DBBatidos.CodGrupo != 11))";
-    $stmtTotalPuntos = $conn->prepare($sqlTotalPuntos);
-    $stmtTotalPuntos->execute([':membresia' => $membresia]);
-    $puntosAccess = floatval($stmtTotalPuntos->fetch(PDO::FETCH_ASSOC)['total_puntos'] ?? 0);
+    // 2. Calcular puntos del historial Access (con degradación suave)
+    $puntosAccess = 0;
+    try {
+        $sqlTotalPuntos = "SELECT COALESCE(SUM(
+                                CASE 
+                                    WHEN VentasGlobalesAccessCSV.Anulado = 0 THEN (VentasGlobalesAccessCSV.Cantidad * VentasGlobalesAccessCSV.Puntos)
+                                    ELSE 0 
+                                END
+                            ), 0) as total_puntos
+                           FROM VentasGlobalesAccessCSV
+                           LEFT JOIN DBBatidos ON VentasGlobalesAccessCSV.CodProducto = DBBatidos.CodBatido
+                           WHERE VentasGlobalesAccessCSV.CodCliente = :membresia
+                           AND (DBBatidos.CodGrupo IS NULL OR (DBBatidos.CodGrupo != 25 AND DBBatidos.CodGrupo != 11))";
+        $stmtTotalPuntos = $conn->prepare($sqlTotalPuntos);
+        $stmtTotalPuntos->execute([':membresia' => (string)$cliente['membresia']]);
+        $rowPuntos = $stmtTotalPuntos->fetch(PDO::FETCH_ASSOC);
+        if ($rowPuntos) {
+            $puntosAccess = floatval($rowPuntos['total_puntos'] ?? 0);
+        }
+    } catch (Exception $ePuntos) {
+        $puntosAccess = 0;
+    }
 
     // 3. Calcular puntos del nuevo POS (pos_ventas_factura_puntos_club) si la tabla existe
     $puntosNuevos = 0;

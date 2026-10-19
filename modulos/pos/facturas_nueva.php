@@ -8,6 +8,7 @@ $hoy = date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,80 +21,190 @@ $hoy = date('Y-m-d');
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
 </head>
+
 <body>
     <?= renderPOSSidebar('ventas') ?>
 
     <div class="pos-main-container">
         <?= renderPOSHeader('Nueva Factura') ?>
 
-        <div class="pos-content">
-            <div class="container-fluid p-3">
+        <div class="pos-content pos-content-fluid">
+            <div class="container-fluid px-0">
                 <div class="facturas-layout">
 
-                    <!-- ====== COLUMNA IZQUIERDA ====== -->
-                    <div class="d-flex flex-column gap-3">
+                    <!-- ====== COLUMNA IZQUIERDA: Catálogo, Membresía y Promociones ====== -->
+                    <div class="col-catalogo-promos d-flex flex-column gap-3">
+
+                        <!-- Panel Catálogo de Productos -->
+                        <div class="panel-catalogo-productos">
+
+                            <!-- Buscador rápido -->
+                            <div class="catalogo-header">
+                                <div class="buscador-catalogo-wrap">
+                                    <i class="bi bi-search buscador-catalogo-icon"></i>
+                                    <input type="text" id="buscarProducto" class="buscador-catalogo-input"
+                                        placeholder="Buscar producto por nombre, código..." autocomplete="off">
+                                    <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button" style="display:none;">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tabs de Grupos -->
+                            <div class="grupos-tabs-bar" id="gruposTabs">
+                                <span class="spinner-border spinner-border-sm text-secondary m-2"></span>
+                            </div>
+
+                            <!-- Área de productos (subgrupos + cards o resultados de búsqueda) -->
+                            <div class="catalogo-content-area" id="catalogoPanel">
+                                <p class="no-productos-msg">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                    Cargando catálogo…
+                                </p>
+                            </div>
+
+                        </div><!-- /panel-catalogo-productos -->
+
+                        <!-- Banner de Quick Add para Membresía Club Pitaya -->
+                        <div class="banner-club-pitaya-pos" id="bannerClubPitaya">
+                            <div class="banner-club-info">
+                                <div class="banner-club-icon">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                                <div class="banner-club-text">
+                                    <h6 class="banner-club-titulo mb-0">Vender Membresía Club Pitaya</h6>
+                                    <span class="banner-club-sub">¡Suma Puntos Ahora! Beneficios exclusivos para el cliente.</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia" title="Agregar membresía a la orden">
+                                QUICK ADD <i class="bi bi-plus-lg ms-1"></i>
+                            </button>
+                        </div>
+
+                        <!-- Sección de Promociones Recomendadas y Aplicables -->
+                        <div class="seccion-promociones-pos" id="seccionPromociones">
+                            <div class="promociones-header-pos mb-2">
+                                <span class="promociones-main-title">PROMOCIONES</span>
+                            </div>
+
+                            <!-- Grupo 1: Recomendados -->
+                            <div class="promociones-bloque mb-3">
+                                <div class="promociones-sub-label">RECOMENDADOS</div>
+                                <div class="promociones-grid-recomendados">
+                                    <!-- Card 1 -->
+                                    <div class="promo-card promo-card-teal" data-promo="2x1-pitaya-blast" role="button" tabindex="0">
+                                        <div class="promo-badge promo-badge-teal">FIJADO</div>
+                                        <div class="promo-title">2x1 Pitaya Blast</div>
+                                        <div class="promo-sub">Válido hasta las 6 PM.</div>
+                                    </div>
+                                    <!-- Card 2 -->
+                                    <div class="promo-card promo-card-amber" data-promo="combo-familiar" role="button" tabindex="0">
+                                        <div class="promo-badge promo-badge-amber">FIJADO</div>
+                                        <div class="promo-title">Combo Familiar</div>
+                                        <div class="promo-sub">-20% en 4+ batidos.</div>
+                                    </div>
+                                    <!-- Card 3 -->
+                                    <div class="promo-card promo-card-neutral" data-promo="hora-feliz">
+                                        <div class="promo-badge promo-badge-neutral">PRÓXIMAMENTE</div>
+                                        <div class="promo-title">Hora Feliz</div>
+                                        <div class="promo-sub">Descuentos desde las 7 PM.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grupo 2: Aplicables -->
+                            <div class="promociones-bloque">
+                                <div class="promociones-sub-label">APLICABLES</div>
+                                <div class="promociones-grid-aplicables">
+                                    <!-- Card Aplicable 1 -->
+                                    <div class="promo-card-dark promo-card-oro">
+                                        <div class="promo-dark-header">
+                                            <span class="badge-rango-oro"><i class="bi bi-gem me-1"></i> ORO</span>
+                                        </div>
+                                        <div class="promo-dark-title">Desc. Miembro (15%)</div>
+                                        <button type="button" class="btn-aplicar-promo btn-aplicar-oro" onclick="demostrarPromocion('Desc. Miembro (15%)')">
+                                            APLICAR <i class="bi bi-check2 ms-1"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Card Aplicable 2 -->
+                                    <div class="promo-card-dark promo-card-canje">
+                                        <div class="promo-dark-header">
+                                            <span class="badge-rango-canje"><i class="bi bi-coin me-1"></i> CANJE</span>
+                                        </div>
+                                        <div class="promo-dark-title">Canje de 10 Puntos</div>
+                                        <button type="button" class="btn-aplicar-promo btn-aplicar-outline" onclick="demostrarPromocion('Canje de 10 Puntos')">
+                                            APLICAR <i class="bi bi-check2 ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div><!-- /seccion-promociones-pos -->
+
+                    </div><!-- /col-catalogo-promos -->
+
+                    <!-- ====== COLUMNA DERECHA: Factura ====== -->
+                    <div class="panel-factura-derecho d-flex flex-column gap-2">
 
                         <!-- Cabecera de Cliente (Club Pitaya vs Cliente General) -->
                         <div class="card-factura card-cliente-pos">
-                            <div class="card-body-factura py-3">
+                            <div class="card-body-factura py-2">
                                 <form id="formFactura" class="form-cabecera m-0">
-                                    <!-- Selector de tipo de cliente -->
-                                    <div class="tipo-cliente-selector mb-3 d-flex align-items-center gap-4">
+                                    <div class="tipo-cliente-selector mb-2 d-flex align-items-center gap-3">
                                         <label class="custom-radio-cliente">
-                                            <input type="radio" name="tipo_cliente" value="club" checked id="tipoClienteClub">
+                                            <input type="radio" name="tipo_cliente" value="club" id="tipoClienteClub">
                                             <span class="radio-mark"></span>
                                             <span class="radio-label">CLUB PITAYA</span>
                                         </label>
                                         <label class="custom-radio-cliente">
-                                            <input type="radio" name="tipo_cliente" value="general" id="tipoClienteGeneral">
+                                            <input type="radio" name="tipo_cliente" value="general" checked id="tipoClienteGeneral">
                                             <span class="radio-mark"></span>
                                             <span class="radio-label">CLIENTE GENERAL</span>
                                         </label>
                                     </div>
 
-                                    <div class="row g-3 align-items-start">
-                                        <!-- Campo N° Membresía (Solo Club Pitaya) -->
-                                        <div class="col-md-3" id="colMembresia">
+                                    <!-- Fila: Membresía + Nombre -->
+                                    <div class="row g-2 align-items-start mb-2">
+                                        <div class="col-sm-5 col-12" id="colMembresia" style="display: none;">
                                             <label for="membresiaCliente" class="form-label-pos">N° MEMBRESÍA</label>
                                             <div class="input-group input-group-pos">
                                                 <input type="text" class="form-control form-control-pos" id="membresiaCliente"
-                                                       name="membresia" placeholder="Ej: 9872" autocomplete="off">
+                                                    name="membresia" placeholder="Ej: 9872" autocomplete="off">
                                                 <button class="btn btn-pos-search" type="button" id="btnBuscarMembresia" title="Buscar / Ver Historial">
                                                     <i class="bi bi-search"></i>
                                                 </button>
                                             </div>
-                                            <button type="button" class="btn-pos-qr mt-2 w-100" id="btnLeerQR">
-                                                <i class="bi bi-qr-code-scan me-1"></i> LEER POR QR
-                                            </button>
                                         </div>
 
-                                        <!-- Campo Nombre del Cliente -->
-                                        <div class="col-md-5" id="colNombreCliente">
-                                            <label for="nombreCliente" class="form-label-pos">NOMBRE CLIENTE</label>
+                                        <div class="col-12" id="colNombreCliente">
+                                            <label for="nombreCliente" class="form-label-pos">
+                                                NOMBRE CLIENTE
+                                                <span id="clienteCheckVerificado" style="display:none;" class="check-verificado-badge" title="Miembro Club Pitaya verificado">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                </span>
+                                            </label>
                                             <input type="text" class="form-control form-control-pos" id="nombreCliente"
-                                                   name="nombre_cliente" placeholder="Nombre del cliente..." readonly style="background-color: #f8fafc;">
+                                                name="nombre_cliente" placeholder="Escriba nombre del cliente casual..." style="background-color: #fff;">
                                             <input type="hidden" id="idClienteClub" name="id_cliente_club" value="">
                                             <input type="hidden" id="fechaFactura" name="fecha" value="<?php echo $hoy; ?>">
                                             <input type="hidden" id="numeroFactura" name="numero_factura" value="AUTO">
-
-                                            <div id="clienteFeedback" class="small mt-1 text-muted"></div>
                                         </div>
+                                    </div>
 
-                                        <!-- Indicadores de Puntos (Solo Club Pitaya) -->
-                                        <div class="col-md-4" id="colIndicadoresPuntos">
-                                            <div class="box-indicadores-puntos">
-                                                <div class="d-flex justify-content-between row-puntos">
-                                                    <span class="lbl-puntos">PUNTOS ANTERIORES</span>
-                                                    <span class="val-puntos" id="txtPuntosAnteriores">0</span>
-                                                </div>
-                                                <div class="d-flex justify-content-between row-puntos">
-                                                    <span class="lbl-puntos">PUNTOS ESTA FACTURA</span>
-                                                    <span class="val-puntos text-success" id="txtPuntosEstaFactura">+0</span>
-                                                </div>
-                                                <div class="d-flex justify-content-between row-puntos pt-1 border-top mt-1">
-                                                    <span class="lbl-puntos fw-bold text-dark">TOTAL PUNTOS</span>
-                                                    <span class="val-puntos fw-bold text-dark" id="txtTotalPuntos">0</span>
-                                                </div>
+                                    <!-- Barra compacta de Puntos (solo Club Pitaya) -->
+                                    <div id="colIndicadoresPuntos" style="display: none;">
+                                        <div class="puntos-compact-bar">
+                                            <div class="puntos-stat-item">
+                                                <span class="pstat-lbl">ANTERIORES</span>
+                                                <span class="pstat-val" id="txtPuntosAnteriores">0</span>
+                                            </div>
+                                            <div class="puntos-stat-item">
+                                                <span class="pstat-lbl">ESTA FACTURA</span>
+                                                <span class="pstat-val text-success" id="txtPuntosEstaFactura">+0</span>
+                                            </div>
+                                            <div class="puntos-stat-item puntos-total">
+                                                <span class="pstat-lbl">TOTAL PUNTOS</span>
+                                                <span class="pstat-val fw-bold" id="txtTotalPuntos">0</span>
                                             </div>
                                         </div>
                                     </div>
@@ -107,38 +218,85 @@ $hoy = date('Y-m-d');
                                 <i class="bi bi-list-ul"></i>
                                 Productos en la Factura
                                 <span id="contadorProductos" class="ms-auto badge"
-                                      style="background:rgba(255,255,255,.2); font-size:.78rem;">0 ítem(s)</span>
+                                    style="background:rgba(255,255,255,.2); font-size:.78rem;">0 ítem(s)</span>
                             </div>
                             <div class="card-body-factura p-0">
                                 <div class="table-responsive">
                                     <table class="tabla-detalle-factura">
                                         <thead>
                                             <tr>
-                                                <th style="width:35%;">Producto / Servicio</th>
-                                                <th style="width:16%;" class="text-end">Cantidad</th>
-                                                <th style="width:22%;" class="text-end">Costo Total c/IVA</th>
-                                                <th style="width:20%;" class="text-end">Costo Unitario</th>
-                                                <th style="width:7%;" class="text-center">Quitar</th>
+                                                <th style="width:42%;">PRODUCTO</th>
+                                                <th style="width:20%;" class="text-center">CANT.</th>
+                                                <th style="width:20%;" class="text-end">PRECIO</th>
+                                                <th style="width:12%;" class="text-center">CANJEADO</th>
+                                                <th style="width:6%;" class="text-center"></th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaDetalleBody">
                                             <tr id="filaVacia">
                                                 <td colspan="5" class="empty-detalle">
                                                     <i class="bi bi-box-seam me-2"></i>
-                                                    Selecciona productos desde el panel derecho
+                                                    Selecciona productos desde el catálogo
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Total bar -->
-                                <div class="total-factura-bar">
-                                    <span class="total-factura-label">Total Factura:</span>
-                                    <span class="total-factura-monto" id="totalFacturaMonto">C$ 0.00</span>
+                                <!-- Sección Métodos de Pago y Desglose -->
+                                <div class="seccion-metodos-pago px-3 py-2 border-top">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <span class="titulo-seccion-pago">MÉTODO DE PAGO</span>
+                                        <small class="text-muted" style="font-size: .72rem;">Clic para agregar/combinar</small>
+                                    </div>
+                                    <div class="metodos-pago-grid mb-2">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo" onclick="agregarMetodoPago('efectivo')">
+                                            <i class="bi bi-cash-stack"></i>
+                                            <span>EFECTIVO</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoPOS" onclick="agregarMetodoPago('pos')">
+                                            <i class="bi bi-credit-card-2-front"></i>
+                                            <span>POS</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia" onclick="agregarMetodoPago('transferencia')">
+                                            <i class="bi bi-bank"></i>
+                                            <span>TRANSF.</span>
+                                        </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoCupon" onclick="agregarMetodoPago('cupon')" title="Agregar pago con cupón de descuento">
+                                            <i class="bi bi-ticket-perforated"></i>
+                                            <span>CUPÓN</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Lista de pagos activos agregados -->
+                                    <div id="contenedorFilasPago" class="contenedor-filas-pago mb-2">
+                                        <!-- Se agregan dinámicamente -->
+                                    </div>
+
+                                    <!-- Desglose de totales y Propina -->
+                                    <div class="desglose-totales-pago">
+                                        <div class="fila-desglose">
+                                            <span class="lbl-desglose">Subtotal</span>
+                                            <span class="val-desglose" id="txtSubtotalFactura">C$ 0.00</span>
+                                        </div>
+                                        <div class="fila-desglose align-items-center">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="lbl-desglose mb-0">Propina (2%)</span>
+                                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                                    <input class="form-check-input switch-propina-pitaya" type="checkbox" id="switchPropina">
+                                                </div>
+                                            </div>
+                                            <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
+                                        </div>
+                                        <div class="fila-desglose fila-total-destacado border-top pt-2 mt-1">
+                                            <span class="lbl-total-pagar">TOTAL A PAGAR</span>
+                                            <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
+                                        </div>
+                                        <!-- Estado de cobertura de pagos -->
+                                        <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2" style="display: none;"></div>
+                                    </div>
                                 </div>
 
-                                <!-- Botones de acción -->
-                                <div class="p-3 border-top bg-light d-flex gap-2 justify-content-end">
+                                <div class="px-3 py-2 border-top bg-light d-flex gap-2 justify-content-end">
                                     <a href="facturas_historial.php" class="btn-cancelar-factura">
                                         <i class="bi bi-x-circle"></i> Cancelar
                                     </a>
@@ -149,31 +307,7 @@ $hoy = date('Y-m-d');
                             </div>
                         </div>
 
-                    </div><!-- /columna izquierda -->
-
-                    <!-- ====== COLUMNA DERECHA: productos elegibles ====== -->
-                    <div class="panel-productos-elegibles">
-                        <div class="card-factura">
-                            <div class="card-header-factura">
-                                <i class="bi bi-grid"></i>
-                                Productos Disponibles
-                            </div>
-                            <div class="card-body-factura">
-                                <div class="buscador-productos">
-                                    <i class="bi bi-search icon-search"></i>
-                                    <input type="text" id="buscarProducto"
-                                           placeholder="Buscar producto…"
-                                           autocomplete="off">
-                                </div>
-                                <div class="lista-productos-scroll" id="listaProductosElegibles">
-                                    <p class="no-productos-msg">
-                                        <span class="spinner-border spinner-border-sm me-1"></span>
-                                        Cargando productos…
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div><!-- /columna derecha -->
+                    </div><!-- /panel-factura-derecho -->
 
                 </div><!-- /facturas-layout -->
             </div>
@@ -197,10 +331,10 @@ $hoy = date('Y-m-d');
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <!-- Resumen del Socio -->
+                    <!-- Resumen del Miembro Club -->
                     <div class="cliente-resumen-banner mb-3 p-3 rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
-                            <span class="text-muted small d-block">CLIENTE SOCIO</span>
+                            <span class="text-muted small d-block">MIEMBRO CLUB PITAYA</span>
                             <strong class="fs-5 text-dark" id="modalNombreCliente">—</strong>
                         </div>
                         <div class="d-flex gap-4">
@@ -251,7 +385,47 @@ $hoy = date('Y-m-d');
                     </div>
                 </div>
                 <div class="modal-footer bg-white border-0 py-3">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== MODAL: Personalización de Receta ====== -->
+    <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg modal-pos-custom">
+                <div class="modal-header modal-header-pos">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-icon-badge">
+                            <i class="bi bi-sliders2"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Personalizar Producto</h5>
+                            <span class="modal-subtitle-pos" id="mpSubtitulo">Ajusta ingredientes, endulzante y extras</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-0 bg-light" id="mpCuerpo">
+                    <!-- Contenido generado por JS -->
+                    <div class="d-flex align-items-center justify-content-center py-5">
+                        <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
+                        <span class="text-muted">Cargando receta…</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <!-- Indicador de ajuste de precio por extras -->
+                    <span class="text-muted small" id="mpAjustePrecio" style="display:none;">
+                        <i class="bi bi-plus-circle text-success me-1"></i>
+                        Extras: <strong id="mpMontoExtras">C$ 0.00</strong>
+                    </span>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn-guardar-factura px-4" id="mpBtnGuardar">
+                            <i class="bi bi-check2-circle me-1"></i> Aplicar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,4 +436,5 @@ $hoy = date('Y-m-d');
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
 </body>
+
 </html>
