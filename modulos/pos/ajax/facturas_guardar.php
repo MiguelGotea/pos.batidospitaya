@@ -96,13 +96,14 @@ try {
 
     // ---- 2. Insertar en pos_ventas_factura_lineas ----
     $sqlLinea = "INSERT INTO pos_ventas_factura_lineas
-                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total, notas)
-                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_extras, :precio_final, :precio_total, :notas)";
+                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total, es_canje_puntos, notas)
+                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_extras, :precio_final, :precio_total, :es_canje, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     foreach ($detalle as $item) {
+        $esCanjeado     = !empty($item['es_canjeado']) ? 1 : 0;
         $cantidad       = (float)$item['cantidad'];
-        $costoTotalIva  = (float)$item['costo_total_iva'];
+        $costoTotalIva  = $esCanjeado ? 0 : (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;
         $precioBase     = isset($item['precio_unitario_base']) ? (float)$item['precio_unitario_base'] : $precioUnitario;
         $nombreSnap     = isset($item['nombre']) ? trim($item['nombre']) : 'Producto';
@@ -111,6 +112,9 @@ try {
         // Procesar resumen de personalización para auditoría y cocina
         $montoExtras = 0;
         $resumenPers = [];
+        if ($esCanjeado) {
+            $resumenPers[] = "PRODUCTO CANJEADO (Puntos)";
+        }
         if (!empty($item['personalizacion']) && is_array($item['personalizacion'])) {
             $p = $item['personalizacion'];
             if (!empty($p['endulzante_nombre'])) {
@@ -147,6 +151,7 @@ try {
             ':precio_extras' => $montoExtras,
             ':precio_final'  => $precioUnitario,
             ':precio_total'  => $costoTotalIva,
+            ':es_canje'      => $esCanjeado,
             ':notas'         => $notasFinal
         ]);
     }

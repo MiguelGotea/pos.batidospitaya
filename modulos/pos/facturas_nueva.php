@@ -225,15 +225,16 @@ $hoy = date('Y-m-d');
                                     <table class="tabla-detalle-factura">
                                         <thead>
                                             <tr>
-                                                <th style="width:48%;">PRODUCTO</th>
-                                                <th style="width:24%;" class="text-center">CANT.</th>
-                                                <th style="width:22%;" class="text-end">PRECIO</th>
+                                                <th style="width:42%;">PRODUCTO</th>
+                                                <th style="width:20%;" class="text-center">CANT.</th>
+                                                <th style="width:20%;" class="text-end">PRECIO</th>
+                                                <th style="width:12%;" class="text-center">CANJEADO</th>
                                                 <th style="width:6%;" class="text-center"></th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaDetalleBody">
                                             <tr id="filaVacia">
-                                                <td colspan="4" class="empty-detalle">
+                                                <td colspan="5" class="empty-detalle">
                                                     <i class="bi bi-box-seam me-2"></i>
                                                     Selecciona productos desde el catálogo
                                                 </td>

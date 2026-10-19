@@ -343,8 +343,8 @@ function actualizarPuntosFactura() {
         return;
     }
 
-    // Puntos estimados: 1 punto por cada unidad de producto vendible en el ticket
-    const puntosEstaFactura = detalleFactura.reduce((s, d) => s + (parseFloat(d.cantidad) || 0), 0);
+    // Puntos estimados: 1 punto por cada unidad de producto vendible (excluye canjeados)
+    const puntosEstaFactura = detalleFactura.reduce((s, d) => s + (!d.es_canjeado ? (parseFloat(d.cantidad) || 0) : 0), 0);
     const puntosAnteriores = parseFloat(clienteActual.puntos_anteriores) || 0;
     const totalPuntos = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
 
@@ -501,6 +501,7 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
         costo_total_iva:      precioNum,
         notas:                '',
         es_personalizable:    parseInt(esPersonalizable) === 1,
+        es_canjeado:          false,
         personalizacion: {
             ingredientes_quitados:   [],  // [{ id_componente, nombre_componente }]
             ingredientes_sustituidos:[],  // [{ id_componente, nombre_original, id_nuevo, nombre_nuevo }]
@@ -528,7 +529,7 @@ function actualizarTablaDetalle() {
     if (detalleFactura.length === 0) {
         $('#tablaDetalleBody').html(`
             <tr id="filaVacia">
-                <td colspan="4" class="empty-detalle">
+                <td colspan="5" class="empty-detalle">
                     <i class="bi bi-box-seam me-2"></i>
                     Selecciona productos desde el catálogo
                 </td>
@@ -539,8 +540,9 @@ function actualizarTablaDetalle() {
 
     let html = '';
     detalleFactura.forEach((item, idx) => {
-        const precioTotalLinea = (item.costo_total_iva || 0);
         const precioUnit = (item.precio_unitario || 0);
+        const precioNormalTotal = Math.round(item.cantidad * precioUnit * 100) / 100;
+        const precioTotalLinea = item.es_canjeado ? 0 : (item.costo_total_iva || 0);
 
         /* Resumen de personalización visible en la fila */
         const pers = item.personalizacion || {};
@@ -554,7 +556,7 @@ function actualizarTablaDetalle() {
             resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
 
         html += `
-        <tr id="fila-${item.id_presentacion}" class="fila-producto-principal" data-idx="${idx}">
+        <tr id="fila-${item.id_presentacion}" class="fila-producto-principal ${item.es_canjeado ? 'fila-canjeada' : ''}" data-idx="${idx}">
             <td>
                 <div class="d-flex align-items-start gap-1">
                     <div class="flex-grow-1">
@@ -567,7 +569,7 @@ function actualizarTablaDetalle() {
                     </button>` : ''}
                 </div>
             </td>
-            <td class="text-center" style="width:125px;">
+            <td class="text-center" style="width:115px;">
                 <div class="qty-control">
                     <button type="button" class="qty-btn" onclick="modificarCantidad(${idx}, -1)" title="Disminuir">
                         <i class="bi bi-dash-lg"></i>
@@ -582,11 +584,26 @@ function actualizarTablaDetalle() {
                 </div>
             </td>
             <td class="text-end" style="white-space: nowrap;">
-                <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">
-                    C$ ${precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </strong>
-                ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
-                ${(pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
+                ${item.es_canjeado ? `
+                    <del class="d-block precio-tachado-canje" style="font-variant-numeric: tabular-nums;">
+                        C$ ${precioNormalTotal.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </del>
+                    <strong class="precio-cero-canje" style="font-variant-numeric: tabular-nums;">
+                        C$ 0.00
+                    </strong>
+                ` : `
+                    <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">
+                        C$ ${precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </strong>
+                    ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
+                    ${(pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
+                `}
+            </td>
+            <td class="text-center" style="width:65px;">
+                <label class="switch-canje-pos" title="${item.es_canjeado ? 'Desmarcar canje' : 'Marcar como producto canjeado (C$ 0.00)'}">
+                    <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
+                    <span class="slider-canje-pos"></span>
+                </label>
             </td>
             <td class="text-center" style="width:40px;">
                 <button class="btn-eliminar-fila" onclick="eliminarItem(${idx})" title="Quitar">
@@ -595,7 +612,7 @@ function actualizarTablaDetalle() {
             </td>
         </tr>
         <tr class="fila-producto-nota" data-idx="${idx}">
-            <td colspan="4">
+            <td colspan="5">
                 <div class="item-nota-row">
                     <span class="item-nota-lbl">Notas:</span>
                     <input type="text" class="item-nota-input"
@@ -612,6 +629,25 @@ function actualizarTablaDetalle() {
     actualizarTotal();
 }
 
+/* ---- Toggle Canjeado: Pone el producto a C$ 0.00 con precio original tachado ---- */
+function toggleCanjeadoItem(idx, checked) {
+    if (!detalleFactura[idx]) return;
+    const item = detalleFactura[idx];
+    item.es_canjeado = checked;
+
+    if (checked) {
+        item.costo_total_iva = 0;
+        item.es_canje_puntos = 1;
+        item.bloquea_puntos = 1;
+    } else {
+        item.costo_total_iva = Math.round(item.cantidad * (item.precio_unitario || 0) * 100) / 100;
+        item.es_canje_puntos = 0;
+        item.bloquea_puntos = 0;
+    }
+
+    actualizarTablaDetalle();
+}
+
 /* ---- Actualizar nota individual sin re-renderizar para no perder foco ---- */
 function actualizarNotaItem(idx, valor) {
     if (detalleFactura[idx]) {
@@ -625,7 +661,11 @@ function actualizarItem(idx, campo, valor) {
     if (campo === 'cantidad') {
         const cant = Math.max(1, parseInt(valor) || 1);
         detalleFactura[idx].cantidad = cant;
-        detalleFactura[idx].costo_total_iva = Math.round(cant * (detalleFactura[idx].precio_unitario || 0) * 100) / 100;
+        if (detalleFactura[idx].es_canjeado) {
+            detalleFactura[idx].costo_total_iva = 0;
+        } else {
+            detalleFactura[idx].costo_total_iva = Math.round(cant * (detalleFactura[idx].precio_unitario || 0) * 100) / 100;
+        }
     }
     actualizarTablaDetalle();
 }
@@ -644,7 +684,11 @@ function modificarCantidad(idx, delta) {
     if (nueva < 1) nueva = 1;
 
     item.cantidad = nueva;
-    item.costo_total_iva = Math.round(nueva * (item.precio_unitario || 0) * 100) / 100;
+    if (item.es_canjeado) {
+        item.costo_total_iva = 0;
+    } else {
+        item.costo_total_iva = Math.round(nueva * (item.precio_unitario || 0) * 100) / 100;
+    }
     actualizarTablaDetalle();
 }
 
