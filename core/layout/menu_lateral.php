@@ -456,8 +456,8 @@ $menuGlobal = [
                 'cargos_permitidos' => [49, 16]
             ],
             [
-                'nombre' => 'Sorteos',
-                'url' => 'marketing/gestion_sorteos.php',
+                'nombre' => 'Sorteo Las Américas',
+                'url' => 'marketing/gestion_sorteos_descubrelasamericas.php',
                 'cargos_permitidos' => [49, 42]
             ],
         ]
