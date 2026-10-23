@@ -282,7 +282,7 @@ $menuGlobal = [
             [
                 'nombre' => 'Compras Access',
                 'url' => 'compras/historial_compras.php',
-                'cargos_permitidos' => [49, 19]
+                'cargos_permitidos' => [49, 19, 55]
             ],
             [
                 'nombre' => 'Solicitudes Cotización',
