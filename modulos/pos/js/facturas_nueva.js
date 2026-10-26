@@ -1383,7 +1383,6 @@ function _mpRenderContenido(datos) {
             // Determinar si alguna opción de este grupo está seleccionada
             const opcionSeleccionada = opciones.find(o => o.id === _mpDraft.endulzante_id);
             const grupoActivo = Boolean(opcionSeleccionada);
-            const esSugerido = opciones.some(o => o.id === datos.endulzante_default_id);
             const tieneMultiples = opciones.length > 1;
 
             // IDs del grupo para el select
@@ -1398,7 +1397,6 @@ function _mpRenderContenido(datos) {
                         onclick="_mpSeleccionarGrupoEndulzante(this)">
                     <span class="mp-end-grupo-icono"><i class="bi bi-water"></i></span>
                     <span class="mp-end-grupo-nombre">${escHtml(nombreGrupo)}</span>
-                    ${esSugerido ? '<span class="mp-badge-sugerido">Sugerido</span>' : ''}
                 </button>`;
 
             if (tieneMultiples) {
