@@ -568,7 +568,7 @@ function actualizarTablaDetalle() {
         if (pers.ingredientes_quitados && pers.ingredientes_quitados.length)
             resumenPers += `<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> Sin: ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`;
         if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length)
-            resumenPers += `<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> Cambio: ${pers.ingredientes_sustituidos.map(i=>escHtml(i.nombre_nuevo)).join(', ')}</span>`;
+            resumenPers += `<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`;
         if (pers.extras_agregados && pers.extras_agregados.length)
             resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
 

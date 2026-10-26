@@ -128,9 +128,11 @@ try {
             if (!empty($p['ingredientes_sustituidos']) && is_array($p['ingredientes_sustituidos'])) {
                 $susts = [];
                 foreach ($p['ingredientes_sustituidos'] as $s) {
-                    $susts[] = ($s['nombre_nuevo'] ?? 'Otro');
+                    $orig  = isset($s['nombre_original']) ? trim($s['nombre_original']) : '';
+                    $nuevo = isset($s['nombre_nuevo'])    ? trim($s['nombre_nuevo'])    : 'Otro';
+                    $susts[] = $orig ? "{$orig} → {$nuevo}" : $nuevo;
                 }
-                if (!empty($susts)) $resumenPers[] = "Cambio por: " . implode(', ', $susts);
+                if (!empty($susts)) $resumenPers[] = "Cambio: " . implode(', ', $susts);
             }
             if (!empty($p['extras_agregados']) && is_array($p['extras_agregados'])) {
                 $exts = array_column($p['extras_agregados'], 'nombre');
