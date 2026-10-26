@@ -1352,6 +1352,84 @@ function abrirModalPersonalizacion(idx) {
 function _mpRenderContenido(datos) {
     let html = '<div class="mp-body-inner p-3">';
 
+    /* ---- SECCIÓN: Endulzante (primero, diseño agrupado por nombre) ---- */
+    if (datos.endulzantes && datos.endulzantes.length > 0) {
+        // Preseleccionar endulzante sugerido si no hay selección previa
+        if (!_mpDraft.endulzante_id && datos.endulzante_default_id) {
+            const sugerido = datos.endulzantes.find(e => e.id === datos.endulzante_default_id);
+            if (sugerido) {
+                _mpDraft.endulzante_id = sugerido.id;
+                _mpDraft.endulzante_nombre = sugerido.nombre_opcion || sugerido.nombre;
+                _mpDraft.endulzante_nombre_grupo = sugerido.nombre;
+            }
+        }
+
+        // Agrupar por campo "nombre" (nombre del endulzante base)
+        const grupos = new Map();
+        datos.endulzantes.forEach(end => {
+            const grupo = end.nombre || 'Sin nombre';
+            if (!grupos.has(grupo)) grupos.set(grupo, []);
+            grupos.get(grupo).push(end);
+        });
+
+        html += `
+        <div class="mp-seccion">
+            <div class="mp-seccion-header"><i class="bi bi-droplet-half"></i> Endulzante
+                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Selecciona uno</small>
+            </div>
+            <div class="mp-endulzante-grupos">`;
+
+        grupos.forEach((opciones, nombreGrupo) => {
+            // Determinar si alguna opción de este grupo está seleccionada
+            const opcionSeleccionada = opciones.find(o => o.id === _mpDraft.endulzante_id);
+            const grupoActivo = Boolean(opcionSeleccionada);
+            const esSugerido = opciones.some(o => o.id === datos.endulzante_default_id);
+            const tieneMultiples = opciones.length > 1;
+
+            // IDs del grupo para el select
+            const grupoKey = nombreGrupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+
+            html += `
+            <div class="mp-endulzante-grupo-row ${grupoActivo ? 'activo' : ''}" data-grupo="${escAttr(nombreGrupo)}">
+                <button type="button" class="mp-endulzante-grupo-btn ${grupoActivo ? 'activo' : ''}"
+                        data-grupo="${escAttr(nombreGrupo)}"
+                        data-primera-id="${opciones[0].id}"
+                        data-primera-nombre="${escAttr(opciones[0].nombre_opcion || opciones[0].nombre)}"
+                        onclick="_mpSeleccionarGrupoEndulzante(this)">
+                    <span class="mp-end-grupo-icono"><i class="bi bi-water"></i></span>
+                    <span class="mp-end-grupo-nombre">${escHtml(nombreGrupo)}</span>
+                    ${esSugerido ? '<span class="mp-badge-sugerido">Sugerido</span>' : ''}
+                </button>`;
+
+            if (tieneMultiples) {
+                // Dropdown de cantidad/variante
+                html += `
+                <div class="mp-endulzante-variante-wrap ${grupoActivo ? '' : 'mp-end-variante-oculto'}" id="varianteWrap_${grupoKey}">
+                    <select class="mp-endulzante-variante-select form-select form-select-sm"
+                            id="varianteSelect_${grupoKey}"
+                            data-grupo="${escAttr(nombreGrupo)}"
+                            onchange="_mpSeleccionarVarianteEndulzante(this)">`;
+
+                opciones.forEach(op => {
+                    const opNombre = op.nombre_opcion || op.nombre;
+                    const sel = op.id === _mpDraft.endulzante_id ? 'selected' : '';
+                    html += `<option value="${op.id}" data-nombre="${escAttr(opNombre)}" ${sel}>${escHtml(opNombre)}</option>`;
+                });
+
+                html += `
+                    </select>
+                </div>`;
+            } else {
+                // Opción única: guardamos id directamente en el botón
+                html += `<input type="hidden" data-grupo="${escAttr(nombreGrupo)}" value="${opciones[0].id}">`;
+            }
+
+            html += `</div>`; // cierre mp-endulzante-grupo-row
+        });
+
+        html += '</div></div>'; // cierre mp-endulzante-grupos y mp-seccion
+    }
+
     /* ---- SECCIÓN: Ingredientes de la Receta ---- */
     if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.length > 0) {
         html += `
@@ -1399,37 +1477,6 @@ function _mpRenderContenido(datos) {
         html += '</div></div>';
     } else if (!datos.tiene_receta) {
         html += '<div class="alert alert-light m-0 mb-3 border"><i class="bi bi-info-circle me-1 text-muted"></i> Este producto no tiene receta registrada. Solo puedes agregar extras o dejar una nota.</div>';
-    }
-
-    /* ---- SECCIÓN: Endulzante ---- */
-    if (datos.endulzantes && datos.endulzantes.length > 0) {
-        // Si no se ha elegido endulzante aún y la receta tiene uno sugerido, preseleccionarlo
-        if (!_mpDraft.endulzante_id && datos.endulzante_default_id) {
-            const sugerido = datos.endulzantes.find(e => e.id === datos.endulzante_default_id);
-            if (sugerido) {
-                _mpDraft.endulzante_id = sugerido.id;
-                _mpDraft.endulzante_nombre = sugerido.nombre;
-            }
-        }
-
-        html += `
-        <div class="mp-seccion">
-            <div class="mp-seccion-header"><i class="bi bi-droplet-half"></i> Endulzante</div>
-            <div class="mp-endulzante-grid">`;
-
-        datos.endulzantes.forEach(end => {
-            const seleccionado = _mpDraft.endulzante_id === end.id;
-            const esSugerido   = datos.endulzante_default_id === end.id;
-            html += `
-            <button type="button" class="btn-mp-endulzante ${seleccionado ? 'activo' : ''}" data-id="${end.id}" data-nombre="${escAttr(end.nombre)}"
-                    onclick="_mpSeleccionarEndulzante(this)">
-                <i class="bi bi-water"></i>
-                ${escHtml(end.nombre)}
-                ${esSugerido ? '<span class="mp-badge-sugerido">Sugerido</span>' : ''}
-            </button>`;
-        });
-
-        html += '</div></div>';
     }
 
     /* ---- SECCIÓN: Extras ---- */
@@ -1519,23 +1566,58 @@ function _mpSustituirIngrediente(select) {
     }
 }
 
-/* ---- Seleccionar endulzante ---- */
-function _mpSeleccionarEndulzante(btn) {
-    const idEnd = parseInt(btn.dataset.id);
-    const nombre = btn.dataset.nombre;
+/* ---- Seleccionar grupo de endulzante (clic en la fila/botón principal) ---- */
+function _mpSeleccionarGrupoEndulzante(btn) {
+    const grupo = btn.dataset.grupo;
+    const grupoKey = grupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    const row = btn.closest('.mp-endulzante-grupo-row');
 
-    // Toggle: si ya estaba seleccionado, deseleccionar
-    if (_mpDraft.endulzante_id === idEnd) {
-        _mpDraft.endulzante_id     = null;
-        _mpDraft.endulzante_nombre = '';
+    // Si ya está activo este grupo → deseleccionar (toggle off)
+    if (row && row.classList.contains('activo')) {
+        row.classList.remove('activo');
         btn.classList.remove('activo');
-    } else {
-        _mpDraft.endulzante_id     = idEnd;
-        _mpDraft.endulzante_nombre = nombre;
-        // Quitar clase activo de todos los botones
-        document.querySelectorAll('.btn-mp-endulzante').forEach(b => b.classList.remove('activo'));
-        btn.classList.add('activo');
+        _mpDraft.endulzante_id = null;
+        _mpDraft.endulzante_nombre = '';
+        _mpDraft.endulzante_nombre_grupo = '';
+        const wrap = document.getElementById('varianteWrap_' + grupoKey);
+        if (wrap) wrap.classList.add('mp-end-variante-oculto');
+        return;
     }
+
+    // Desactivar todos los grupos
+    document.querySelectorAll('.mp-endulzante-grupo-row').forEach(r => r.classList.remove('activo'));
+    document.querySelectorAll('.mp-endulzante-grupo-btn').forEach(b => b.classList.remove('activo'));
+    document.querySelectorAll('[id^="varianteWrap_"]').forEach(w => w.classList.add('mp-end-variante-oculto'));
+
+    // Activar este grupo
+    if (row) row.classList.add('activo');
+    btn.classList.add('activo');
+
+    const wrap = document.getElementById('varianteWrap_' + grupoKey);
+    const select = document.getElementById('varianteSelect_' + grupoKey);
+
+    if (wrap && select) {
+        // Tiene dropdown: mostrar y usar opción seleccionada en el select
+        wrap.classList.remove('mp-end-variante-oculto');
+        const selOpt = select.options[select.selectedIndex];
+        const varNombre = selOpt.dataset.nombre || selOpt.text;
+        _mpDraft.endulzante_id = parseInt(selOpt.value);
+        _mpDraft.endulzante_nombre = grupo + ' — ' + varNombre;
+    } else {
+        // Opción única: solo el nombre del grupo
+        _mpDraft.endulzante_id = parseInt(btn.dataset.primeraId);
+        _mpDraft.endulzante_nombre = grupo;
+    }
+    _mpDraft.endulzante_nombre_grupo = grupo;
+}
+
+/* ---- Cambiar variante dentro de un grupo (dropdown de cantidad/tipo) ---- */
+function _mpSeleccionarVarianteEndulzante(select) {
+    const selOpt = select.options[select.selectedIndex];
+    const varNombre = selOpt.dataset.nombre || selOpt.text;
+    const grupo = select.dataset.grupo || '';
+    _mpDraft.endulzante_id = parseInt(selOpt.value);
+    _mpDraft.endulzante_nombre = grupo ? (grupo + ' — ' + varNombre) : varNombre;
 }
 
 /* ---- Toggle extra (agregar/quitar) ---- */

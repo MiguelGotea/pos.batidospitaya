@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * get_receta_producto.php — Datos de Receta para Personalización en el POS
  *
@@ -79,10 +79,10 @@ try {
     // 3. Endulzantes activos (lista completa para dropdown)
     // =================================================================
     $stmtEndulzantes = $conn->prepare("
-        SELECT id, nombre, unidad_medida
+        SELECT id, nombre, nombre_opcion, unidad_medida
         FROM endulzantes
         WHERE activo = 1
-        ORDER BY orden ASC, nombre ASC
+        ORDER BY orden ASC, nombre ASC, id ASC
     ");
     $stmtEndulzantes->execute();
     $endulzantes = $stmtEndulzantes->fetchAll(PDO::FETCH_ASSOC);
