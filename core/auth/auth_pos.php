@@ -13,8 +13,8 @@
 // ---------------------------------------------------------------------------
 // ⚠️  MODO DESARROLLO — Cambiar a false en producción
 // ---------------------------------------------------------------------------
-define('POS_DEV_MODE',          true);   // true = bypass de cookie activo
-define('POS_DEV_SUCURSAL_COD',  1);      // Código de sucursal a simular
+define('POS_DEV_MODE', true);   // true = bypass de cookie activo, false para producción
+define('POS_DEV_SUCURSAL_COD', 5);      // Código de sucursal a simular
 define('POS_DEV_SUCURSAL_NOMBRE', 'Sucursal Test (DEV)'); // Nombre descriptivo
 // ---------------------------------------------------------------------------
 
@@ -45,18 +45,18 @@ function posVerificarDispositivo()
     if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
         // Poblar sesión automáticamente como si el dispositivo fuera válido
         if (!isset($_SESSION['pos_store_sucursal']) || $_SESSION['pos_store_sucursal'] != POS_DEV_SUCURSAL_COD) {
-            $_SESSION['pos_device_sucursal']       = POS_DEV_SUCURSAL_COD;
-            $_SESSION['pos_store_sucursal']        = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_device_sucursal'] = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal'] = POS_DEV_SUCURSAL_COD;
             $_SESSION['pos_store_sucursal_nombre'] = POS_DEV_SUCURSAL_NOMBRE;
-            $_SESSION['pos_store_usuario']         = 'DEV-Terminal';
-            $_SESSION['pos_store_id']              = 0;
-            $_SESSION['usuario_id']                = 0;
-            $_SESSION['usuario_rol']               = 'sucursal';
-            $_SESSION['cargo_cod']                 = 27;
+            $_SESSION['pos_store_usuario'] = 'DEV-Terminal';
+            $_SESSION['pos_store_id'] = 0;
+            $_SESSION['usuario_id'] = 0;
+            $_SESSION['usuario_rol'] = 'sucursal';
+            $_SESSION['cargo_cod'] = 27;
         }
         return [
-            'status'          => true,
-            'msg'             => '',
+            'status' => true,
+            'msg' => '',
             'sucursal_codigo' => POS_DEV_SUCURSAL_COD,
             'sucursal_nombre' => POS_DEV_SUCURSAL_NOMBRE,
         ];
@@ -68,8 +68,8 @@ function posVerificarDispositivo()
     $esChromium = (strpos($ua, 'Chrome') !== false || strpos($ua, 'Edg') !== false);
     if (!$esChromium) {
         return [
-            'status'  => false,
-            'msg'     => 'Navegador no permitido. Usa Google Chrome o Microsoft Edge.',
+            'status' => false,
+            'msg' => 'Navegador no permitido. Usa Google Chrome o Microsoft Edge.',
             'sucursal_codigo' => null,
         ];
     }
@@ -78,8 +78,8 @@ function posVerificarDispositivo()
     $tokenCookie = $_COOKIE['pos_device_token'] ?? null;
     if (empty($tokenCookie)) {
         return [
-            'status'  => false,
-            'msg'     => 'Este dispositivo no cuenta con una autorización activa. Por favor, contacta al área de TI para configurar este dispositivo.',
+            'status' => false,
+            'msg' => 'Este dispositivo no cuenta con una autorización activa. Por favor, contacta al área de TI para configurar este dispositivo.',
             'sucursal_codigo' => null,
         ];
     }
@@ -92,8 +92,8 @@ function posVerificarDispositivo()
 
         if (!$sucursal) {
             return [
-                'status'  => false,
-                'msg'     => 'La autorización de este dispositivo ya no es válida o la sucursal ha sido desactivada. Por favor, contacta al área de TI.',
+                'status' => false,
+                'msg' => 'La autorización de este dispositivo ya no es válida o la sucursal ha sido desactivada. Por favor, contacta al área de TI.',
                 'sucursal_codigo' => null,
             ];
         }
@@ -103,20 +103,20 @@ function posVerificarDispositivo()
         // para obviar el login manual de Nivel 1.
         if (!isset($_SESSION['pos_store_sucursal']) || $_SESSION['pos_store_sucursal'] != $sucursal['codigo']) {
             $_SESSION['pos_device_sucursal'] = $sucursal['codigo'];
-            $_SESSION['pos_store_sucursal']  = $sucursal['codigo'];
+            $_SESSION['pos_store_sucursal'] = $sucursal['codigo'];
             $_SESSION['pos_store_sucursal_nombre'] = $sucursal['nombre'];
-            $_SESSION['pos_store_usuario']   = 'Terminal Autorizada';
-            $_SESSION['pos_store_id']        = 0; // ID virtual para auto-login
+            $_SESSION['pos_store_usuario'] = 'Terminal Autorizada';
+            $_SESSION['pos_store_id'] = 0; // ID virtual para auto-login
 
             // Compatibilidad legacy para módulos ERP
-            $_SESSION['usuario_id']  = 0;
+            $_SESSION['usuario_id'] = 0;
             $_SESSION['usuario_rol'] = 'sucursal';
-            $_SESSION['cargo_cod']   = 27;
+            $_SESSION['cargo_cod'] = 27;
         }
 
         return [
-            'status'  => true,
-            'msg'     => '',
+            'status' => true,
+            'msg' => '',
             'sucursal_codigo' => $sucursal['codigo'],
             'sucursal_nombre' => $sucursal['nombre']
         ];
@@ -124,8 +124,8 @@ function posVerificarDispositivo()
     } catch (Exception $e) {
         error_log("POS - Error validando dispositivo: " . $e->getMessage());
         return [
-            'status'  => false,
-            'msg'     => 'Error de sistema al validar el dispositivo POS.',
+            'status' => false,
+            'msg' => 'Error de sistema al validar el dispositivo POS.',
             'sucursal_codigo' => null,
         ];
     }
@@ -230,7 +230,7 @@ function posValidarLoginTienda($usuario, $clave)
     if ($dispositivoSucursal && $user['Sucursal'] != $dispositivoSucursal) {
         return [
             'status' => false,
-            'msg'    => 'Tu usuario no corresponde a la sucursal de este dispositivo.',
+            'msg' => 'Tu usuario no corresponde a la sucursal de este dispositivo.',
         ];
     }
 
@@ -247,16 +247,16 @@ function posValidarLoginTienda($usuario, $clave)
     }
 
     // Guardar sesión de tienda
-    $_SESSION['pos_store_id']       = $user['CodOperario'];
-    $_SESSION['pos_store_usuario']  = $user['usuario'];
+    $_SESSION['pos_store_id'] = $user['CodOperario'];
+    $_SESSION['pos_store_usuario'] = $user['usuario'];
     $_SESSION['pos_store_sucursal'] = $user['Sucursal'];
     $_SESSION['pos_store_sucursal_nombre'] = $user['sucursal_nombre'];
 
     // --- COMPATIBILIDAD LEGACY ---
     // Mapeo inicial para módulos que esperen estas variables desde la Etapa 1
-    $_SESSION['usuario_id']  = $user['CodOperario'];
+    $_SESSION['usuario_id'] = $user['CodOperario'];
     $_SESSION['usuario_rol'] = 'sucursal'; // Rol genérico para POS
-    $_SESSION['cargo_cod']   = 27;
+    $_SESSION['cargo_cod'] = 27;
 
     return ['status' => true];
 }
@@ -282,7 +282,7 @@ function posValidarColaborador($clave)
     }
 
     $sucursal = $_SESSION['pos_store_sucursal'];
-    $hoy      = date('Y-m-d');
+    $hoy = date('Y-m-d');
 
     // Buscar colaboradores activos (excluir cargo 27 = encargados de sucursal, excepto cargos de administración/TI/pruebas)
     $stmt = ejecutarConsulta("
@@ -348,10 +348,10 @@ function posValidarColaborador($clave)
     if ($stmtCargo) {
         $filasCargo = $stmtCargo->fetchAll();
         foreach ($filasCargo as $fc) {
-            $cargosColaborador[] = (int)$fc['CodNivelesCargos'];
+            $cargosColaborador[] = (int) $fc['CodNivelesCargos'];
         }
         if (!empty($filasCargo)) {
-            $cargoPrincipal = (int)$filasCargo[0]['CodNivelesCargos'];
+            $cargoPrincipal = (int) $filasCargo[0]['CodNivelesCargos'];
         }
     }
 
@@ -375,7 +375,7 @@ function posValidarColaborador($clave)
         if (!$stmtMarc || !$stmtMarc->fetch()) {
             return [
                 'status' => false,
-                'msg'    => 'Acceso denegado: No tienes una marcación de entrada activa hoy en esta sucursal.',
+                'msg' => 'Acceso denegado: No tienes una marcación de entrada activa hoy en esta sucursal.',
             ];
         }
     }
@@ -384,16 +384,16 @@ function posValidarColaborador($clave)
     $ahora = time();
     $fechaActual = date('Y-m-d');
 
-    $_SESSION['pos_colaborador_id']     = $encontrado['CodOperario'];
+    $_SESSION['pos_colaborador_id'] = $encontrado['CodOperario'];
     $_SESSION['pos_colaborador_nombre'] = obtenerNombreCompletoOperario($encontrado);
 
     // --- COMPATIBILIDAD LEGACY ---
-    $_SESSION['usuario_id']     = $encontrado['CodOperario'];
+    $_SESSION['usuario_id'] = $encontrado['CodOperario'];
     $_SESSION['usuario_nombre'] = $_SESSION['pos_colaborador_nombre'];
-    $_SESSION['login_time']     = $ahora;
-    $_SESSION['login_date']     = $fechaActual;
-    $_SESSION['last_activity']  = $ahora;
-    $_SESSION['cargo_cod']      = $cargoPrincipal;
+    $_SESSION['login_time'] = $ahora;
+    $_SESSION['login_date'] = $fechaActual;
+    $_SESSION['last_activity'] = $ahora;
+    $_SESSION['cargo_cod'] = $cargoPrincipal;
 
     return ['status' => true];
 }
@@ -445,8 +445,9 @@ function obtenerUsuarioActual()
 {
     // Prioridad: Colaborador actual (Stage 2)
     $id = $_SESSION['pos_colaborador_id'] ?? ($_SESSION['pos_store_id'] ?? null);
-    
-    if (!$id) return null;
+
+    if (!$id)
+        return null;
 
     global $conn;
     try {
