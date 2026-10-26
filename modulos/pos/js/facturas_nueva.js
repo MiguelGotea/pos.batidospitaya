@@ -1439,15 +1439,20 @@ function _mpRenderContenido(datos) {
             <div class="mp-ingredientes-lista">`;
 
         datos.ingredientes.forEach(ing => {
-            const idComp    = ing.id_componente;
-            const quitado   = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
+            const idComp     = ing.id_componente;
+            const quitado    = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
             const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);
 
-            // Opciones para dropdown de sustitución
-            let optsHtml = '<option value="">— Sin cambio —</option>';
-            (datos.ingredientes_alternativos || []).forEach(alt => {
-                const sel = sustituido && sustituido.id_nuevo === alt.id ? 'selected' : '';
-                optsHtml += `<option value="${alt.id}" ${sel}>${escHtml(alt.Nombre)}</option>`;
+            const nombreActual = sustituido ? sustituido.nombre_nuevo : '';
+            const valorActual  = sustituido ? sustituido.id_nuevo     : '';
+
+            // Construir items del combo buscable usando datos.extras
+            let dropdownHtml = `<div class="mp-sust-item mp-sust-sin-cambio" data-id="" data-nombre="" onclick="_mpSeleccionarSustituto(this, ${idComp})"><i class="bi bi-dash me-1"></i>Sin cambio</div>`;
+            (datos.extras || []).forEach(ext => {
+                dropdownHtml += `<div class="mp-sust-item" data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}" onclick="_mpSeleccionarSustituto(this, ${idComp})">
+                    <span class="mp-sust-item-nombre">${escHtml(ext.nombre)}</span>
+                    <span class="mp-sust-item-precio">+C$ ${parseFloat(ext.precio).toFixed(2)}</span>
+                </div>`;
             });
 
             html += `
@@ -1457,11 +1462,24 @@ function _mpRenderContenido(datos) {
                     <small class="text-muted">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
                 </div>
                 <div class="mp-ing-controles">
-                    <!-- Dropdown de sustitución -->
-                    <select class="mp-select-sustituir form-select form-select-sm" data-comp="${idComp}" data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
-                            onchange="_mpSustituirIngrediente(this)" ${quitado ? 'disabled' : ''}>
-                        ${optsHtml}
-                    </select>
+                    <!-- Combo buscable de sustitución (fuente: tabla extras) -->
+                    <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}">
+                        <input type="text"
+                               class="mp-sustituir-input"
+                               data-comp="${idComp}"
+                               data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
+                               value="${escAttr(nombreActual)}"
+                               placeholder="Sin cambio"
+                               autocomplete="off"
+                               ${quitado ? 'disabled' : ''}
+                               oninput="_mpFiltrarSustitutos(this)"
+                               onfocus="_mpAbrirDropdownSust(this)"
+                               onblur="_mpBlurSustituto(this)">
+                        <input type="hidden" class="mp-sustituir-valor" data-comp="${idComp}" value="${valorActual || ''}">
+                        <div class="mp-sustituir-dropdown">
+                            ${dropdownHtml}
+                        </div>
+                    </div>
                     <!-- Toggle quitar -->
                     <button type="button" class="btn-mp-quitar ${quitado ? 'activo' : ''}" data-comp="${idComp}"
                             onclick="_mpToggleQuitarIngrediente(this, '${escAttr(ing.nombre_ingrediente)}')"
@@ -1549,9 +1567,12 @@ function _mpRenderContenido(datos) {
 
 /* ---- Toggle: quitar / restaurar ingrediente ---- */
 function _mpToggleQuitarIngrediente(btn, nombreComponente) {
-    const idComp = parseInt(btn.dataset.comp);
-    const row = btn.closest('.mp-ingrediente-row');
-    const selectSustituto = row.querySelector('.mp-select-sustituir');
+    const idComp   = parseInt(btn.dataset.comp);
+    const row      = btn.closest('.mp-ingrediente-row');
+    const combo    = row ? row.querySelector('.mp-sustituir-combo') : null;
+    const inputSust  = combo ? combo.querySelector('.mp-sustituir-input')   : null;
+    const hiddenSust = combo ? combo.querySelector('.mp-sustituir-valor')   : null;
+    const dropdown   = combo ? combo.querySelector('.mp-sustituir-dropdown') : null;
 
     const yaQuitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
 
@@ -1562,13 +1583,17 @@ function _mpToggleQuitarIngrediente(btn, nombreComponente) {
         btn.classList.remove('activo');
         btn.innerHTML = '<i class="bi bi-x-circle"></i>';
         btn.title = 'Quitar este ingrediente';
-        if (selectSustituto) selectSustituto.disabled = false;
+        if (inputSust) { inputSust.disabled = false; }
+        if (combo)     { combo.classList.remove('mp-combo-disabled'); }
     } else {
         // Quitar
         _mpDraft.ingredientes_quitados.push({ id_componente: idComp, nombre_componente: nombreComponente });
-        // Si había sustitución, la cancelamos
+        // Cancelar sustitución previa si la había
         _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
-        if (selectSustituto) { selectSustituto.value = ''; selectSustituto.disabled = true; }
+        if (inputSust)  { inputSust.value = ''; inputSust.disabled = true; }
+        if (hiddenSust) { hiddenSust.value = ''; }
+        if (dropdown)   { dropdown.classList.remove('mp-sust-abierto'); }
+        if (combo)      { combo.classList.add('mp-combo-disabled'); }
 
         row.classList.add('mp-ingrediente-quitado');
         btn.classList.add('activo');
@@ -1577,22 +1602,68 @@ function _mpToggleQuitarIngrediente(btn, nombreComponente) {
     }
 }
 
-/* ---- Sustituir ingrediente por otro del catálogo ---- */
-function _mpSustituirIngrediente(select) {
-    const idComp      = parseInt(select.dataset.comp);
-    const nombreOrig  = select.dataset.nombreOrig;
-    const idNuevo     = select.value ? parseInt(select.value) : null;
-    const nombreNuevo = select.value ? select.options[select.selectedIndex].text : '';
+/* ---- Combo buscable: abrir dropdown ---- */
+function _mpAbrirDropdownSust(input) {
+    const combo = input.closest('.mp-sustituir-combo');
+    if (!combo || combo.classList.contains('mp-combo-disabled')) return;
+    const dropdown = combo.querySelector('.mp-sustituir-dropdown');
+    // Mostrar todos los items antes de abrir
+    combo.querySelectorAll('.mp-sust-item').forEach(item => item.style.display = '');
+    if (dropdown) dropdown.classList.add('mp-sust-abierto');
+}
 
-    // Quitar sustitución previa de este componente
+/* ---- Combo buscable: cerrar con delay (permite el clic en item) ---- */
+function _mpBlurSustituto(input) {
+    setTimeout(() => {
+        const combo = input ? input.closest('.mp-sustituir-combo') : null;
+        if (!combo) return;
+        const dropdown = combo.querySelector('.mp-sustituir-dropdown');
+        if (dropdown) dropdown.classList.remove('mp-sust-abierto');
+    }, 220);
+}
+
+/* ---- Combo buscable: filtrar mientras el usuario escribe ---- */
+function _mpFiltrarSustitutos(input) {
+    const combo = input.closest('.mp-sustituir-combo');
+    if (!combo) return;
+    const dropdown = combo.querySelector('.mp-sustituir-dropdown');
+    const texto = input.value.toLowerCase().trim();
+    if (dropdown) dropdown.classList.add('mp-sust-abierto');
+
+    combo.querySelectorAll('.mp-sust-item').forEach(item => {
+        if (item.classList.contains('mp-sust-sin-cambio')) {
+            item.style.display = '';   // siempre visible
+            return;
+        }
+        const nombre = (item.dataset.nombre || '').toLowerCase();
+        item.style.display = (texto === '' || nombre.includes(texto)) ? '' : 'none';
+    });
+}
+
+/* ---- Combo buscable: seleccionar una opción del dropdown ---- */
+function _mpSeleccionarSustituto(itemDiv, idComp) {
+    const combo = itemDiv.closest('.mp-sustituir-combo');
+    if (!combo) return;
+    const input    = combo.querySelector('.mp-sustituir-input');
+    const hidden   = combo.querySelector('.mp-sustituir-valor');
+    const dropdown = combo.querySelector('.mp-sustituir-dropdown');
+    const nombreOrig = input ? input.dataset.nombreOrig : '';
+
+    const id     = itemDiv.dataset.id;
+    const nombre = itemDiv.dataset.nombre;
+
+    if (input)    input.value  = nombre || '';
+    if (hidden)   hidden.value = id     || '';
+    if (dropdown) dropdown.classList.remove('mp-sust-abierto');
+
+    // Actualizar draft
     _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
-
-    if (idNuevo) {
+    if (id) {
         _mpDraft.ingredientes_sustituidos.push({
-            id_componente:  idComp,
+            id_componente:   idComp,
             nombre_original: nombreOrig,
-            id_nuevo:        idNuevo,
-            nombre_nuevo:    nombreNuevo
+            id_nuevo:        parseInt(id),
+            nombre_nuevo:    nombre
         });
     }
 }

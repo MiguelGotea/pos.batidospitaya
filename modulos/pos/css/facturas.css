@@ -2078,13 +2078,89 @@
     flex-shrink: 0;
 }
 
-.mp-select-sustituir {
-    font-size: .78rem !important;
-    min-width: 140px;
-    max-width: 180px;
-    border-color: #cbd5e1 !important;
+/* ---- Combo buscable de sustitución de ingrediente ---- */
+.mp-sustituir-combo {
+    position: relative;
+    min-width: 150px;
+    max-width: 195px;
+}
+.mp-sustituir-input {
+    width: 100%;
+    font-size: .78rem;
+    padding: 3px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
     color: #334155;
-    border-radius: 6px !important;
+    background: #fff;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    cursor: text;
+}
+.mp-sustituir-input:focus {
+    border-color: #0E544C;
+    box-shadow: 0 0 0 2px rgba(14,84,76,.12);
+}
+.mp-sustituir-input::placeholder { color: #94a3b8; }
+.mp-sustituir-input:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+.mp-combo-disabled .mp-sustituir-input {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Dropdown flotante */
+.mp-sustituir-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+    z-index: 1080;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.mp-sustituir-dropdown.mp-sust-abierto { display: block; }
+
+/* Items del dropdown */
+.mp-sust-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    padding: 5px 10px;
+    font-size: .78rem;
+    color: #334155;
+    cursor: pointer;
+    transition: background .1s;
+}
+.mp-sust-item:hover { background: #f0fdf4; color: #0E544C; }
+.mp-sust-item:first-child { border-radius: 7px 7px 0 0; }
+.mp-sust-item:last-child  { border-radius: 0 0 7px 7px; }
+
+/* Opción "Sin cambio" */
+.mp-sust-sin-cambio {
+    color: #64748b;
+    font-style: italic;
+    border-bottom: 1px solid #f1f5f9;
+}
+.mp-sust-sin-cambio:hover { background: #f8fafc; color: #475569; }
+
+.mp-sust-item-nombre { flex: 1; }
+.mp-sust-item-precio {
+    flex-shrink: 0;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #059669;
+    white-space: nowrap;
 }
 
 .btn-mp-quitar {
