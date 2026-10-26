@@ -284,6 +284,50 @@ function posValidarColaborador($clave)
     $sucursal = $_SESSION['pos_store_sucursal'];
     $hoy = date('Y-m-d');
 
+    // ===========================================================
+    // 🛠️  BYPASS DE DESARROLLO — Cualquier colaborador operativo
+    //     sin restricción de cargo, sucursal ni marcación
+    // ===========================================================
+    if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
+        $stmtDev = ejecutarConsulta("
+            SELECT CodOperario, Nombre, Nombre2, Apellido, Apellido2, clave, clave_hash
+            FROM Operarios
+            WHERE Operativo = 1
+        ", []);
+
+        if (!$stmtDev) {
+            return ['status' => false, 'msg' => '[DEV] Error al consultar base de datos.'];
+        }
+
+        $encontradoDev = null;
+        foreach ($stmtDev->fetchAll() as $op) {
+            if (!empty($op['clave_hash']) && password_verify($clave, $op['clave_hash'])) {
+                $encontradoDev = $op;
+                break;
+            } elseif ($clave === $op['clave']) {
+                $encontradoDev = $op;
+                break;
+            }
+        }
+
+        if (!$encontradoDev) {
+            return ['status' => false, 'msg' => 'Clave incorrecta.'];
+        }
+
+        // Poblar sesión igual que en producción, sin validar turno ni sucursal
+        $ahora = time();
+        $_SESSION['pos_colaborador_id']     = $encontradoDev['CodOperario'];
+        $_SESSION['pos_colaborador_nombre'] = obtenerNombreCompletoOperario($encontradoDev);
+        $_SESSION['usuario_id']             = $encontradoDev['CodOperario'];
+        $_SESSION['usuario_nombre']         = $_SESSION['pos_colaborador_nombre'];
+        $_SESSION['login_time']             = $ahora;
+        $_SESSION['login_date']             = date('Y-m-d');
+        $_SESSION['last_activity']          = $ahora;
+        $_SESSION['cargo_cod']              = 2; // operario por defecto en DEV
+        return ['status' => true];
+    }
+    // ===========================================================
+
     // Buscar colaboradores activos (excluir cargo 27 = encargados de sucursal, excepto cargos de administración/TI/pruebas)
     $stmt = ejecutarConsulta("
         SELECT
