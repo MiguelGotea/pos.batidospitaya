@@ -10,6 +10,14 @@
  * Seguridad adicional: Solo dispositivos autorizados mediante erp_device_token
  */
 
+// ---------------------------------------------------------------------------
+// ⚠️  MODO DESARROLLO — Cambiar a false en producción
+// ---------------------------------------------------------------------------
+define('POS_DEV_MODE',          true);   // true = bypass de cookie activo
+define('POS_DEV_SUCURSAL_COD',  1);      // Código de sucursal a simular
+define('POS_DEV_SUCURSAL_NOMBRE', 'Sucursal Test (DEV)'); // Nombre descriptivo
+// ---------------------------------------------------------------------------
+
 // Gestor centralizado de sesiones (8 horas y corte a Medianoche UTC-6)
 require_once __DIR__ . '/session_manager.php';
 iniciarSesionSegura();
@@ -30,6 +38,30 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/helpers/funciones.php';
 function posVerificarDispositivo()
 {
     global $conn;
+
+    // ===========================================================
+    // 🛠️  BYPASS DE DESARROLLO — Se activa con POS_DEV_MODE=true
+    // ===========================================================
+    if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
+        // Poblar sesión automáticamente como si el dispositivo fuera válido
+        if (!isset($_SESSION['pos_store_sucursal']) || $_SESSION['pos_store_sucursal'] != POS_DEV_SUCURSAL_COD) {
+            $_SESSION['pos_device_sucursal']       = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal']        = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal_nombre'] = POS_DEV_SUCURSAL_NOMBRE;
+            $_SESSION['pos_store_usuario']         = 'DEV-Terminal';
+            $_SESSION['pos_store_id']              = 0;
+            $_SESSION['usuario_id']                = 0;
+            $_SESSION['usuario_rol']               = 'sucursal';
+            $_SESSION['cargo_cod']                 = 27;
+        }
+        return [
+            'status'          => true,
+            'msg'             => '',
+            'sucursal_codigo' => POS_DEV_SUCURSAL_COD,
+            'sucursal_nombre' => POS_DEV_SUCURSAL_NOMBRE,
+        ];
+    }
+    // ===========================================================
 
     // 1. Verificar Navegador (Chrome/Edge)
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
