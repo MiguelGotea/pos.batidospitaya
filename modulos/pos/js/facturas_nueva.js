@@ -840,8 +840,13 @@ function actualizarMontoPago(idx, val) {
     pagos[idx].monto = Math.round(m * 100) / 100;
 
     if (pagos[idx].metodo === 'efectivo') {
-        const recibido = pagos[idx].recibido || pagos[idx].monto;
-        const cambio = Math.max(0, recibido - pagos[idx].monto);
+        // Si el monto de efectivo supera el recibido, actualizar recibido automáticamente
+        if (pagos[idx].monto > (pagos[idx].recibido || 0)) {
+            pagos[idx].recibido = pagos[idx].monto;
+            const inputRec = document.getElementById(`inputRecibido-${idx}`);
+            if (inputRec) inputRec.value = pagos[idx].recibido;
+        }
+        const cambio = Math.max(0, (pagos[idx].recibido || pagos[idx].monto) - pagos[idx].monto);
         pagos[idx].cambio = Math.round(cambio * 100) / 100;
         $(`#badgeCambio-${idx}`).text(`Cambio: C$ ${pagos[idx].cambio.toFixed(2)}`);
     }
@@ -1063,6 +1068,7 @@ function renderizarFilasPago() {
                 <div class="subdetalle-recibido">
                     <span>Recibido: C$</span>
                     <input type="number" step="0.01" min="0"
+                           id="inputRecibido-${idx}"
                            value="${p.recibido || p.monto}"
                            placeholder="0.00"
                            oninput="actualizarRecibidoEfectivo(${idx}, this.value)">
