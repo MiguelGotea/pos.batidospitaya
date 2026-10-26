@@ -1477,27 +1477,60 @@ function _mpRenderContenido(datos) {
         html += '<div class="alert alert-light m-0 mb-3 border"><i class="bi bi-info-circle me-1 text-muted"></i> Este producto no tiene receta registrada. Solo puedes agregar extras o dejar una nota.</div>';
     }
 
-    /* ---- SECCIÓN: Extras ---- */
+    /* ---- SECCIÓN: Extras (agrupados por grupo, ordenados por precio, acordeón) ---- */
     if (datos.extras && datos.extras.length > 0) {
+
+        // 1) Agrupar por campo "grupo"
+        const extrasGrupos = new Map();
+        datos.extras.forEach(ext => {
+            const g = ext.grupo || 'Otros';
+            if (!extrasGrupos.has(g)) extrasGrupos.set(g, []);
+            extrasGrupos.get(g).push(ext);
+        });
+
+        // 2) Ordenar cada grupo por precio ascendente
+        extrasGrupos.forEach(lista => lista.sort((a, b) => parseFloat(a.precio) - parseFloat(b.precio)));
+
         html += `
         <div class="mp-seccion">
             <div class="mp-seccion-header">
                 <i class="bi bi-plus-square"></i> Extras
                 <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Los extras sí alteran el precio</small>
             </div>
-            <div class="mp-extras-grid">`;
+            <div class="mp-extras-acordeon">`;
 
-        datos.extras.forEach(ext => {
-            const agregado = _mpDraft.extras_agregados.some(e => e.id === ext.id);
+        let grupoIdx = 0;
+        extrasGrupos.forEach((lista, nombreGrupo) => {
+            const grupoKey = 'mpeg_' + grupoIdx++;
+            // ¿Hay algún extra de este grupo ya seleccionado? → abrir por defecto
+            const tieneActivo = lista.some(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id));
+            const cantSelec   = lista.filter(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id)).length;
+
             html += `
-            <button type="button" class="btn-mp-extra ${agregado ? 'activo' : ''}" data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}"
-                    onclick="_mpToggleExtra(this)">
-                <span class="mp-extra-nombre">${escHtml(ext.nombre)}</span>
-                <span class="mp-extra-precio">+C$ ${parseFloat(ext.precio).toFixed(2)}</span>
-            </button>`;
+            <div class="mp-extras-grupo ${tieneActivo ? 'abierto' : ''}">
+                <button type="button" class="mp-extras-grupo-header" onclick="_mpToggleGrupoExtras(this)" aria-expanded="${tieneActivo}">
+                    <span class="mp-extras-grupo-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+                    <span class="mp-extras-grupo-nombre">${escHtml(nombreGrupo)}</span>
+                    ${cantSelec > 0 ? `<span class="mp-extras-grupo-badge">${cantSelec}</span>` : `<span class="mp-extras-grupo-badge" style="display:none;">0</span>`}
+                    <span class="mp-extras-grupo-flecha"><i class="bi bi-chevron-down"></i></span>
+                </button>
+                <div class="mp-extras-grupo-body">`;
+
+            lista.forEach(ext => {
+                const agregado = _mpDraft.extras_agregados.some(e => e.id === ext.id);
+                html += `
+                <button type="button" class="btn-mp-extra ${agregado ? 'activo' : ''}"
+                        data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}"
+                        onclick="_mpToggleExtra(this)">
+                    <span class="mp-extra-nombre">${escHtml(ext.nombre)}</span>
+                    <span class="mp-extra-precio">+C$ ${parseFloat(ext.precio).toFixed(2)}</span>
+                </button>`;
+            });
+
+            html += `</div></div>`; // cierre mp-extras-grupo-body y mp-extras-grupo
         });
 
-        html += '</div></div>';
+        html += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
     }
 
     /* ---- SECCIÓN: Combos Sugeridos (placeholder — funcionalidad pendiente) ---- */
@@ -1633,8 +1666,29 @@ function _mpToggleExtra(btn) {
         btn.classList.add('activo');
     }
 
+    // Actualizar badge del grupo acordeón al que pertenece este botón
+    const grupoEl = btn.closest('.mp-extras-grupo');
+    if (grupoEl) {
+        const cuerpo = grupoEl.querySelector('.mp-extras-grupo-body');
+        const seleccionados = cuerpo ? cuerpo.querySelectorAll('.btn-mp-extra.activo').length : 0;
+        const badge = grupoEl.querySelector('.mp-extras-grupo-badge');
+        if (badge) {
+            badge.textContent = seleccionados;
+            badge.style.display = seleccionados > 0 ? '' : 'none';
+        }
+    }
+
     _mpActualizarResumenExtras();
 }
+
+/* ---- Expandir / colapsar un grupo de extras ---- */
+function _mpToggleGrupoExtras(btn) {
+    const grupo = btn.closest('.mp-extras-grupo');
+    if (!grupo) return;
+    const abierto = grupo.classList.toggle('abierto');
+    btn.setAttribute('aria-expanded', abierto);
+}
+
 
 /* ---- Recalcular monto de extras en el footer del modal ---- */
 function _mpActualizarResumenExtras() {

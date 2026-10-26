@@ -118,10 +118,10 @@ try {
     // 4. Extras activos (precio propio — SÍ alteran el total de la orden)
     // =================================================================
     $stmtExtras = $conn->prepare("
-        SELECT id, nombre, precio
+        SELECT id, nombre, precio, grupo
         FROM extras
         WHERE activo = 1
-        ORDER BY nombre ASC
+        ORDER BY COALESCE(grupo,'') ASC, precio ASC, nombre ASC
     ");
     $stmtExtras->execute();
     $extras = $stmtExtras->fetchAll(PDO::FETCH_ASSOC);

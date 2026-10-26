@@ -2203,14 +2203,116 @@
     color: #fff;
 }
 
-/* ---- Grid de Extras ---- */
-.mp-extras-grid {
+/* ---- Acordeón de grupos de Extras ---- */
+.mp-extras-acordeon {
     display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    padding: .75rem;
+    flex-direction: column;
+    /* sin gap: los separadores los ponen los borders */
 }
 
+/* Grupo acordeón */
+.mp-extras-grupo {
+    border-bottom: 1px solid #e2e8f0;
+}
+.mp-extras-grupo:last-child {
+    border-bottom: none;
+}
+
+/* Header del grupo — botón clickeable */
+.mp-extras-grupo-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .7rem 1rem;
+    background: #f8fafc;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s;
+    user-select: none;
+}
+.mp-extras-grupo-header:hover {
+    background: #f0fdf9;
+}
+.mp-extras-grupo.abierto .mp-extras-grupo-header {
+    background: #f0fdf9;
+    border-bottom: 1px solid #d1fae5;
+}
+
+/* Icono del grupo */
+.mp-extras-grupo-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: .78rem;
+    flex-shrink: 0;
+    transition: background .15s, color .15s;
+}
+.mp-extras-grupo.abierto .mp-extras-grupo-icono,
+.mp-extras-grupo-header:hover .mp-extras-grupo-icono {
+    background: #d1fae5;
+    color: #166534;
+}
+
+/* Nombre del grupo */
+.mp-extras-grupo-nombre {
+    flex: 1;
+    font-size: .84rem;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.mp-extras-grupo.abierto .mp-extras-grupo-nombre {
+    color: #0E544C;
+}
+
+/* Badge de cantidad seleccionada */
+.mp-extras-grupo-badge {
+    background: #166534;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 20px;
+    line-height: 1.6;
+    flex-shrink: 0;
+}
+
+/* Flecha / chevron */
+.mp-extras-grupo-flecha {
+    color: #94a3b8;
+    font-size: .78rem;
+    flex-shrink: 0;
+    transition: transform .22s ease;
+}
+.mp-extras-grupo.abierto .mp-extras-grupo-flecha {
+    transform: rotate(180deg);
+    color: #0E544C;
+}
+
+/* Body colapsable — transición con max-height */
+.mp-extras-grupo-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    padding: 0 .85rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .28s ease, padding .28s ease;
+}
+.mp-extras-grupo.abierto .mp-extras-grupo-body {
+    max-height: 600px; /* suficiente para cualquier grupo */
+    padding: .65rem .85rem;
+}
+
+/* ---- Botón individual de extra ---- */
 .btn-mp-extra {
     display: inline-flex;
     flex-direction: column;
@@ -2235,6 +2337,7 @@
 }
 .mp-extra-nombre { font-weight: 600; }
 .mp-extra-precio { font-size: .72rem; opacity: .85; }
+
 
 /* ---- Placeholder de Combos Sugeridos ---- */
 .mp-seccion-placeholder .mp-seccion-header { opacity: .6; }
