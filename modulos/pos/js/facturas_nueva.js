@@ -1,4 +1,4 @@
-/* ===================================================
+﻿/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -823,10 +823,9 @@ function quitarMetodoPago(idx) {
         const total = calcularTotalAPagar();
         pagos[0].monto = total;
         if (pagos[0].metodo === 'efectivo') {
-            if ((pagos[0].recibido || 0) < total) {
-                pagos[0].recibido = total;
-            }
-            pagos[0].cambio = Math.max(0, (pagos[0].recibido || total) - total);
+            // Al quedar solo, recibido = total (se aplica todo a la factura), cambio = 0
+            pagos[0].recibido = total;
+            pagos[0].cambio = 0;
         }
     }
 
@@ -840,13 +839,9 @@ function actualizarMontoPago(idx, val) {
     pagos[idx].monto = Math.round(m * 100) / 100;
 
     if (pagos[idx].metodo === 'efectivo') {
-        // Si el monto de efectivo supera el recibido, actualizar recibido automáticamente
-        if (pagos[idx].monto > (pagos[idx].recibido || 0)) {
-            pagos[idx].recibido = pagos[idx].monto;
-            const inputRec = document.getElementById(`inputRecibido-${idx}`);
-            if (inputRec) inputRec.value = pagos[idx].recibido;
-        }
-        const cambio = Math.max(0, (pagos[idx].recibido || pagos[idx].monto) - pagos[idx].monto);
+        // Cambio = lo que entrega el cliente (monto) menos lo que aplica a la factura (recibido)
+        const aplicado = pagos[idx].recibido || 0;
+        const cambio = Math.max(0, pagos[idx].monto - aplicado);
         pagos[idx].cambio = Math.round(cambio * 100) / 100;
         $(`#badgeCambio-${idx}`).text(`Cambio: C$ ${pagos[idx].cambio.toFixed(2)}`);
     }
@@ -858,7 +853,7 @@ function actualizarRecibidoEfectivo(idx, val) {
     if (!pagos[idx]) return;
     const rec = Math.max(0, parseFloat(val) || 0);
     pagos[idx].recibido = Math.round(rec * 100) / 100;
-    const cambio = Math.max(0, pagos[idx].recibido - (pagos[idx].monto || 0));
+    const cambio = Math.max(0, (pagos[idx].monto || 0) - pagos[idx].recibido);
     pagos[idx].cambio = Math.round(cambio * 100) / 100;
     $(`#badgeCambio-${idx}`).text(`Cambio: C$ ${pagos[idx].cambio.toFixed(2)}`);
 }
