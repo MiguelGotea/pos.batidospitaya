@@ -1064,9 +1064,14 @@ function renderizarFilasPago() {
 
         if (p.metodo === 'efectivo_dolar') {
             const tcUSD = tipoCambioUSD || 0;
-            const equivCor = tcUSD > 0 && p.monto > 0
-                ? `<span style="font-size:.78rem;color:#0e544c;font-weight:600;">≈ C$ ${(p.monto * tcUSD).toFixed(2)}</span>`
-                : `<span style="font-size:.78rem;color:#e53e3e;">T/C no disponible</span>`;
+            let equivCor;
+            if (tcUSD <= 0) {
+                equivCor = `<span style="font-size:.78rem;color:#e53e3e;">⚠ Sin T/C configurado — contacte al administrador</span>`;
+            } else if (p.monto > 0) {
+                equivCor = `<span style="font-size:.78rem;color:#0e544c;font-weight:600;">≈ C$ ${(p.monto * tcUSD).toFixed(2)}</span>`;
+            } else {
+                equivCor = `<span style="font-size:.78rem;color:#64748b;">T/C del día: C$ ${tcUSD.toFixed(4)} por US$1</span>`;
+            }
             html += `
             <div class="subdetalle-referencia" style="padding:3px 12px;">${equivCor}</div>`;
         } else if (p.metodo !== 'efectivo') {
