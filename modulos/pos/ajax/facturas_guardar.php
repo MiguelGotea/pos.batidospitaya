@@ -65,7 +65,12 @@ try {
         if ($monto <= 0) {
             throw new Exception("El monto del método de pago #" . ($i + 1) . " debe ser mayor a 0.");
         }
-        $totalPagos += $monto;
+        // Si es efectivo dólar, sumar el equivalente en córdobas
+        if (($p['metodo'] ?? '') === 'efectivo_dolar' && !empty($p['tipo_cambio']) && (float)$p['tipo_cambio'] > 0) {
+            $totalPagos += round($monto * (float)$p['tipo_cambio'], 2);
+        } else {
+            $totalPagos += $monto;
+        }
     }
 
     if (round($totalPagos, 2) < $totalFacturaCalculado) {
@@ -178,21 +183,38 @@ try {
      * ===================================================================================== */
     $sqlPago = "INSERT INTO pos_ventas_factura_pagos
                 (id_factura, metodo, moneda, monto_original, monto_cordoba, tipo_cambio_aplicado, id_cupon, codigo_cupon, referencia)
-                VALUES (:id_fac, :metodo, 'NIO', :monto_orig, :monto_cor, NULL, :id_cupon, :codigo_cupon, :ref)";
+                VALUES (:id_fac, :metodo, :moneda, :monto_orig, :monto_cor, :tipo_cambio, :id_cupon, :codigo_cupon, :ref)";
     $stmtPago = $conn->prepare($sqlPago);
 
     foreach ($pagos as $p) {
-        $metodo      = in_array($p['metodo'] ?? '', ['efectivo', 'pos', 'transferencia', 'cupon']) ? $p['metodo'] : 'efectivo';
-        $montoPago   = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
-        $refPago     = !empty($p['referencia']) ? trim($p['referencia']) : null;
+        $metodoRaw   = $p['metodo'] ?? 'efectivo';
+        $esDolar     = ($metodoRaw === 'efectivo_dolar');
+        $metodo      = $esDolar ? 'efectivo' : (in_array($metodoRaw, ['efectivo', 'pos', 'transferencia', 'cupon']) ? $metodoRaw : 'efectivo');
+        $montoPago    = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
+        $refPago      = !empty($p['referencia']) ? trim($p['referencia']) : null;
+        // Efectivo en dólares: convertir a córdobas
+        if ($esDolar) {
+            $tipoCambio   = isset($p['tipo_cambio']) && (float)$p['tipo_cambio'] > 0 ? round((float)$p['tipo_cambio'], 4) : null;
+            $moneda       = 'USD';
+            $montoOrig    = $montoPago;                   // dólares ingresados
+            $montoCor     = $tipoCambio ? round($montoOrig * $tipoCambio, 2) : $montoOrig;
+            // Para la validación de cobertura usamos monto en córdobas
+        } else {
+            $tipoCambio   = null;
+            $moneda       = 'NIO';
+            $montoOrig    = $montoPago;
+            $montoCor     = $montoPago;
+        }
         $idCupon     = ($metodo === 'cupon' && !empty($p['id_cupon'])) ? (int)$p['id_cupon'] : null;
         $codigoCupon = ($metodo === 'cupon') ? $refPago : null;
 
         $stmtPago->execute([
             ':id_fac'       => $idFactura,
             ':metodo'       => $metodo,
-            ':monto_orig'   => $montoPago,
-            ':monto_cor'    => $montoPago,
+            ':moneda'       => $moneda,
+            ':monto_orig'   => $montoOrig,
+            ':monto_cor'    => $montoCor,
+            ':tipo_cambio'  => $tipoCambio,
             ':id_cupon'     => $idCupon,
             ':codigo_cupon' => $codigoCupon,
             ':ref'          => $refPago

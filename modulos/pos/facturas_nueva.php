@@ -265,6 +265,10 @@ $hoy = date('Y-m-d');
                                             <i class="bi bi-ticket-perforated"></i>
                                             <span>CUPÓN</span>
                                         </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar" onclick="agregarMetodoPago('efectivo_dolar')" title="Pago en efectivo dólares USD">
+                                            <i class="bi bi-cash-coin"></i>
+                                            <span>EFEC. $</span>
+                                        </button>
                                     </div>
 
                                     <!-- Lista de pagos activos agregados -->
