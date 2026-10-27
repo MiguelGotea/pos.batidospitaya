@@ -12,12 +12,14 @@ let grupoActivo = null;   // id del grupo activo en tabs del catálogo
 let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
 
 // Estado de Pagos y Propina
-let pagos = [];           // array de { metodo: 'efectivo'|'pos'|'transferencia', monto: float, recibido: float, cambio: float, referencia: string }
+let pagos = [];
+let tipoCambioUSD = 0;     // Tasa USD/NIO cargada desde pos_ventas_tipo_cambio (solo lectura)           // array de { metodo: 'efectivo'|'pos'|'transferencia', monto: float, recibido: float, cambio: float, referencia: string }
 let conPropina = false;   // estado del switch de propina
 const PORCENTAJE_PROPINA = 2; // 2% corporativo
 
 $(document).ready(function () {
     cargarProductosElegibles();
+    cargarTipoCambioUSD();
     setupClienteEvents();
     cambiarTipoCliente('general');
 
@@ -365,6 +367,21 @@ function actualizarPuntosFactura() {
     $('#txtTotalPuntos').text(totalPuntos.toFixed(2));
 }
 
+
+/* ---- Cargar tipo de cambio USD/NIO desde la BD (solo lectura) ---- */
+function cargarTipoCambioUSD() {
+    $.getJSON('/modulos/pos/ajax/get_tipo_cambio.php', function (res) {
+        if (res.success && res.tasa > 0) {
+            tipoCambioUSD = res.tasa;
+            // Actualizar todas las filas de efectivo_dolar que ya estén en pantalla
+            renderizarFilasPago();
+        } else {
+            console.warn('T/C USD no disponible:', res.message);
+        }
+    }).fail(function () {
+        console.warn('Error al cargar tipo de cambio USD.');
+    });
+}
 
 /* ---- Cargar productos elegibles (catálogo izquierdo) ---- */
 function cargarProductosElegibles() {
@@ -798,9 +815,6 @@ function agregarMetodoPago(metodo) {
             cambio:     0,
             referencia: ''
         };
-        if (metodo === 'efectivo_dolar') {
-            nuevoPago.tipo_cambio = 0;
-        }
         pagos.push(nuevoPago);
     }
 
@@ -854,14 +868,6 @@ function actualizarReferenciaPago(idx, val) {
     pagos[idx].referencia = val.trim();
 }
 
-function actualizarTipoCambioDolar(idx, val) {
-    if (!pagos[idx]) return;
-    const tc = Math.max(0, parseFloat(val) || 0);
-    pagos[idx].tipo_cambio = Math.round(tc * 100) / 100;
-    // Re-render para actualizar el equivalente en C$
-    renderizarFilasPago();
-    actualizarTotal(false);
-}
 
 /* ============================================================
    VALIDACIÓN DE CUPONES (AJAX A validar_cupon.php)
@@ -1063,17 +1069,15 @@ function renderizarFilasPago() {
             </div>`;
 
         if (p.metodo === 'efectivo_dolar') {
+            const tcUSD = tipoCambioUSD || 0;
+            const equivCor = tcUSD > 0 ? (p.monto * tcUSD).toFixed(2) : '—';
             html += `
-            <div class="subdetalle-referencia subdetalle-dolar">
-                <label style="font-size:.78rem;color:#64748b;margin-right:4px;">T/C:</label>
-                <input type="number" step="0.01" min="0"
-                       placeholder="Ej: 36.50"
-                       value="${p.tipo_cambio || ''}"
-                       style="width:90px;"
-                       oninput="actualizarTipoCambioDolar(${idx}, this.value)">
-                <small style="color:#64748b;font-size:.72rem;margin-left:6px;">
-                    ${p.tipo_cambio > 0 ? '≈ C$ ' + (p.monto * p.tipo_cambio).toFixed(2) : 'Ingrese tipo de cambio'}
-                </small>
+            <div class="subdetalle-referencia subdetalle-dolar" style="display:flex;align-items:center;gap:8px;padding:4px 12px;">
+                <i class="bi bi-info-circle" style="color:#64748b;font-size:.8rem;"></i>
+                <span style="font-size:.78rem;color:#64748b;">
+                    T/C del día: <strong>C$ ${tcUSD > 0 ? tcUSD.toFixed(4) : 'No disponible'}</strong>
+                    ${tcUSD > 0 && p.monto > 0 ? ' &nbsp;·&nbsp; Equivale a <strong>C$ ' + equivCor + '</strong>' : ''}
+                </span>
             </div>`;
         } else if (p.metodo !== 'efectivo') {
             const placeholderRef = p.metodo === 'pos' ? 'N° Voucher / Autorización (opcional)...' : 'N° Referencia bancaria (opcional)...';

@@ -65,9 +65,9 @@ try {
         if ($monto <= 0) {
             throw new Exception("El monto del método de pago #" . ($i + 1) . " debe ser mayor a 0.");
         }
-        // Si es efectivo dólar, sumar el equivalente en córdobas
-        if (($p['metodo'] ?? '') === 'efectivo_dolar' && !empty($p['tipo_cambio']) && (float)$p['tipo_cambio'] > 0) {
-            $totalPagos += round($monto * (float)$p['tipo_cambio'], 2);
+        // Si es efectivo dólar, convertir a córdobas usando la tasa de BD
+        if (($p['metodo'] ?? '') === 'efectivo_dolar' && $tasaUSD) {
+            $totalPagos += round($monto * $tasaUSD, 2);
         } else {
             $totalPagos += $monto;
         }
@@ -76,6 +76,14 @@ try {
     if (round($totalPagos, 2) < $totalFacturaCalculado) {
         throw new Exception("Los pagos registrados (C$ " . number_format($totalPagos, 2) . ") no cubren el total a pagar (C$ " . number_format($totalFacturaCalculado, 2) . ").");
     }
+
+    // ---- Obtener tipo de cambio USD/NIO desde BD (solo lectura, no del frontend) ----
+    $stmtTC = $conn->prepare(
+        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha <= CURDATE() ORDER BY fecha DESC LIMIT 1"
+    );
+    $stmtTC->execute();
+    $tasaUSD = $stmtTC->fetchColumn();
+    $tasaUSD = $tasaUSD ? round((float)$tasaUSD, 4) : null;
 
     $conn->beginTransaction();
 
@@ -192,13 +200,15 @@ try {
         $metodo      = $esDolar ? 'efectivo' : (in_array($metodoRaw, ['efectivo', 'pos', 'transferencia', 'cupon']) ? $metodoRaw : 'efectivo');
         $montoPago    = isset($p['monto']) ? round((float)$p['monto'], 2) : 0;
         $refPago      = !empty($p['referencia']) ? trim($p['referencia']) : null;
-        // Efectivo en dólares: convertir a córdobas
+        // Efectivo en dólares: T/C siempre desde BD, nunca del frontend
         if ($esDolar) {
-            $tipoCambio   = isset($p['tipo_cambio']) && (float)$p['tipo_cambio'] > 0 ? round((float)$p['tipo_cambio'], 4) : null;
+            if (!$tasaUSD) {
+                throw new Exception('No hay tipo de cambio USD/NIO configurado para hoy. Contacte al administrador.');
+            }
+            $tipoCambio   = $tasaUSD;
             $moneda       = 'USD';
             $montoOrig    = $montoPago;                   // dólares ingresados
-            $montoCor     = $tipoCambio ? round($montoOrig * $tipoCambio, 2) : $montoOrig;
-            // Para la validación de cobertura usamos monto en córdobas
+            $montoCor     = round($montoOrig * $tipoCambio, 2);
         } else {
             $tipoCambio   = null;
             $moneda       = 'NIO';
