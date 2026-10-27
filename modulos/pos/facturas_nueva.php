@@ -446,6 +446,8 @@ try {
     <script>
         // Tipo de cambio USD/NIO vigente — inyectado desde PHP, no editable por el usuario
         const TIPO_CAMBIO_USD_INICIAL = <?php echo json_encode($tipoCambioUSD_php); ?>;
+        // ID de sucursal del POS -- para evaluar condiciones de promociones
+        const POS_SUCURSAL_ID = <?php echo json_encode($_SESSION['pos_store_sucursal'] ?? $_SESSION['pos_device_sucursal'] ?? ''); ?>;
     </script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
 </body>
