@@ -1,17 +1,16 @@
 <?php
-// get_tipo_cambio.php — Retorna la tasa USD/NIO vigente del día (o la más reciente)
+// get_tipo_cambio.php — Retorna la tasa USD/NIO vigente (la mas reciente con fecha_desde <= hoy)
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    // Tasa del día exacto; si no existe, la más reciente anterior a hoy
     $stmt = $conn->prepare(
-        "SELECT tasa, fecha
+        "SELECT tasa, fecha_desde
          FROM pos_ventas_tipo_cambio
-         WHERE fecha <= CURDATE()
-         ORDER BY fecha DESC
+         WHERE fecha_desde <= CURDATE()
+         ORDER BY fecha_desde DESC
          LIMIT 1"
     );
     $stmt->execute();
@@ -26,12 +25,11 @@ try {
     }
 
     echo json_encode([
-        'success' => true,
-        'tasa'    => (float)$row['tasa'],
-        'fecha'   => $row['fecha']
+        'success'      => true,
+        'tasa'         => (float)$row['tasa'],
+        'fecha_desde'  => $row['fecha_desde']
     ]);
 
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-

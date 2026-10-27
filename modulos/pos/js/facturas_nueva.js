@@ -13,13 +13,14 @@ let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
 
 // Estado de Pagos y Propina
 let pagos = [];
-let tipoCambioUSD = 0;     // Tasa USD/NIO cargada desde pos_ventas_tipo_cambio (solo lectura)           // array de { metodo: 'efectivo'|'pos'|'transferencia', monto: float, recibido: float, cambio: float, referencia: string }
+let tipoCambioUSD = (typeof TIPO_CAMBIO_USD_INICIAL !== 'undefined' && TIPO_CAMBIO_USD_INICIAL > 0)
+    ? TIPO_CAMBIO_USD_INICIAL
+    : 0; // Tasa USD/NIO inyectada por PHP desde pos_ventas_tipo_cambio           // array de { metodo: 'efectivo'|'pos'|'transferencia', monto: float, recibido: float, cambio: float, referencia: string }
 let conPropina = false;   // estado del switch de propina
 const PORCENTAJE_PROPINA = 2; // 2% corporativo
 
 $(document).ready(function () {
     cargarProductosElegibles();
-    cargarTipoCambioUSD();
     setupClienteEvents();
     cambiarTipoCliente('general');
 
@@ -368,20 +369,6 @@ function actualizarPuntosFactura() {
 }
 
 
-/* ---- Cargar tipo de cambio USD/NIO desde la BD (solo lectura) ---- */
-function cargarTipoCambioUSD() {
-    $.getJSON('/modulos/pos/ajax/get_tipo_cambio.php', function (res) {
-        if (res.success && res.tasa > 0) {
-            tipoCambioUSD = res.tasa;
-            // Actualizar todas las filas de efectivo_dolar que ya estén en pantalla
-            renderizarFilasPago();
-        } else {
-            console.warn('T/C USD no disponible:', res.message);
-        }
-    }).fail(function () {
-        console.warn('Error al cargar tipo de cambio USD.');
-    });
-}
 
 /* ---- Cargar productos elegibles (catálogo izquierdo) ---- */
 function cargarProductosElegibles() {

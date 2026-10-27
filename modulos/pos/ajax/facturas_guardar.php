@@ -79,7 +79,7 @@ try {
 
     // ---- Obtener tipo de cambio USD/NIO desde BD (solo lectura, no del frontend) ----
     $stmtTC = $conn->prepare(
-        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha <= CURDATE() ORDER BY fecha DESC LIMIT 1"
+        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
     );
     $stmtTC->execute();
     $tasaUSD = $stmtTC->fetchColumn();
