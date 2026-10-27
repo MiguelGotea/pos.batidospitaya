@@ -764,7 +764,14 @@ function calcularTotalAPagar() {
 }
 
 function sumarTotalPagos() {
-    return Math.round(pagos.reduce((s, p) => s + (parseFloat(p.monto) || 0), 0) * 100) / 100;
+    return Math.round(pagos.reduce((s, p) => {
+        const monto = parseFloat(p.monto) || 0;
+        // Efectivo dólar: convertir a córdobas con el T/C del día
+        if (p.metodo === 'efectivo_dolar' && tipoCambioUSD > 0) {
+            return s + Math.round(monto * tipoCambioUSD * 100) / 100;
+        }
+        return s + monto;
+    }, 0) * 100) / 100;
 }
 
 function agregarMetodoPago(metodo) {
@@ -1070,15 +1077,11 @@ function renderizarFilasPago() {
 
         if (p.metodo === 'efectivo_dolar') {
             const tcUSD = tipoCambioUSD || 0;
-            const equivCor = tcUSD > 0 ? (p.monto * tcUSD).toFixed(2) : '—';
+            const equivCor = tcUSD > 0 && p.monto > 0
+                ? `<span style="font-size:.78rem;color:#0e544c;font-weight:600;">≈ C$ ${(p.monto * tcUSD).toFixed(2)}</span>`
+                : `<span style="font-size:.78rem;color:#e53e3e;">T/C no disponible</span>`;
             html += `
-            <div class="subdetalle-referencia subdetalle-dolar" style="display:flex;align-items:center;gap:8px;padding:4px 12px;">
-                <i class="bi bi-info-circle" style="color:#64748b;font-size:.8rem;"></i>
-                <span style="font-size:.78rem;color:#64748b;">
-                    T/C del día: <strong>C$ ${tcUSD > 0 ? tcUSD.toFixed(4) : 'No disponible'}</strong>
-                    ${tcUSD > 0 && p.monto > 0 ? ' &nbsp;·&nbsp; Equivale a <strong>C$ ' + equivCor + '</strong>' : ''}
-                </span>
-            </div>`;
+            <div class="subdetalle-referencia" style="padding:3px 12px;">${equivCor}</div>`;
         } else if (p.metodo !== 'efectivo') {
             const placeholderRef = p.metodo === 'pos' ? 'N° Voucher / Autorización (opcional)...' : 'N° Referencia bancaria (opcional)...';
             html += `
