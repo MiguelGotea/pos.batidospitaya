@@ -1998,6 +1998,17 @@ function evaluarPromocionesConCarrito() {
 
 /* ─── Render: resultados de la evaluación del motor ─────────── */
 function renderPromosEvaluadas(res) {
+    // ── Auto-limpiar aprobaciones que ya no califican ─────────────────────
+    // El backend solo incluye en promos_aplicadas las que están en approved_ids
+    // Y además cumplen TODAS las condiciones con el carrito actual.
+    // Si una promo estaba aprobada pero ya no califica, la quitamos automáticamente.
+    var idsConfirmados = (res.promos_aplicadas || []).map(function (p) { return parseInt(p.id); });
+    var idsRevocados   = _promoIdsAprobados.filter(function (id) { return !idsConfirmados.includes(id); });
+    if (idsRevocados.length > 0) {
+        _promoIdsAprobados = idsConfirmados.slice(); // dejar solo las confirmadas
+        // No necesitamos re-evaluar: el backend ya evaluó con approved_ids y devolvió la verdad
+    }
+
     // ── Bloque "APLICAN AHORA" (califican + ya aprobadas) ──
     const aplican   = res.promos_aplican   || [];
     const aplicadas = res.promos_aplicadas || [];
