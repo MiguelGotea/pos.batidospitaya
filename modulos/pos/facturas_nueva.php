@@ -6,14 +6,21 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 
 $hoy = date('Y-m-d');
 
-// Cargar tipo de cambio USD vigente
-require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
-$_tcStmt = $conn->prepare(
-    "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
-);
-$_tcStmt->execute();
-$_tcRow = $_tcStmt->fetch(PDO::FETCH_ASSOC);
-$tipoCambioUSD_php = $_tcRow ? (float)$_tcRow['tasa'] : 0;
+// Cargar tipo de cambio USD vigente desde pos_ventas_tipo_cambio
+$tipoCambioUSD_php = 0;
+try {
+    if (!isset($conn)) {
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
+    }
+    $_tcStmt = $conn->prepare(
+        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
+    );
+    $_tcStmt->execute();
+    $_tcRow = $_tcStmt->fetch(PDO::FETCH_ASSOC);
+    $tipoCambioUSD_php = $_tcRow ? (float)$_tcRow['tasa'] : 0;
+} catch (Exception $_tcEx) {
+    $tipoCambioUSD_php = 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -447,9 +454,10 @@ $tipoCambioUSD_php = $_tcRow ? (float)$_tcRow['tasa'] : 0;
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- DEBUG T/C: valor PHP = <?php echo $tipoCambioUSD_php; ?> -->
     <script>
         // Tipo de cambio USD/NIO vigente — inyectado desde PHP, no editable por el usuario
-        const TIPO_CAMBIO_USD_INICIAL = <?php echo $tipoCambioUSD_php; ?>;
+        const TIPO_CAMBIO_USD_INICIAL = <?php echo json_encode($tipoCambioUSD_php); ?>;
     </script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
 </body>
