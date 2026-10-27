@@ -3003,3 +3003,29 @@
 .promo-dark-sub {
     font-size: .76rem;
 }
+/* ── Precio con descuento de promoción en tabla de detalle ── */
+.precio-con-promo-tachado {
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+    display: block;
+}
+
+.precio-con-promo-final {
+    color: #166534;
+    font-weight: 700;
+    font-size: .92rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.badge-promo-linea {
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: .68rem;
+    font-weight: 600;
+    display: inline-block;
+}
+

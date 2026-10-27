@@ -519,6 +519,8 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
         notas:                '',
         es_personalizable:    parseInt(esPersonalizable) === 1,
         es_canjeado:          false,
+        descuento_promo:      0,   // Descuento monetario aplicado por promociones
+        promos_en_item:       [],  // [{id, nombre}] de promos que afectan este item
         personalizacion: {
             ingredientes_quitados:   [],  // [{ id_componente, nombre_componente }]
             ingredientes_sustituidos:[],  // [{ id_componente, nombre_original, id_nuevo, nombre_nuevo }]
@@ -613,11 +615,21 @@ function actualizarTablaDetalle() {
                         C$ 0.00
                     </strong>
                 ` : `
-                    <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">
-                        C$ ${precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </strong>
-                    ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
-                    ${(pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
+                    ${(() => {
+                        var _dto   = parseFloat(item.descuento_promo) || 0;
+                        var _pFin  = Math.max(0, Math.round((precioTotalLinea - _dto) * 100) / 100);
+                        var _pFmtOrig = precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        var _pFmtFin  = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        var _promoNom = (item.promos_en_item && item.promos_en_item.length > 0) ? item.promos_en_item.map(function(pp){ return escHtml(pp.nombre); }).join(', ') : '';
+                        if (_dto > 0) {
+                            return `<del class="precio-con-promo-tachado">C$ ${_pFmtOrig}</del>`
+                                 + `<strong class="precio-con-promo-final d-block">C$ ${_pFmtFin}</strong>`
+                                 + (_promoNom ? `<small class="badge-promo-linea d-block mt-1">${_promoNom}</small>` : '');
+                        }
+                        return `<strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">C$ ${_pFmtOrig}</strong>`
+                             + (item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : '')
+                             + ((pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : '');
+                    })()}
                 `}
             </td>
             <td class="text-center" style="width:65px;">
@@ -737,7 +749,12 @@ function modificarCantidad(idx, delta) {
    ============================================================ */
 
 function calcularSubtotalFactura() {
-    return detalleFactura.reduce((s, d) => s + (parseFloat(d.costo_total_iva) || 0), 0);
+    return detalleFactura.reduce(function (s, d) {
+        if (d.es_canjeado) return s; // ya vale 0, el costo_total_iva es 0
+        var base = parseFloat(d.costo_total_iva) || 0;
+        var dto  = parseFloat(d.descuento_promo)  || 0;
+        return s + Math.max(0, Math.round((base - dto) * 100) / 100);
+    }, 0);
 }
 
 function calcularMontoPropina(subtotal) {
@@ -745,9 +762,11 @@ function calcularMontoPropina(subtotal) {
 }
 
 function calcularTotalAPagar() {
-    const subtotal = calcularSubtotalFactura();
-    const propina = calcularMontoPropina(subtotal);
-    return Math.round((subtotal + propina) * 100) / 100;
+    var subtotal = calcularSubtotalFactura();
+    var propina  = calcularMontoPropina(subtotal);
+    var total    = Math.round((subtotal + propina) * 100) / 100;
+    // _promoDescuentoGlobal: descuento a nivel de factura (pct_factura / monto_factura)
+    return Math.max(0, Math.round((total - (_promoDescuentoGlobal || 0)) * 100) / 100);
 }
 
 function sumarTotalPagos() {
@@ -1101,6 +1120,23 @@ function actualizarTotal(reajustarPagosAuto = true) {
     $('#txtMontoPropina').text('C$ ' + propina.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     $('#totalFacturaMonto').text('C$ ' + total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
+    // Mostrar/ocultar fila de descuento de promociones
+    var _sumItemDtos = detalleFactura.reduce(function(s,d){ return s + (parseFloat(d.descuento_promo)||0); }, 0);
+    var _totalDescPromo = Math.round((_sumItemDtos + (_promoDescuentoGlobal||0)) * 100) / 100;
+    if (_totalDescPromo > 0) {
+        var $filaDesc = $("#filaDescuentoPromo");
+        if ($filaDesc.length === 0) {
+            $("#txtSubtotalFactura").closest("tr").after(
+                "<tr id=\"filaDescuentoPromo\"><td class=\"text-muted\" style=\"font-size:.85rem;\"><i class=\"bi bi-tag-fill text-success me-1\"></i>Desc. Promo</td>" +
+                "<td class=\"text-end text-success fw-semibold\" id=\"txtDescuentoPromo\"></td></tr>"
+            );
+        }
+        $("#txtDescuentoPromo").text("-C$ " + _totalDescPromo.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        $("#filaDescuentoPromo").show();
+    } else {
+        $("#filaDescuentoPromo").hide();
+    }
+
 
     const $alerta = $('#alertaCoberturaPagos');
     if (detalleFactura.length === 0) {
@@ -1216,6 +1252,9 @@ function guardarFactura() {
             }).then(() => {
                 // Reset completo para la siguiente venta
                 detalleFactura = [];
+                _promoIdsAprobados    = [];
+                _promoDescuentoGlobal = 0;
+                $("#filaDescuentoPromo").remove();
                 actualizarTablaDetalle();
                 pagos = [];
                 renderizarFilasPago();
@@ -2004,6 +2043,44 @@ function renderPromosEvaluadas(res) {
     } else {
         $('#bloquePromosPotenciales').hide();
     }
+
+    // ══ APLICAR DESCUENTOS AL CARRITO ════════════════════════════
+    // 1. Reset todos los descuentos de promo en detalleFactura
+    detalleFactura.forEach(function (d) {
+        d.descuento_promo = 0;
+        d.promos_en_item  = [];
+    });
+    _promoDescuentoGlobal = 0;
+
+    // 2. Aplicar descuentos por ítem (promos_aplicadas devuelve items con descuento_total)
+    var resItems = res.items || [];
+    resItems.forEach(function (ri) {
+        var dtoItem = Math.round((parseFloat(ri.descuento_total) || 0) * 100) / 100;
+        if (dtoItem <= 0) return;
+        // Buscar el item en detalleFactura por id_presentacion
+        var item = null;
+        for (var k = 0; k < detalleFactura.length; k++) {
+            if (parseInt(detalleFactura[k].id_presentacion) === parseInt(ri.id)) {
+                item = detalleFactura[k];
+                break;
+            }
+        }
+        if (item && !item.es_canjeado) {
+            item.descuento_promo = dtoItem;
+            item.promos_en_item  = ri.promos || [];
+        }
+    });
+
+    // 3. Si hay descuento global de factura (pct_factura/monto_factura),
+    //    es la diferencia entre total_descuento y la suma de descuentos por item
+    var sumItemDtos = detalleFactura.reduce(function (s, d) { return s + (d.descuento_promo || 0); }, 0);
+    var totalDto    = Math.round((parseFloat(res.total_descuento) || 0) * 100) / 100;
+    _promoDescuentoGlobal = Math.max(0, Math.round((totalDto - sumItemDtos) * 100) / 100);
+
+    // 4. Actualizar totales y tabla SIN volver a disparar evaluarPromos
+    _evaluandoPromos = true;
+    actualizarTablaDetalle();
+    _evaluandoPromos = false;
 }
 
 /* ─── Aprobar / quitar una promo ────────────────────────────── */
@@ -2054,7 +2131,7 @@ $(document).ready(function () {
     const _origActualizar = actualizarTablaDetalle;
     actualizarTablaDetalle = function () {
         _origActualizar.apply(this, arguments);
-        scheduleEvaluarPromos();
+        if (!_evaluandoPromos) scheduleEvaluarPromos();
     };
 });
 
