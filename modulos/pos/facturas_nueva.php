@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
@@ -36,6 +36,7 @@ try {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/promociones.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -97,61 +98,48 @@ try {
                             </button>
                         </div>
 
-                        <!-- Sección de Promociones Recomendadas y Aplicables -->
+                        <!-- Sección de Promociones Dinámicas (carga desde BD) -->
                         <div class="seccion-promociones-pos" id="seccionPromociones">
-                            <div class="promociones-header-pos mb-2">
+                            <div class="promociones-header-pos mb-2 d-flex align-items-center justify-content-between">
                                 <span class="promociones-main-title">PROMOCIONES</span>
+                                <button type="button" class="btn-refrescar-promos" id="btnRefrescarPromos" title="Evaluar promociones con el pedido actual">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
                             </div>
 
-                            <!-- Grupo 1: Recomendados -->
-                            <div class="promociones-bloque mb-3">
-                                <div class="promociones-sub-label">RECOMENDADOS</div>
-                                <div class="promociones-grid-recomendados">
-                                    <!-- Card 1 -->
-                                    <div class="promo-card promo-card-teal" data-promo="2x1-pitaya-blast" role="button" tabindex="0">
-                                        <div class="promo-badge promo-badge-teal">FIJADO</div>
-                                        <div class="promo-title">2x1 Pitaya Blast</div>
-                                        <div class="promo-sub">Válido hasta las 6 PM.</div>
-                                    </div>
-                                    <!-- Card 2 -->
-                                    <div class="promo-card promo-card-amber" data-promo="combo-familiar" role="button" tabindex="0">
-                                        <div class="promo-badge promo-badge-amber">FIJADO</div>
-                                        <div class="promo-title">Combo Familiar</div>
-                                        <div class="promo-sub">-20% en 4+ batidos.</div>
-                                    </div>
-                                    <!-- Card 3 -->
-                                    <div class="promo-card promo-card-neutral" data-promo="hora-feliz">
-                                        <div class="promo-badge promo-badge-neutral">PRÓXIMAMENTE</div>
-                                        <div class="promo-title">Hora Feliz</div>
-                                        <div class="promo-sub">Descuentos desde las 7 PM.</div>
-                                    </div>
+                            <!-- Estado de carga -->
+                            <div id="promosLoadingState" class="promos-estado-carga">
+                                <span class="spinner-border spinner-border-sm me-1 text-secondary"></span>
+                                <span class="text-muted small">Cargando promociones…</span>
+                            </div>
+
+                            <!-- Estado vacío (sin promos activas) -->
+                            <div id="promosEmptyState" class="promos-estado-vacio" style="display:none;">
+                                <i class="bi bi-tag-x text-muted"></i>
+                                <span class="text-muted small">No hay promociones activas en este momento.</span>
+                            </div>
+
+                            <!-- Bloque: Disponibles (todas las activas vigentes) -->
+                            <div class="promociones-bloque mb-3" id="bloquePromosTodas" style="display:none;">
+                                <div class="promociones-sub-label">DISPONIBLES</div>
+                                <div class="promociones-grid-recomendados" id="gridPromosTodas">
+                                    <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>
 
-                            <!-- Grupo 2: Aplicables -->
-                            <div class="promociones-bloque">
-                                <div class="promociones-sub-label">APLICABLES</div>
-                                <div class="promociones-grid-aplicables">
-                                    <!-- Card Aplicable 1 -->
-                                    <div class="promo-card-dark promo-card-oro">
-                                        <div class="promo-dark-header">
-                                            <span class="badge-rango-oro"><i class="bi bi-gem me-1"></i> ORO</span>
-                                        </div>
-                                        <div class="promo-dark-title">Desc. Miembro (15%)</div>
-                                        <button type="button" class="btn-aplicar-promo btn-aplicar-oro" onclick="demostrarPromocion('Desc. Miembro (15%)')">
-                                            APLICAR <i class="bi bi-check2 ms-1"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Card Aplicable 2 -->
-                                    <div class="promo-card-dark promo-card-canje">
-                                        <div class="promo-dark-header">
-                                            <span class="badge-rango-canje"><i class="bi bi-coin me-1"></i> CANJE</span>
-                                        </div>
-                                        <div class="promo-dark-title">Canje de 10 Puntos</div>
-                                        <button type="button" class="btn-aplicar-promo btn-aplicar-outline" onclick="demostrarPromocion('Canje de 10 Puntos')">
-                                            APLICAR <i class="bi bi-check2 ms-1"></i>
-                                        </button>
-                                    </div>
+                            <!-- Bloque: Aplican ahora (carrito cumple condiciones) -->
+                            <div class="promociones-bloque mb-3" id="bloquePromosAplican" style="display:none;">
+                                <div class="promociones-sub-label">APLICAN AHORA</div>
+                                <div class="promociones-grid-aplicables" id="gridPromosAplican">
+                                    <!-- Generado dinámicamente por JS -->
+                                </div>
+                            </div>
+
+                            <!-- Bloque: Potenciales (el carrito está cerca de calificar) -->
+                            <div class="promociones-bloque" id="bloquePromosPotenciales" style="display:none;">
+                                <div class="promociones-sub-label">CASI CALIFICAN</div>
+                                <div class="promociones-grid-recomendados" id="gridPromosPotenciales">
+                                    <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>
 
