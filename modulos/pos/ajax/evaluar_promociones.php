@@ -38,22 +38,22 @@ try {
         exit;
     }
 
-    $context      = $data['context'];
-    $cart         = $data['cart'];
-    $approved_ids = isset($data['approved_ids']) ? (array)$data['approved_ids'] : [];
+    $context = $data['context'];
+    $cart = $data['cart'];
+    $approved_ids = isset($data['approved_ids']) ? (array) $data['approved_ids'] : [];
 
     // Si el carrito está vacío, devolver respuesta vacía
     if (empty($cart)) {
         header('Content-Type: application/json');
         echo json_encode([
-            'success'           => true,
-            'items'             => [],
-            'total_original'    => 0,
-            'total_descuento'   => 0,
-            'total_final'       => 0,
-            'promos_aplican'    => [],
-            'promos_potenciales'=> [],
-            'promos_aplicadas'  => [],
+            'success' => true,
+            'items' => [],
+            'total_original' => 0,
+            'total_descuento' => 0,
+            'total_final' => 0,
+            'promos_aplican' => [],
+            'promos_potenciales' => [],
+            'promos_aplicadas' => [],
         ]);
         exit;
     }
@@ -71,15 +71,15 @@ try {
 
     // Preparar carrito con campos de seguimiento
     foreach ($cart as &$item) {
-        $item['descuento_total']  = 0;
-        $item['promos']           = [];
-        $item['precio_original']  = (float)($item['precio'] ?? 0);
-        $item['cantidad_libre']   = (int)($item['cantidad'] ?? 0);
+        $item['descuento_total'] = 0;
+        $item['promos'] = [];
+        $item['precio_original'] = (float) ($item['precio'] ?? 0);
+        $item['cantidad_libre'] = (int) ($item['cantidad'] ?? 0);
     }
     unset($item);
 
-    $promos_aplicadas   = [];
-    $promos_aplican     = [];   // califican totalmente pero no están en approved_ids
+    $promos_aplicadas = [];
+    $promos_aplican = [];   // califican totalmente pero no están en approved_ids
     $promos_potenciales = [];
     $promos_descartadas = [];
     $total_descuento_global_extra = 0;
@@ -92,50 +92,55 @@ try {
         $stmt_c->execute([':pid' => $promo_id]);
         $condiciones = $stmt_c->fetchAll(PDO::FETCH_ASSOC);
 
-        $total_conds        = count($condiciones);
-        $conds_met          = 0;
-        $pasa_contexto      = true;
+        $total_conds = count($condiciones);
+        $conds_met = 0;
+        $pasa_contexto = true;
         $qualifying_indices = array_keys($cart);
-        $has_product_cond   = false;
-        $motivo_descarte    = '';
+        $has_product_cond = false;
+        $motivo_descarte = '';
 
         // Evaluar condiciones
         foreach ($condiciones as $c) {
-            $valor  = json_decode($c['valor_json'], true);
+            $valor = json_decode($c['valor_json'], true);
             $nombre = $c['nombre_cond'];
-            $met    = true;
+            $met = true;
 
             if ($c['tipo_cond'] === 'A') {
                 // TIPO A: Contexto
                 switch ($nombre) {
                     case 'dia_semana':
                         if (!isset($valor['dias']) || !in_array($context['dia'] ?? '', $valor['dias'])) {
-                            $met = false; $pasa_contexto = false;
+                            $met = false;
+                            $pasa_contexto = false;
                             $motivo_descarte = 'Día no permitido: ' . ($context['dia'] ?? '?');
                         }
                         break;
                     case 'sucursal':
-                        if (!isset($valor['ids']) || !in_array((string)($context['sucursal'] ?? ''), array_map('strval', $valor['ids']))) {
-                            $met = false; $pasa_contexto = false;
+                        if (!isset($valor['ids']) || !in_array((string) ($context['sucursal'] ?? ''), array_map('strval', $valor['ids']))) {
+                            $met = false;
+                            $pasa_contexto = false;
                             $motivo_descarte = 'Sucursal no permitida.';
                         }
                         break;
                     case 'horario':
                         $hora_actual = $context['hora'] ?? '00:00';
                         if ($hora_actual < ($valor['desde'] ?? '00:00') || $hora_actual > ($valor['hasta'] ?? '23:59')) {
-                            $met = false; $pasa_contexto = false;
+                            $met = false;
+                            $pasa_contexto = false;
                             $motivo_descarte = 'Fuera de horario (' . ($valor['desde'] ?? '') . '–' . ($valor['hasta'] ?? '') . ').';
                         }
                         break;
                     case 'canal_venta':
                         if (!isset($valor['canales']) || !in_array($context['canal'] ?? '', $valor['canales'])) {
-                            $met = false; $pasa_contexto = false;
+                            $met = false;
+                            $pasa_contexto = false;
                             $motivo_descarte = 'Canal no válido.';
                         }
                         break;
                     case 'tipo_cliente':
                         if (!isset($valor['tipos']) || !in_array($context['tipo_cliente'] ?? '', $valor['tipos'])) {
-                            $met = false; $pasa_contexto = false;
+                            $met = false;
+                            $pasa_contexto = false;
                             $motivo_descarte = 'Tipo de cliente no aplica.';
                         }
                         break;
@@ -169,9 +174,19 @@ try {
                         $has_product_cond = true;
                         $match_found = false;
                         $new_qualifying = [];
+                        // BD guarda las claves como grupo_id / subgrupo_id (a veces id_grupo) — normalizar ambas
+                        $req_grupo = (int) ($valor['grupo_id'] ?? $valor['id_grupo'] ?? 0);
+                        $req_subgrupo = (int) ($valor['subgrupo_id'] ?? $valor['id_subgrupo'] ?? 0);
+                        $req_cantidad = (int) ($valor['cantidad'] ?? 1);
+                        $nombre_display = $valor['nombre_grupo'] ?? $valor['nombre_subgrupo'] ?? ('Grupo ID ' . $req_grupo);
+                        if ($req_subgrupo)
+                            $nombre_display .= ' / ' . ($valor['nombre_subgrupo'] ?? 'Subgrupo ' . $req_subgrupo);
+
                         foreach ($qualifying_indices as $idx) {
                             $it = $cart[$idx];
-                            if (($it['id_grupo'] ?? 0) == $valor['id_grupo'] && $it['cantidad_libre'] > 0) {
+                            $grupo_ok = ($req_grupo === 0 || (int) ($it['id_grupo'] ?? 0) === $req_grupo);
+                            $subgrupo_ok = ($req_subgrupo === 0 || (int) ($it['id_subgrupo'] ?? 0) === $req_subgrupo);
+                            if ($grupo_ok && $subgrupo_ok && $it['cantidad_libre'] > 0) {
                                 $new_qualifying[] = $idx;
                                 $match_found = true;
                             }
@@ -179,15 +194,26 @@ try {
                         if (!$match_found) {
                             $met = false;
                             $qualifying_indices = [];
-                            $motivo_descarte = 'No hay productos del grupo: ' . ($valor['nombre_grupo'] ?? 'ID ' . $valor['id_grupo']);
+                            $motivo_descarte = 'No hay productos del grupo: ' . $nombre_display;
                         } else {
-                            $qualifying_indices = $new_qualifying;
+                            // Verificar cantidad mínima total de items que califican
+                            $total_libre_grupo = 0;
+                            foreach ($new_qualifying as $qi)
+                                $total_libre_grupo += $cart[$qi]['cantidad_libre'];
+                            if ($req_cantidad > 1 && $total_libre_grupo < $req_cantidad) {
+                                $met = false;
+                                $qualifying_indices = [];
+                                $motivo_descarte = 'Faltan ' . ($req_cantidad - $total_libre_grupo) . ' producto(s) del grupo: ' . $nombre_display;
+                            } else {
+                                $qualifying_indices = $new_qualifying;
+                            }
                         }
                         break;
 
                     case 'monto_min':
                         $total_monto = 0;
-                        foreach ($cart as $it) $total_monto += ($it['precio_original'] * $it['cantidad']);
+                        foreach ($cart as $it)
+                            $total_monto += ($it['precio_original'] * $it['cantidad']);
                         if ($total_monto < ($valor['monto'] ?? 0)) {
                             $met = false;
                             $qualifying_indices = [];
@@ -197,17 +223,45 @@ try {
 
                     case 'cantidad_min':
                         $total_items = 0;
-                        foreach ($cart as $it) $total_items += $it['cantidad'];
+                        foreach ($cart as $it)
+                            $total_items += $it['cantidad'];
                         if ($total_items < ($valor['cantidad'] ?? 1)) {
                             $met = false;
                             $qualifying_indices = [];
                             $motivo_descarte = 'Cantidad mínima no alcanzada (se requieren ' . ($valor['cantidad'] ?? 1) . ' unidades).';
                         }
                         break;
+
+                    case 'tamano':
+                        // Filtra qualifying_indices por tamaño del producto (ej. "20oz", "16oz")
+                        // El nombre del producto debe contener uno de los tamaños permitidos
+                        $tamanos_req = $valor['tamanos'] ?? [];
+                        if (!empty($tamanos_req)) {
+                            $new_qualifying = [];
+                            foreach ($qualifying_indices as $idx) {
+                                $it = $cart[$idx];
+                                $nombre_it = strtolower($it['nombre'] ?? '');
+                                foreach ($tamanos_req as $tam) {
+                                    if (strpos($nombre_it, strtolower($tam)) !== false) {
+                                        $new_qualifying[] = $idx;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (empty($new_qualifying)) {
+                                $met = false;
+                                $qualifying_indices = [];
+                                $motivo_descarte = 'Tamaño requerido: ' . implode(', ', $tamanos_req) . '.';
+                            } else {
+                                $qualifying_indices = $new_qualifying;
+                            }
+                        }
+                        break;
                 }
             }
 
-            if ($met) $conds_met++;
+            if ($met)
+                $conds_met++;
         }
 
         // ¿Califica completamente?
@@ -226,20 +280,23 @@ try {
             $items_finales = [];
             switch ($p['objetivo_descuento']) {
                 case 'todos':
-                    foreach ($qualifying_indices as $idx) $items_finales[$idx] = $cart[$idx]['cantidad'];
+                    foreach ($qualifying_indices as $idx)
+                        $items_finales[$idx] = $cart[$idx]['cantidad'];
                     break;
                 case 'mas_barato':
-                    $min_idx = -1; $min_precio = PHP_FLOAT_MAX;
+                    $min_idx = -1;
+                    $min_precio = PHP_FLOAT_MAX;
                     foreach ($qualifying_indices as $idx) {
                         if ($cart[$idx]['precio_original'] < $min_precio) {
                             $min_precio = $cart[$idx]['precio_original'];
                             $min_idx = $idx;
                         }
                     }
-                    if ($min_idx !== -1) $items_finales[$min_idx] = 1;
+                    if ($min_idx !== -1)
+                        $items_finales[$min_idx] = 1;
                     break;
                 case 'nth_item':
-                    $n = (int)($p['objetivo_nth_numero'] ?: 2);
+                    $n = (int) ($p['objetivo_nth_numero'] ?: 2);
                     if (count($candidatos) >= $n) {
                         $idx = $candidatos[$n - 1];
                         $items_finales[$idx] = ($items_finales[$idx] ?? 0) + 1;
@@ -247,7 +304,7 @@ try {
                     break;
                 case 'get_y':
                     $y_prod_id = $p['objetivo_get_y_prod'];
-                    $y_cant    = (int)($p['objetivo_get_y_cant'] ?: 1);
+                    $y_cant = (int) ($p['objetivo_get_y_cant'] ?: 1);
                     foreach ($cart as $idx => $it) {
                         if ($it['id'] == $y_prod_id || ($it['id_producto_maestro'] ?? 0) == $y_prod_id) {
                             $items_finales[$idx] = min($it['cantidad'], $y_cant);
@@ -263,10 +320,11 @@ try {
             if ($p['objetivo_descuento'] === 'factura') {
                 if ($p['resultado_tipo'] === 'pct_factura') {
                     $subtotal = 0;
-                    foreach ($cart as $it) $subtotal += ($it['precio_original'] * $it['cantidad']);
+                    foreach ($cart as $it)
+                        $subtotal += ($it['precio_original'] * $it['cantidad']);
                     $monto_descuento_promo = $subtotal * ($p['resultado_valor'] / 100);
                 } elseif ($p['resultado_tipo'] === 'monto_factura') {
-                    $monto_descuento_promo = (float)$p['resultado_valor'];
+                    $monto_descuento_promo = (float) $p['resultado_valor'];
                 }
                 $aplicado = ($monto_descuento_promo > 0);
             } else {
@@ -274,14 +332,15 @@ try {
                     $item_ref = &$cart[$idx];
                     $desc_unitario = ($p['resultado_tipo'] === 'pct_producto')
                         ? ($item_ref['precio_original'] * ($p['resultado_valor'] / 100))
-                        : (float)$p['resultado_valor'];
+                        : (float) $p['resultado_valor'];
 
                     $total_desc_item = $desc_unitario * $cant_desc;
                     if ($total_desc_item > 0) {
                         if (in_array($promo_id, $approved_ids)) {
                             $item_ref['descuento_total'] += $total_desc_item;
                             $item_ref['promos'][] = ['id' => $p['id'], 'nombre' => $p['nombre']];
-                            if ($p['combinable'] == 0) $item_ref['cantidad_libre'] -= $cant_desc;
+                            if ($p['combinable'] == 0)
+                                $item_ref['cantidad_libre'] -= $cant_desc;
                         }
                         $monto_descuento_promo += $total_desc_item;
                         $aplicado = true;
@@ -292,7 +351,7 @@ try {
 
             // Aplicar tope máximo si existe
             if ($p['descuento_maximo_cs'] > 0 && $monto_descuento_promo > $p['descuento_maximo_cs']) {
-                $monto_descuento_promo = (float)$p['descuento_maximo_cs'];
+                $monto_descuento_promo = (float) $p['descuento_maximo_cs'];
             }
 
             if ($aplicado) {
@@ -300,10 +359,10 @@ try {
                 if (in_array($promo_id, $approved_ids)) {
                     // Ya aprobada → registrar como aplicada
                     $promos_aplicadas[] = [
-                        'id'      => $p['id'],
-                        'nombre'  => $p['nombre'],
+                        'id' => $p['id'],
+                        'nombre' => $p['nombre'],
                         'resumen' => $resumen_promo,
-                        'resultado_tipo'  => $p['resultado_tipo'],
+                        'resultado_tipo' => $p['resultado_tipo'],
                         'resultado_valor' => $p['resultado_valor'],
                     ];
                     if ($p['objetivo_descuento'] === 'factura') {
@@ -312,15 +371,15 @@ try {
                 } else {
                     // Califica pero aún no aprobada
                     $promos_aplican[] = [
-                        'id'                   => $p['id'],
-                        'nombre'               => $p['nombre'],
-                        'resumen'              => $resumen_promo,
-                        'resultado_tipo'       => $p['resultado_tipo'],
-                        'resultado_valor'      => $p['resultado_valor'],
-                        'objetivo_descuento'   => $p['objetivo_descuento'],
-                        'requiere_autorizacion'=> (bool)$p['requiere_autorizacion'],
-                        'ejecucion_automatica' => (bool)$p['ejecucion_automatica'],
-                        'monto_descuento'      => round($monto_descuento_promo, 2),
+                        'id' => $p['id'],
+                        'nombre' => $p['nombre'],
+                        'resumen' => $resumen_promo,
+                        'resultado_tipo' => $p['resultado_tipo'],
+                        'resultado_valor' => $p['resultado_valor'],
+                        'objetivo_descuento' => $p['objetivo_descuento'],
+                        'requiere_autorizacion' => (bool) $p['requiere_autorizacion'],
+                        'ejecucion_automatica' => (bool) $p['ejecucion_automatica'],
+                        'monto_descuento' => round($monto_descuento_promo, 2),
                     ];
                 }
             } else {
@@ -329,15 +388,15 @@ try {
         } elseif ($conds_met > 0) {
             // Potencial: cumple algunas condiciones
             $promos_potenciales[] = [
-                'id'               => $p['id'],
-                'nombre'           => $p['nombre'],
-                'condiciones_met'  => $conds_met,
-                'total_condiciones'=> $total_conds,
-                'faltante'         => $motivo_descarte ?: 'Faltan condiciones por cumplir.',
+                'id' => $p['id'],
+                'nombre' => $p['nombre'],
+                'condiciones_met' => $conds_met,
+                'total_condiciones' => $total_conds,
+                'faltante' => $motivo_descarte ?: 'Faltan condiciones por cumplir.',
             ];
         } else {
             $promos_descartadas[] = [
-                'id'     => $p['id'],
+                'id' => $p['id'],
                 'nombre' => $p['nombre'],
                 'motivo' => $motivo_descarte ?: 'No cumple las condiciones requeridas.',
             ];
@@ -345,10 +404,10 @@ try {
     }
 
     // Totales finales
-    $total_original  = 0;
+    $total_original = 0;
     $total_descuento = 0;
     foreach ($cart as &$item) {
-        $total_original  += ($item['precio_original'] * $item['cantidad']);
+        $total_original += ($item['precio_original'] * $item['cantidad']);
         $total_descuento += $item['descuento_total'];
         $item['subtotal_final'] = ($item['precio_original'] * $item['cantidad']) - $item['descuento_total'];
     }
@@ -358,14 +417,14 @@ try {
     ob_clean();
     header('Content-Type: application/json');
     echo json_encode([
-        'success'           => true,
-        'items'             => $cart,
-        'total_original'    => round($total_original, 2),
-        'total_descuento'   => round($total_descuento, 2),
-        'total_final'       => round($total_original - $total_descuento, 2),
-        'promos_aplican'    => $promos_aplican,
-        'promos_potenciales'=> $promos_potenciales,
-        'promos_aplicadas'  => $promos_aplicadas,
+        'success' => true,
+        'items' => $cart,
+        'total_original' => round($total_original, 2),
+        'total_descuento' => round($total_descuento, 2),
+        'total_final' => round($total_original - $total_descuento, 2),
+        'promos_aplican' => $promos_aplican,
+        'promos_potenciales' => $promos_potenciales,
+        'promos_aplicadas' => $promos_aplicadas,
     ]);
 
 } catch (Exception $e) {

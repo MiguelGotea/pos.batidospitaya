@@ -1964,7 +1964,8 @@ function evaluarPromocionesConCarrito() {
                 id_grupo:    parseInt(prod.id_grupo    || 0),
                 id_subgrupo: parseInt(prod.id_subgrupo || 0),
                 precio:      parseFloat(d.precio_unitario || 0),
-                cantidad:    parseInt(d.cantidad || 1)
+                cantidad:    parseInt(d.cantidad || 1),
+                nombre:      d.nombre || prod.Nombre || '',
             };
         });
 
