@@ -66,6 +66,7 @@ function agregarAlCarrito(prod) {
             precio: parseFloat(prod.precio || 0),
             cantidad: 1,
             id_producto_maestro: prod.id_producto_maestro,
+            id_catalogo_menu_pos: parseInt(prod.id_catalogo_menu_pos || 0),
             id_subgrupo: prod.id_subgrupo,
             id_grupo: prod.id_grupo,
             tamano: prod.tamano
