@@ -10,6 +10,7 @@ let paginaHistorialActual = 1;
 let membresiaHistorialActual = '';
 let grupoActivo = null;   // id del grupo activo en tabs del catálogo
 let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
+let _promoDescuentoGlobal = 0; // descuento a nivel de factura aplicado por promociones (pct_factura/monto_factura)
 
 // Estado de Pagos y Propina
 let pagos = [];

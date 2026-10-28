@@ -21,6 +21,7 @@ try {
                    pp.presentacion,
                    CASE WHEN pp.Id_receta_producto IS NOT NULL THEN 1 ELSE 0 END AS es_personalizable,
                    COALESCE(psuc.precio, pglob.precio, 0.00) AS precio_venta,
+                   pp.id_catalogo_menu_pos,
                    CASE 
                        WHEN psuc.precio IS NOT NULL THEN 'sucursal'
                        WHEN pglob.precio IS NOT NULL THEN 'global'
