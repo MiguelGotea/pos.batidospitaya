@@ -269,7 +269,7 @@ try {
                                         <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo"
                                             onclick="agregarMetodoPago('efectivo')">
                                             <i class="bi bi-cash-stack"></i>
-                                            <span>EFECTIVO</span>
+                                            <span>CORDOBAS C$</span>
                                         </button>
                                         <button type="button" class="btn-metodo-pago" id="btnPagoPOS"
                                             onclick="agregarMetodoPago('pos')">
@@ -291,7 +291,7 @@ try {
                                             onclick="agregarMetodoPago('efectivo_dolar')"
                                             title="Pago en efectivo dólares USD">
                                             <i class="bi bi-cash-coin"></i>
-                                            <span>Efectivo USD</span>
+                                            <span>DOLARES USD</span>
                                         </button>
                                     </div>
 

@@ -619,7 +619,7 @@ function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
 
     // Configurar encabezado del modal
     $('#modalPersonalizacionLabel').text(escHtml(nombreCatalogo));
-    $('#mpSubtitulo').text('Selecciona un producto y configura tus opciones');
+    $('#mpSubtitulo').text('Ajusta tus preferencias');
     $('#mpAjustePrecio').hide();
 
     // Mostrar spinner mientras carga los productos de la clasificación
@@ -647,9 +647,14 @@ function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
             _mspProductos = res.data;
             _renderSelectorProductos();
 
-            // Si solo hay un producto, seleccionarlo automáticamente
+            // Si solo hay un producto: ocultar selector y subtitulo, seleccionar auto
             if (_mspProductos.length === 1) {
+                $('#mpSelectorProductos').hide();
+                $('#mpSubtitulo').hide();
                 _mspSeleccionarProducto(0);
+            } else {
+                $('#mpSubtitulo').text('Selecciona una opción');
+                $('#mpSubtitulo').show();
             }
         },
         error: function () {
@@ -1693,6 +1698,18 @@ function abrirModalPersonalizacion(idx) {
     });
 }
 
+/* ---- Convierte cantidad numérica a fracción legible ---- */
+function _formatearCantidad(val) {
+    const n = parseFloat(val);
+    if (isNaN(n)) return val;
+    if (Math.abs(n - Math.round(n)) < 0.01) return Math.round(n).toString();
+    if (Math.abs(n - 0.5)   < 0.02)  return '1/2';
+    if (Math.abs(n - 0.25)  < 0.02)  return '1/4';
+    if (Math.abs(n - 1/6)   < 0.015) return '1/6';
+    return n.toFixed(2);
+}
+
+
 /* ---- Renderizar contenido del modal con los datos de receta ---- */
 function _mpRenderContenido(datos) {
     let html = '<div class="mp-body-inner p-3">';
@@ -1740,7 +1757,7 @@ function _mpRenderContenido(datos) {
                         data-primera-id="${opciones[0].id}"
                         data-primera-nombre="${escAttr(opciones[0].nombre_opcion || opciones[0].nombre)}"
                         onclick="_mpSeleccionarGrupoEndulzante(this)">
-                    <span class="mp-end-grupo-icono"><i class="bi bi-water"></i></span>
+                    <span class="mp-end-grupo-icono"><i class="bi bi-record-circle"></i></span>
                     <span class="mp-end-grupo-nombre">${escHtml(nombreGrupo)}</span>
                 </button>`;
 
@@ -1805,7 +1822,7 @@ function _mpRenderContenido(datos) {
                 <div class="mp-ing-nombre">
                     <div class="d-flex align-items-center gap-2">
                         <strong>${escHtml(ing.nombre_ingrediente)}</strong>
-                        <small class="text-muted ms-auto">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
+                        <small class="text-muted ms-auto">${_formatearCantidad(ing.cantidad)}</small>
                     </div>
                 </div>
                 <div class="mp-ing-controles">
@@ -1874,7 +1891,7 @@ function _mpRenderContenido(datos) {
             html += `
             <div class="mp-extras-grupo ${tieneActivo ? 'abierto' : ''}">
                 <button type="button" class="mp-extras-grupo-header" onclick="_mpToggleGrupoExtras(this)" aria-expanded="${tieneActivo}">
-                    <span class="mp-extras-grupo-icono"><i class="bi bi-grid-3x3-gap"></i></span>
+                    <span class="mp-extras-grupo-icono"><i class="bi bi-bag-plus"></i></span>
                     <span class="mp-extras-grupo-nombre">${escHtml(nombreGrupo)}</span>
                     ${cantSelec > 0 ? `<span class="mp-extras-grupo-badge">${cantSelec}</span>` : `<span class="mp-extras-grupo-badge" style="display:none;">0</span>`}
                     <span class="mp-extras-grupo-flecha"><i class="bi bi-chevron-down"></i></span>
