@@ -2,13 +2,16 @@
 // /core/auth/DbSessionHandler.php
 // Handler de sesiones PHP respaldado por MySQL.
 // Evita que el GC de archivos de Hostinger destruya sesiones activas.
+//
+// REQUISITO: La tabla `php_sessions` debe existir previamente en la BD.
+// Script SQL: core/auth/sql/crear_tablas_sesiones.sql
 
 class DbSessionHandler implements SessionHandlerInterface
 {
     /** @var PDO */
     private PDO $pdo;
 
-    /** @var int Tiempo máximo de vida de sesión inactiva (segundos) */
+    /** @var int Tiempo maximo de vida de sesion inactiva (segundos) */
     private int $maxLifetime;
 
     public function __construct(PDO $pdo, int $maxLifetime = 57600)
@@ -18,35 +21,17 @@ class DbSessionHandler implements SessionHandlerInterface
     }
 
     // -------------------------------------------------------------------------
-    // Crear la tabla si no existe (se llama una sola vez al registrar el handler)
-    // -------------------------------------------------------------------------
-    public function instalarTabla(): void
-    {
-        $this->pdo->exec("
-            CREATE TABLE IF NOT EXISTS `php_sessions` (
-                `session_id`    VARCHAR(128) NOT NULL COLLATE 'utf8mb4_bin',
-                `data`          MEDIUMTEXT   NOT NULL,
-                `last_activity` INT UNSIGNED NOT NULL,
-                `created_at`    INT UNSIGNED NOT NULL,
-                PRIMARY KEY (`session_id`),
-                INDEX `idx_last_activity` (`last_activity`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        ");
-    }
-
-    // -------------------------------------------------------------------------
     // SessionHandlerInterface
     // -------------------------------------------------------------------------
 
     public function open(string $path, string $name): bool
     {
-        return true; // La conexión PDO ya está abierta
+        return true; // La conexion PDO ya esta abierta
     }
 
     public function close(): bool
     {
-        // Aprovechar el cierre para limpiar sesiones expiradas (GC propio)
-        // Solo ~1% de las veces para no sobrecargar la BD
+        // GC propio: limpiar sesiones expiradas ~1% de las veces
         if (mt_rand(1, 100) === 1) {
             $limite = time() - $this->maxLifetime;
             $stmt   = $this->pdo->prepare('DELETE FROM `php_sessions` WHERE `last_activity` < ?');
@@ -86,7 +71,6 @@ class DbSessionHandler implements SessionHandlerInterface
 
     public function gc(int $max_lifetime): int|false
     {
-        // PHP puede llamar a gc(); delegamos al cierre de sesión para consistencia.
         $limite = time() - $this->maxLifetime;
         $stmt   = $this->pdo->prepare('DELETE FROM `php_sessions` WHERE `last_activity` < ?');
         $stmt->execute([$limite]);

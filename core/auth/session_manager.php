@@ -1,38 +1,72 @@
 <?php
 // /core/auth/session_manager.php
-// Gestor centralizado de sesiones del ERP con inactividad de 8 horas y corte a Medianoche (12:00 AM UTC-6)
+// Gestor centralizado de sesiones del ERP
+// - Inactividad maxima: 8 horas (ventana deslizante por last_activity)
+// - Corte automatico a medianoche (12:00 AM UTC-6 / America/Managua)
+// - Registro de auditoria en erp_sesiones_activas
+//
+// REQUISITO: Las tablas php_sessions y erp_sesiones_activas deben existir en BD.
+// Script SQL: core/auth/sql/crear_tablas_sesiones.sql
 
 if (!defined('SESSION_DURATION_SECONDS')) {
-    define('SESSION_DURATION_SECONDS', 28800); // 8 horas de inactividad máxima
+    define('SESSION_DURATION_SECONDS', 28800); // 8 horas
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers internos (sin lanzar excepciones al exterior)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Obtiene la conexion PDO global, cargando conexion.php si aun no esta lista.
+ * @return PDO|null
+ */
+function _sm_getConn(): ?PDO
+{
+    global $conn;
+    if (!isset($conn) || !($conn instanceof PDO)) {
+        $conexionPath = $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
+        if (file_exists($conexionPath)) {
+            require_once $conexionPath;
+            global $conn;
+        }
+    }
+    return ($conn instanceof PDO) ? $conn : null;
 }
 
 /**
- * Inicia la sesión de forma segura usando MySQL como almacén de sesiones.
- * Esto evita que el GC externo de Hostinger destruya los archivos de sesión.
+ * Obtiene la IP real del cliente (considera proxies de Hostinger / Cloudflare).
  */
-function iniciarSesionSegura()
+function _sm_getIp(): string
+{
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'] as $h) {
+        if (!empty($_SERVER[$h])) {
+            return trim(explode(',', $_SERVER[$h])[0]);
+        }
+    }
+    return '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// API PUBLICA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Inicia la sesion de forma segura usando MySQL como almacen de sesiones.
+ * Evita que el GC externo de Hostinger destruya los archivos de sesion.
+ */
+function iniciarSesionSegura(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
         return;
     }
 
-    // Configurar zona horaria de Nicaragua
     date_default_timezone_set('America/Managua');
 
-    // -------------------------------------------------------------------------
-    // Handler de sesiones en MySQL
-    // Almacena sesiones en la tabla `php_sessions`, inmune al GC de Hostinger.
-    // -------------------------------------------------------------------------
+    // ── Handler de sesiones en MySQL ─────────────────────────────────────────
+    // La tabla php_sessions debe existir previamente (ver SQL en core/auth/sql/).
     require_once __DIR__ . '/DbSessionHandler.php';
 
-    // Reusar $conn global (creado por core/database/conexion.php).
-    // Antes se creaba una conexión PDO independiente ($pdoSession), pero cuando
-    // Ticket.php → database.php → conexion.php se carga primero que auth.php,
-    // el segundo PDO podía fallar silenciosamente por límite de conexiones en Hostinger,
-    // dejando la sesión vacía y causando el bucle de redirección.
     global $conn;
-
-    // Si $conn aún no está disponible (edge case), cargamos conexion.php primero
     if (!isset($conn) || !($conn instanceof PDO)) {
         require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
         global $conn;
@@ -40,17 +74,9 @@ function iniciarSesionSegura()
 
     try {
         $handler = new DbSessionHandler($conn, SESSION_DURATION_SECONDS * 2);
-
-        // Crear tabla si aún no existe (operación idempotente)
-        $handler->instalarTabla();
-
-        // Registrar el handler ANTES de session_start()
         session_set_save_handler($handler, true);
-
     } catch (PDOException $e) {
-        // Fallback a archivos si la BD no está disponible
         error_log('[SessionManager] ADVERTENCIA: No se pudo iniciar handler de BD. Usando archivos. ' . $e->getMessage());
-
         $sessionSavePath = dirname(__DIR__, 2) . '/core/sessions';
         if (!is_dir($sessionSavePath)) {
             @mkdir($sessionSavePath, 0777, true);
@@ -61,19 +87,15 @@ function iniciarSesionSegura()
         }
     }
 
-
-    // Configurar tiempo de vida de sesión y cookie
     ini_set('session.gc_maxlifetime',  SESSION_DURATION_SECONDS * 2);
     ini_set('session.cookie_lifetime', SESSION_DURATION_SECONDS);
-
-    // Deshabilitar GC automático de PHP (el DbSessionHandler tiene su propio GC)
-    ini_set('session.gc_probability', 0);
-    ini_set('session.gc_divisor',     1);
+    ini_set('session.gc_probability',  0);
+    ini_set('session.gc_divisor',      1);
 
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
         || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
-        || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on');
+        || (!empty($_SERVER['HTTP_X_FORWARDED_SSL'])   && strtolower($_SERVER['HTTP_X_FORWARDED_SSL'])   === 'on');
 
     if (PHP_VERSION_ID >= 70300) {
         session_set_cookie_params([
@@ -82,72 +104,65 @@ function iniciarSesionSegura()
             'domain'   => '',
             'secure'   => $isSecure,
             'httponly' => true,
-            'samesite' => 'Lax'
+            'samesite' => 'Lax',
         ]);
     } else {
-        session_set_cookie_params(
-            SESSION_DURATION_SECONDS,
-            '/; samesite=Lax',
-            '',
-            $isSecure,
-            true
-        );
+        session_set_cookie_params(SESSION_DURATION_SECONDS, '/; samesite=Lax', '', $isSecure, true);
     }
 
     session_start();
 }
 
 /**
- * Verifica si la sesión actual ha expirado según las reglas de negocio:
- * 1. Inactividad de más de 8 horas (ventana deslizante por last_activity).
- * 2. Cambio de día (medianoche 12:00 AM en hora de Nicaragua).
- * 
- * @return bool true si la sesión es válida o no hay usuario autenticado; false si expiró
+ * Verifica si la sesion actual ha expirado segun las reglas de negocio:
+ *   1. Inactividad > 8 h (ventana deslizante, renovada por ping.php cada 5 min).
+ *   2. Cambio de dia (medianoche en hora de Nicaragua).
+ *
+ * Si expiro, destruye la sesion Y registra el motivo en erp_sesiones_activas.
+ *
+ * @return bool true = sesion valida (o sin usuario); false = expiro y fue destruida
  */
-function verificarExpiracionSesion()
+function verificarExpiracionSesion(): bool
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         iniciarSesionSegura();
     }
 
-    // Si no hay usuario logueado, no se evalúa expiración
     if (!isset($_SESSION['usuario_id'])) {
         return true;
     }
 
     date_default_timezone_set('America/Managua');
-    $ahora = time();
-    $fechaActual = date('Y-m-d');
-
-    $haExpirado = false;
+    $ahora        = time();
+    $fechaActual  = date('Y-m-d');
+    $haExpirado   = false;
     $motivoExpiracion = '';
 
-    // Regla 1: Validar fecha (Corte automático a las 12:00 AM del nuevo día)
+    // Regla 1: corte de medianoche
     if (isset($_SESSION['login_date']) && $_SESSION['login_date'] !== $fechaActual) {
-        $haExpirado = true;
-        $motivoExpiracion = 'midnight';
+        $haExpirado       = true;
+        $motivoExpiracion = 'medianoche';
     }
 
-    // Regla 2: Validar inactividad máxima de 8 horas (ventana deslizante)
-    // Se usa last_activity (que se actualiza en cada petición) en lugar de login_time
-    // (que es fijo desde el login). Así la sesión solo expira si el usuario estuvo
-    // inactivo más de SESSION_DURATION_SECONDS segundos seguidos.
+    // Regla 2: inactividad de 8 h (ventana deslizante)
     if (!$haExpirado) {
         $ultimaActividad = $_SESSION['last_activity'] ?? $_SESSION['login_time'] ?? null;
         if ($ultimaActividad !== null && ($ahora - $ultimaActividad) > SESSION_DURATION_SECONDS) {
-            $haExpirado = true;
-            $motivoExpiracion = 'inactividad_8h';
+            $haExpirado       = true;
+            $motivoExpiracion = 'inactividad';
         }
     }
 
-    // Si no tenían registrados login_time o login_date (sesión antigua en transición), inicializarlos
+    // Inicializar marcas faltantes en sesiones antiguas (transicion)
     if (!$haExpirado && (!isset($_SESSION['login_time']) || !isset($_SESSION['login_date']))) {
         $_SESSION['login_time'] = $ahora;
         $_SESSION['login_date'] = $fechaActual;
     }
 
     if ($haExpirado) {
-        // Limpiar y destruir sesión expirada
+        // Registrar cierre en auditoria ANTES de destruir la sesion
+        _sm_registrarCierreSesion(session_id(), $motivoExpiracion);
+
         $_SESSION = [];
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -155,22 +170,23 @@ function verificarExpiracionSesion()
         return false;
     }
 
-    // Actualizar marca de última actividad
+    // Renovar ventana deslizante
     $_SESSION['last_activity'] = $ahora;
     return true;
 }
 
 /**
- * Registra los metadatos necesarios al iniciar sesión exitosamente
- * 
- * @param mixed $usuarioId ID o CodOperario del usuario
- * @param string $usuarioNombre Nombre o identificador del usuario
- * @param array $datosAdicionales Claves adicionales para almacenar en $_SESSION
+ * Registra los metadatos de sesion al iniciar sesion exitosamente.
+ * Guarda en $_SESSION Y en erp_sesiones_activas.
+ *
+ * @param mixed  $usuarioId         CodOperario o id del usuario
+ * @param string $usuarioNombre     Nombre del usuario
+ * @param array  $datosAdicionales  Claves extra para $_SESSION (cargo_cod, cargo_nombre, etc.)
  */
-function registrarInicioSesion($usuarioId, $usuarioNombre, $datosAdicionales = [])
+function registrarInicioSesion($usuarioId, $usuarioNombre, array $datosAdicionales = []): void
 {
     date_default_timezone_set('America/Managua');
-    $ahora = time();
+    $ahora       = time();
     $fechaActual = date('Y-m-d');
 
     $_SESSION['usuario_id']     = $usuarioId;
@@ -181,5 +197,106 @@ function registrarInicioSesion($usuarioId, $usuarioNombre, $datosAdicionales = [
 
     foreach ($datosAdicionales as $key => $val) {
         $_SESSION[$key] = $val;
+    }
+
+    // ── Auditoria: insertar registro de nueva sesion ──────────────────────────
+    // La tabla erp_sesiones_activas debe existir previamente (ver SQL en core/auth/sql/).
+    $pdo = _sm_getConn();
+    if ($pdo) {
+        try {
+            $pdo->prepare("
+                INSERT INTO `erp_sesiones_activas`
+                    (`session_id`, `cod_operario`, `usuario_nombre`,
+                     `cargo_cod`, `cargo_nombre`, `ip`, `user_agent`,
+                     `login_at`, `last_activity_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ")->execute([
+                session_id(),
+                $usuarioId,
+                $usuarioNombre,
+                $datosAdicionales['cargo_cod']    ?? null,
+                $datosAdicionales['cargo_nombre'] ?? null,
+                _sm_getIp(),
+                substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300),
+            ]);
+        } catch (Throwable $e) {
+            error_log('[SessionManager] No se pudo insertar en erp_sesiones_activas: ' . $e->getMessage());
+        }
+    }
+}
+
+/**
+ * Registra el logout manual en auditoria y destruye la sesion.
+ * Usar desde logout.php en lugar de session_destroy() directamente.
+ */
+function cerrarSesion(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['usuario_id'])) {
+        _sm_registrarCierreSesion(session_id(), 'logout_manual');
+    }
+
+    $_SESSION = [];
+
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(), '', time() - 42000,
+            $params['path'], $params['domain'],
+            $params['secure'], $params['httponly']
+        );
+    }
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+}
+
+/**
+ * Actualiza last_activity_at en erp_sesiones_activas.
+ * Llamar desde ping.php en cada heartbeat exitoso.
+ *
+ * @param string $sessionId  session_id() actual
+ */
+function actualizarPingAuditoria(string $sessionId): void
+{
+    $pdo = _sm_getConn();
+    if (!$pdo) return;
+    try {
+        $pdo->prepare("
+            UPDATE `erp_sesiones_activas`
+            SET `last_activity_at` = NOW()
+            WHERE `session_id` = ? AND `logout_at` IS NULL
+            LIMIT 1
+        ")->execute([$sessionId]);
+    } catch (Throwable $e) {
+        // No critico: no interrumpir el heartbeat por un fallo de auditoria
+        error_log('[SessionManager] actualizarPingAuditoria: ' . $e->getMessage());
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Privadas / internas
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Marca como cerrada una sesion en erp_sesiones_activas.
+ *
+ * @param string $sessionId  session_id() a cerrar
+ * @param string $motivo     logout_manual | inactividad | medianoche | forzado_sistema
+ */
+function _sm_registrarCierreSesion(string $sessionId, string $motivo): void
+{
+    $pdo = _sm_getConn();
+    if (!$pdo) return;
+    try {
+        $pdo->prepare("
+            UPDATE `erp_sesiones_activas`
+            SET `logout_at`     = NOW(),
+                `motivo_cierre` = ?
+            WHERE `session_id` = ? AND `logout_at` IS NULL
+            LIMIT 1
+        ")->execute([$motivo, $sessionId]);
+    } catch (Throwable $e) {
+        error_log('[SessionManager] _sm_registrarCierreSesion: ' . $e->getMessage());
     }
 }
