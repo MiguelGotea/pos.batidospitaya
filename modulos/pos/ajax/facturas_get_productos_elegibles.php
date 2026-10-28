@@ -13,6 +13,7 @@ try {
                    pp.SKU,
                    pp.Nombre,
                    COALESCE(pm.Nombre, pp.Nombre) AS nombre_maestro,
+                   COALESCE(cmp.nombre, pm.Nombre, pp.Nombre) AS nombre_catalogo,
                    COALESCE(g.id, 0) AS id_grupo,
                    COALESCE(g.nombre, 'Otros') AS grupo,
                    COALESCE(sg.id, 0) AS id_subgrupo,
@@ -92,12 +93,13 @@ try {
     ];
 
     if ($busqueda !== '') {
-        $sql .= " AND (pp.Nombre LIKE :q OR pm.Nombre LIKE :q2 OR pp.SKU LIKE :q3 OR g.nombre LIKE :q4 OR sg.nombre LIKE :q5)";
+        $sql .= " AND (pp.Nombre LIKE :q OR pm.Nombre LIKE :q2 OR pp.SKU LIKE :q3 OR g.nombre LIKE :q4 OR sg.nombre LIKE :q5 OR cmp.nombre LIKE :q6)";
         $params[':q']  = "%$busqueda%";
         $params[':q2'] = "%$busqueda%";
         $params[':q3'] = "%$busqueda%";
         $params[':q4'] = "%$busqueda%";
         $params[':q5'] = "%$busqueda%";
+        $params[':q6'] = "%$busqueda%";
     }
 
     $sql .= " ORDER BY CASE WHEN g.id IS NULL THEN 1 ELSE 0 END ASC, g.nombre ASC, sg.nombre ASC, pp.Nombre ASC";

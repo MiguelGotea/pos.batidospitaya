@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    facturas.css — Módulo Registro de Facturas POS
    ============================================================ */
 
@@ -3093,4 +3093,76 @@
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+
+/* ============================================================
+   MODAL DE SELECCIÓN DE PRODUCTO (Nuevo flujo de catálogo)
+   ============================================================
+   Selector horizontal de productos dentro del modal de personalización.
+   Se muestra cuando el cajero hace clic en una clasificación del catálogo.
+   ============================================================ */
+
+/* ── Wrapper del selector ─────────────────────────────────── */
+.mp-selector-productos-wrap {
+    background: #f0faf9;
+    border-bottom: 1.5px solid #cce8e5;
+    padding-bottom: 0.75rem;
+}
+
+/* ── Fila horizontal de botones ───────────────────────────── */
+.msp-productos-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+/* ── Botón de cada opción de producto ─────────────────────── */
+.msp-btn-producto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 10px;
+    border: 1.5px solid #b2d8d4;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
+    min-width: 80px;
+    max-width: 160px;
+    text-align: center;
+}
+
+.msp-btn-producto:hover {
+    border-color: #0E544C;
+    background: #e6f7f5;
+    box-shadow: 0 2px 8px rgba(14,84,76,.13);
+    transform: translateY(-1px);
+}
+
+.msp-btn-producto.activo {
+    border-color: #0E544C;
+    background: #0E544C;
+    box-shadow: 0 3px 10px rgba(14,84,76,.22);
+}
+
+.msp-btn-producto.activo .msp-btn-nombre,
+.msp-btn-producto.activo .msp-btn-precio {
+    color: #ffffff;
+}
+
+.msp-btn-nombre {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.msp-btn-precio {
+    font-size: .75rem;
+    color: #0E544C;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }

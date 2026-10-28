@@ -401,7 +401,7 @@ try {
         </div>
     </div>
 
-    <!-- ====== MODAL: Personalización de Receta ====== -->
+    <!-- ====== MODAL: Selección de Producto y Personalización de Receta ====== -->
     <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg modal-pos-custom">
@@ -411,19 +411,26 @@ try {
                             <i class="bi bi-sliders2"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Personalizar Producto</h5>
-                            <span class="modal-subtitle-pos" id="mpSubtitulo">Ajusta ingredientes, endulzante y extras</span>
+                            <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Seleccionar Producto</h5>
+                            <span class="modal-subtitle-pos" id="mpSubtitulo">Elige una opción y ajusta tus preferencias</span>
                         </div>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
+
+                <!-- Selector horizontal de producto de la clasificación (visible al venir del catálogo) -->
+                <div id="mpSelectorProductos" class="mp-selector-productos-wrap px-3 pt-3">
+                    <!-- Generado dinámicamente por JS -->
+                </div>
+
                 <div class="modal-body p-0 bg-light" id="mpCuerpo">
                     <!-- Contenido generado por JS -->
                     <div class="d-flex align-items-center justify-content-center py-5">
                         <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
-                        <span class="text-muted">Cargando receta…</span>
+                        <span class="text-muted">Elige un producto arriba para ver sus opciones…</span>
                     </div>
                 </div>
+
                 <div class="modal-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                     <!-- Indicador de ajuste de precio por extras -->
                     <span class="text-muted small" id="mpAjustePrecio" style="display:none;">
@@ -440,7 +447,6 @@ try {
             </div>
         </div>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

@@ -11,6 +11,7 @@ let membresiaHistorialActual = '';
 let grupoActivo = null;   // id del grupo activo en tabs del catálogo
 let _grupos = null;       // Map: id_grupo → { nombre, subgrupos: Map }
 let _promoDescuentoGlobal = 0; // descuento a nivel de factura aplicado por promociones (pct_factura/monto_factura)
+let _rowKeyCounter = 0;       // contador incremental para clave única de fila en el DOM
 
 // Estado de Pagos y Propina
 let pagos = [];
@@ -439,8 +440,19 @@ function cargarProductosElegibles() {
 }
 
 /* ---- Renderizar catálogo por grupos (tabs + subgrupos + cards) ---- */
+/*
+ * Nueva estructura:
+ *  - Pestañas (tabs)    = grupo_presentacion_producto.nombre
+ *  - Encabezados        = subgrupo_presentacion_producto.nombre
+ *  - Botones            = catalogo_menu_pos.nombre  (clasificación; puede tener varios producto_presentacion)
+ *
+ * Al clic en un botón se abre el modal de selección/personalización.
+ * El cajero elige el producto concreto, configura opciones y da "Aplicar".
+ * El ítem se agrega solo al presionar "Aplicar".
+ */
 function renderizarCatalogoPorGrupos(lista) {
     _grupos = new Map();
+
     lista.forEach(p => {
         const gId     = parseInt(p.id_grupo)    || 0;
         const gNombre = p.grupo    || 'Otros';
@@ -451,12 +463,20 @@ function renderizarCatalogoPorGrupos(lista) {
         const sId     = parseInt(p.id_subgrupo) || 0;
         const sNombre = p.subgrupo || 'General';
         if (!grupo.subgrupos.has(sId)) {
-            grupo.subgrupos.set(sId, { id: sId, nombre: sNombre, productos: [] });
+            grupo.subgrupos.set(sId, { id: sId, nombre: sNombre, catalogos: new Map() });
         }
-        grupo.subgrupos.get(sId).productos.push(p);
+        const subgrupo = grupo.subgrupos.get(sId);
+
+        // Agrupar por catalogo_menu_pos
+        const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
+        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '—';
+        if (!subgrupo.catalogos.has(cId)) {
+            subgrupo.catalogos.set(cId, { id: cId, nombre: cNombre, productos: [] });
+        }
+        subgrupo.catalogos.get(cId).productos.push(p);
     });
 
-    // Render tabs
+    // Render tabs (grupos)
     let tabsHtml = '';
     let firstGrupoId = null;
     _grupos.forEach(g => {
@@ -486,20 +506,24 @@ function cambiarGrupo(grupoId) {
     grupo.subgrupos.forEach(sg => {
         html += `<div class="subgrupo-col">`;
         html += `<div class="subgrupo-header">${escHtml(sg.nombre)}</div>`;
-        sg.productos.forEach(p => {
-            const precio = parseFloat(p.precio_venta || 0);
-            html += `<div class="producto-card-pos ${parseInt(p.es_personalizable) ? 'producto-personalizable' : ''}" tabindex="0" role="button"
-                          onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
-                          onkeypress="if(event.key==='Enter')agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
-                     >${escHtml(p.Nombre)}${parseInt(p.es_personalizable) ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+        // Cada botón = una clasificación (catalogo_menu_pos)
+        sg.catalogos.forEach(cat => {
+            const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
+            html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
+                          onclick="abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
+                          onkeypress="if(event.key==='Enter')abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
+                     >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
         });
         html += `</div>`;
     });
     html += '</div>';
     $('#catalogoPanel').html(html);
 }
-
 /* ---- Filtrar localmente (overlay de búsqueda) ---- */
+/*
+ * La búsqueda ahora muestra botones de clasificación (catalogo_menu_pos),
+ * igual que el catálogo por grupos, no productos directos.
+ */
 function filtrarProductos(q) {
     if (q === '') {
         if (grupoActivo !== null && _grupos) {
@@ -516,7 +540,8 @@ function filtrarProductos(q) {
         (p.nombre_maestro || '').toLowerCase().includes(ql) ||
         (p.SKU            || '').toLowerCase().includes(ql) ||
         (p.grupo          || '').toLowerCase().includes(ql) ||
-        (p.subgrupo       || '').toLowerCase().includes(ql)
+        (p.subgrupo       || '').toLowerCase().includes(ql) ||
+        (p.nombre_catalogo|| '').toLowerCase().includes(ql)
     );
 
     if (!filtrados.length) {
@@ -524,77 +549,236 @@ function filtrarProductos(q) {
         return;
     }
 
-    let html = '<div class="busqueda-resultados-grid">';
+    // Agrupar resultados por catalogo_menu_pos (igual que la vista normal)
+    const catMap = new Map();
     filtrados.forEach(p => {
-        const precio = parseFloat(p.precio_venta || 0);
-        html += `<div class="producto-card-pos ${parseInt(p.es_personalizable) ? 'producto-personalizable' : ''}" tabindex="0" role="button"
-                      onclick="agregarProducto(${p.id},'${escAttr(p.Nombre)}','${escAttr(p.nombre_unidad||'')}',${precio},${p.es_personalizable || 0})"
-                 >${escHtml(p.Nombre)}${parseInt(p.es_personalizable) ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+        const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
+        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '—';
+        if (!catMap.has(cId)) {
+            catMap.set(cId, { id: cId, nombre: cNombre, productos: [] });
+        }
+        catMap.get(cId).productos.push(p);
+    });
+
+    let html = '<div class="busqueda-resultados-grid">';
+    catMap.forEach(cat => {
+        const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
+        html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
+                      onclick="abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
+                 >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
     });
     html += '</div>';
     $('#catalogoPanel').html(html);
 }
 
-/* ---- Agregar producto al detalle ---- */
-function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
-    const precioNum = parseFloat(precio) || 0;
-    const existe = detalleFactura.find(d => d.id_presentacion === id);
+/* ============================================================
+   MODAL DE SELECCIÓN DE PRODUCTO + PERSONALIZACIÓN
+   ============================================================
+   Flujo:
+   1. El cajero hace clic en un botón del catálogo (catalogo_menu_pos).
+   2. Se abre el modalPersonalizacion con un selector de producto en la parte
+      superior (una línea horizontal de opciones, solo una seleccionable).
+   3. Al elegir un producto se cargan su receta, endulzantes y extras.
+   4. El cajero configura y da "Aplicar" → recién entonces se agrega al ticket.
+   ============================================================ */
 
-    // Buscar el objeto completo del producto en el catálogo para obtener reglas de puntos
-    const prodCatalogo = todosProductos.find(p => parseInt(p.id) === parseInt(id)) || {};
+// Estado del modal de selección
+let _mspIdCatalogo   = null;   // id del catalogo_menu_pos abierto
+let _mspNombreCat    = '';     // nombre de la clasificación
+let _mspProductos    = [];     // lista de productos de esa clasificación
+let _mspIdxSelec     = -1;     // índice dentro de _mspProductos del producto seleccionado
+let _mspModoEdicion  = false;  // true si estamos editando un ítem ya existente en el ticket
+let _mspIdxTicket    = -1;     // índice en detalleFactura (si es edición)
 
-    if (existe) {
-        // Si ya existe, solo incrementa cantidad (no vuelve a abrir modal)
-        existe.cantidad += 1;
-        const precioUnit = existe.precio_unitario || 0;
-        existe.costo_total_iva = Math.round(existe.cantidad * precioUnit * 100) / 100;
-        actualizarTablaDetalle();
+/* ---- Abrir el modal de selección de producto de una clasificación ---- */
+function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
+    _mspIdCatalogo  = idCatalogo;
+    _mspNombreCat   = nombreCatalogo;
+    _mspProductos   = [];
+    _mspIdxSelec    = -1;
+    _mspModoEdicion = false;
+    _mspIdxTicket   = -1;
 
-        const fila = $(`#fila-${id}`);
-        fila.addClass('table-warning');
-        setTimeout(() => fila.removeClass('table-warning'), 600);
+    // Resetear draft de personalización
+    _mpIdx   = -1;
+    _mpDraft = {
+        ingredientes_quitados:    [],
+        ingredientes_sustituidos: [],
+        endulzante_id:            null,
+        endulzante_nombre:        '',
+        extras_agregados:         [],
+        monto_extras:             0
+    };
+
+    // Configurar encabezado del modal
+    $('#modalPersonalizacionLabel').text(escHtml(nombreCatalogo));
+    $('#mpSubtitulo').text('Selecciona un producto y configura tus opciones');
+    $('#mpAjustePrecio').hide();
+
+    // Mostrar spinner mientras carga los productos de la clasificación
+    $('#mpSelectorProductos').html(
+        '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
+    );
+    $('#mpCuerpo').html(
+        '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Elige un producto arriba para ver sus opciones…</span></div>'
+    );
+
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
+    modal.show();
+
+    // Cargar productos de este catalogo_menu_pos
+    $.ajax({
+        url: 'ajax/get_productos_catalogo.php',
+        type: 'GET',
+        data: { id_catalogo: idCatalogo },
+        dataType: 'json',
+        success: function (res) {
+            if (!res.success || !res.data || res.data.length === 0) {
+                $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>No hay productos disponibles en esta clasificación.</span>');
+                return;
+            }
+            _mspProductos = res.data;
+            _renderSelectorProductos();
+
+            // Si solo hay un producto, seleccionarlo automáticamente
+            if (_mspProductos.length === 1) {
+                _mspSeleccionarProducto(0);
+            }
+        },
+        error: function () {
+            $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-cloud-slash me-1"></i>Error al cargar los productos.</span>');
+        }
+    });
+}
+
+/* ---- Renderizar los botones de selección de producto (línea horizontal) ---- */
+function _renderSelectorProductos() {
+    if (!_mspProductos.length) return;
+
+    let html = '<div class="msp-productos-selector">';
+    _mspProductos.forEach((p, i) => {
+        const precio = parseFloat(p.precio_venta || 0);
+        const activo = i === _mspIdxSelec ? ' activo' : '';
+        html += `<button type="button" class="msp-btn-producto${activo}" data-idx="${i}"
+                         onclick="_mspSeleccionarProducto(${i})">
+                    <span class="msp-btn-nombre">${escHtml(p.Nombre)}</span>
+                    <span class="msp-btn-precio">C$ ${precio.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                 </button>`;
+    });
+    html += '</div>';
+    $('#mpSelectorProductos').html(html);
+}
+
+/* ---- Seleccionar un producto del selector horizontal ---- */
+function _mspSeleccionarProducto(idx) {
+    if (!_mspProductos[idx]) return;
+    _mspIdxSelec = idx;
+
+    const p = _mspProductos[idx];
+
+    // Actualizar botones activos
+    $('#mpSelectorProductos .msp-btn-producto').removeClass('activo');
+    $(`#mpSelectorProductos .msp-btn-producto[data-idx="${idx}"]`).addClass('activo');
+
+    // Subtítulo con nombre del producto seleccionado
+    $('#mpSubtitulo').text(`${escHtml(p.Nombre)} — Ajusta opciones`);
+    $('#mpAjustePrecio').hide();
+
+    // Resetear draft de personalización al cambiar producto
+    _mpDraft = {
+        ingredientes_quitados:    [],
+        ingredientes_sustituidos: [],
+        endulzante_id:            null,
+        endulzante_nombre:        '',
+        extras_agregados:         [],
+        monto_extras:             0
+    };
+
+    // Si hay un ítem existente en el ticket de este mismo producto (edición), precargar su personalización
+    const existente = detalleFactura.find(d => parseInt(d.id_presentacion) === parseInt(p.id));
+    if (existente && existente.personalizacion) {
+        _mpDraft = JSON.parse(JSON.stringify(existente.personalizacion));
+    }
+
+    // Mostrar spinner mientras carga receta
+    $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
+
+    // Cargar receta (usa caché igual que antes)
+    const idPres = parseInt(p.id);
+    if (_mpCache[idPres]) {
+        _mpRenderContenido(_mpCache[idPres]);
         return;
     }
 
+    $.ajax({
+        url: 'ajax/get_receta_producto.php',
+        type: 'GET',
+        data: { id_presentacion: idPres },
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                _mpCache[idPres] = res;
+                _mpRenderContenido(res);
+            } else {
+                $('#mpCuerpo').html(`<div class="alert alert-warning m-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'No se pudieron cargar los datos de receta.')}</div>`);
+            }
+        },
+        error: function () {
+            $('#mpCuerpo').html('<div class="alert alert-danger m-3"><i class="bi bi-cloud-slash me-1"></i> Error de conexión al cargar la receta.</div>');
+        }
+    });
+}
+
+/* ---- Agregar producto al detalle (siempre crea línea nueva) ---- */
+/*
+ * REGLA: Cada llamada desde el modal crea un ítem independiente.
+ * La cantidad SOLO se modifica con los botones +/- de la tabla.
+ * Para identificar filas en el DOM se usa _rowKey (contador único),
+ * ya que el mismo id_presentacion puede aparecer varias veces.
+ */
+function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoObj, personalizacion) {
+    const precioNum    = parseFloat(precio) || 0;
+    const prodCatalogo = productoObj || todosProductos.find(p => parseInt(p.id) === parseInt(id)) || {};
+
+    // Calcular precio final con extras del borrador
+    const montoExtras = (personalizacion && personalizacion.monto_extras) ? parseFloat(personalizacion.monto_extras) : 0;
+    const precioFinal = Math.round((precioNum + montoExtras) * 100) / 100;
+
+    // Clave de fila única para el DOM (independiente de id_presentacion)
+    const rowKey = ++_rowKeyCounter;
+
     const nuevoItem = {
-        id_presentacion:      id,
+        _rowKey:              rowKey,                // identificador único de esta fila
+        id_presentacion:      parseInt(id),
         nombre:               nombre,
         unidad:               unidad,
-        precio_unitario_base: precioNum, // precio original sin extras
-        precio_unitario:      precioNum, // precio efectivo (base + extras)
+        precio_unitario_base: precioNum,
+        precio_unitario:      precioFinal,
         cantidad:             1,
-        costo_total_iva:      precioNum,
+        costo_total_iva:      precioFinal,
         notas:                '',
         es_personalizable:    parseInt(esPersonalizable) === 1,
         es_canjeado:          false,
-        descuento_promo:      0,   // Descuento monetario aplicado por promociones
-        promos_en_item:       [],  // [{id, nombre}] de promos que afectan este item
-        es_condicion_promo:   false, // true si este ítem es condición de una promo aplicada
-        qty_condicion:        0,     // unidades de este ítem usadas como condición (0 = ninguna)
-        // Reglas de puntos desde BD (null = sin regla configurada)
+        descuento_promo:      0,
+        promos_en_item:       [],
+        es_condicion_promo:   false,
+        qty_condicion:        0,
         puntos_acumulacion:   prodCatalogo.puntos_acumulacion != null ? parseFloat(prodCatalogo.puntos_acumulacion) : null,
         puntos_canje:         prodCatalogo.puntos_canje        != null ? parseFloat(prodCatalogo.puntos_canje)        : null,
         id_catalogo_menu_pos: prodCatalogo.id_catalogo_menu_pos ? parseInt(prodCatalogo.id_catalogo_menu_pos) : null,
-        personalizacion: {
-            ingredientes_quitados:   [],  // [{ id_componente, nombre_componente }]
-            ingredientes_sustituidos:[],  // [{ id_componente, nombre_original, id_nuevo, nombre_nuevo }]
-            endulzante_id:           null,
-            endulzante_nombre:       '',
-            extras_agregados:        [],  // [{ id, nombre, precio }]
-            monto_extras:            0
+        personalizacion:      personalizacion ? JSON.parse(JSON.stringify(personalizacion)) : {
+            ingredientes_quitados:    [],
+            ingredientes_sustituidos: [],
+            endulzante_id:            null,
+            endulzante_nombre:        '',
+            extras_agregados:         [],
+            monto_extras:             0
         }
     };
 
     detalleFactura.push(nuevoItem);
     actualizarTablaDetalle();
-
-    /* Al agregar por primera vez, si tiene receta, abrir modal de personalización */
-    if (parseInt(esPersonalizable) === 1) {
-        const idx = detalleFactura.length - 1;
-        setTimeout(() => abrirModalPersonalizacion(idx), 150);
-    }
 }
-
 /* ---- Renderizar tabla de detalle (columna derecha) ---- */
 function actualizarTablaDetalle() {
     $('#contadorProductos').text(`${detalleFactura.length} ítem(s)`);
@@ -657,7 +841,7 @@ function actualizarTablaDetalle() {
         const esCanjeable = esClubValido && item.puntos_canje != null && !item.es_condicion_promo;
 
         html += `
-        <tr id="fila-${item.id_presentacion}" class="fila-producto-principal ${item.es_canjeado ? 'fila-canjeada' : ''}" data-idx="${idx}">
+        <tr id="fila-${item._rowKey}" class="fila-producto-principal ${item.es_canjeado ? 'fila-canjeada' : ''}" data-idx="${idx}">
             <td>
                 <div class="d-flex align-items-start gap-1">
                     <div class="flex-grow-1">
@@ -1360,6 +1544,7 @@ function guardarFactura() {
             }).then(() => {
                 // Reset completo para la siguiente venta
                 detalleFactura = [];
+                _rowKeyCounter        = 0;
                 _promoIdsAprobados    = [];
                 _promoDescuentoGlobal = 0;
                 $("#filaDescuentoPromo").remove();
@@ -1440,12 +1625,21 @@ let _mpDraft = null;
 // Cache de datos de receta por id_presentacion
 const _mpCache = {};
 
-/* ---- Abrir modal y cargar datos de receta ---- */
+/* ---- Abrir modal para EDITAR personalización de ítem existente en el ticket ---- */
+/*
+ * Este modo se activa desde el botón de personalización en la fila del ticket.
+ * A diferencia del flujo de selección de catálogo, aquí ya hay un producto
+ * seleccionado, así que mostramos directamente su receta sin el selector.
+ */
 function abrirModalPersonalizacion(idx) {
     const item = detalleFactura[idx];
     if (!item) return;
 
-    _mpIdx = idx;
+    _mpIdx          = idx;
+    _mspModoEdicion = true;
+    _mspIdxTicket   = idx;
+    _mspProductos   = [];
+    _mspIdxSelec    = -1;
 
     // Clonar personalización actual como borrador de trabajo
     _mpDraft = JSON.parse(JSON.stringify(item.personalizacion || {
@@ -1457,9 +1651,11 @@ function abrirModalPersonalizacion(idx) {
         monto_extras:             0
     }));
 
-    // Actualizar título del modal
+    // Actualizar título del modal — sin selector de productos (ya está elegido)
     $('#modalPersonalizacionLabel').text('Personalizar: ' + item.nombre);
     $('#mpSubtitulo').text('Ajusta ingredientes, endulzante y extras');
+    // Ocultar el selector de productos (no aplica en edición directa)
+    $('#mpSelectorProductos').html('').hide();
     $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
     $('#mpAjustePrecio').hide();
 
@@ -1917,32 +2113,73 @@ function _mpActualizarResumenExtras() {
     }
 }
 
-/* ---- Aplicar personalización al item del ticket ---- */
+/* ---- Aplicar personalización / Confirmar selección de producto al ticket ---- */
+/*
+ * Hay dos modos:
+ * A) Modo nuevo (desde catálogo): _mspModoEdicion = false
+ *    - _mspProductos[_mspIdxSelec] es el producto elegido
+ *    - Se llama a agregarProducto() con la personalización del borrador
+ *
+ * B) Modo edición (desde tabla, ícono de lápiz): _mspModoEdicion = true
+ *    - _mpIdx apunta al ítem en detalleFactura
+ *    - Se actualiza su personalización y precio sin crear un nuevo ítem
+ */
 $('#mpBtnGuardar').on('click', function () {
-    if (_mpIdx < 0 || !detalleFactura[_mpIdx]) return;
 
-    const item = detalleFactura[_mpIdx];
-    item.personalizacion = JSON.parse(JSON.stringify(_mpDraft));
+    /* ── MODO EDICIÓN (ítem ya existente en el ticket) ── */
+    if (_mspModoEdicion && _mpIdx >= 0 && detalleFactura[_mpIdx]) {
+        const item = detalleFactura[_mpIdx];
+        item.personalizacion = JSON.parse(JSON.stringify(_mpDraft));
 
-    // Ajustar precio_unitario: precio base + monto de extras
-    item.precio_unitario = Math.round(((item.precio_unitario_base || 0) + (_mpDraft.monto_extras || 0)) * 100) / 100;
-    item.costo_total_iva = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
+        // Ajustar precio_unitario: precio base + monto de extras
+        item.precio_unitario = Math.round(((item.precio_unitario_base || 0) + (_mpDraft.monto_extras || 0)) * 100) / 100;
+        item.costo_total_iva = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
 
-    actualizarTablaDetalle();
+        actualizarTablaDetalle();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion')).hide();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Personalización actualizada',
+            toast: true,
+            position: 'top-end',
+            timer: 1800,
+            showConfirmButton: false
+        });
+        return;
+    }
+
+    /* ── MODO NUEVO (desde catálogo, producto seleccionado del modal) ── */
+    if (_mspIdxSelec < 0 || !_mspProductos[_mspIdxSelec]) {
+        alertWarning('Selecciona un producto antes de aplicar.');
+        return;
+    }
+
+    const p       = _mspProductos[_mspIdxSelec];
+    const precio  = parseFloat(p.precio_venta || 0);
+    const draft   = JSON.parse(JSON.stringify(_mpDraft));
+
+    agregarProducto(
+        parseInt(p.id),
+        p.Nombre,
+        p.nombre_unidad || 'Unidad',
+        precio,
+        p.es_personalizable,
+        p,
+        draft
+    );
 
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion')).hide();
 
-    // Toast de confirmación
     Swal.fire({
         icon: 'success',
-        title: 'Personalización aplicada',
+        title: 'Producto agregado',
         toast: true,
         position: 'top-end',
-        timer: 1800,
+        timer: 1500,
         showConfirmButton: false
     });
 });
-
 /* ============================================================
    BANNER CLUB PITAYA (QUICK ADD)
    ============================================================ */
@@ -1989,6 +2226,7 @@ $('#btnQuickAddMembresia').on('click', function () {
         const precio = parseFloat(p.precio_venta) || 0;
 
         detalleFactura.unshift({
+            _rowKey:              ++_rowKeyCounter,
             id_presentacion:      parseInt(p.id),
             id_catalogo_menu_pos: parseInt(p.id_catalogo_menu_pos),
             nombre:               p.nombre,
@@ -2305,3 +2543,14 @@ $(document).ready(function () {
     };
 });
 
+
+/* ── Reset estado del modal al cerrarlo ────────────────────── */
+document.getElementById('modalPersonalizacion').addEventListener('hidden.bs.modal', function () {
+    // Limpiar selector de productos para que no quede visible en el próximo apertura
+    $('#mpSelectorProductos').html('').show(); // show() porque en modo edicion lo ocultamos
+    _mspModoEdicion = false;
+    _mspIdxTicket   = -1;
+    _mspIdxSelec    = -1;
+    _mspProductos   = [];
+    _mpIdx          = -1;
+});
