@@ -14,7 +14,7 @@ try {
                    COALESCE(pm.Nombre, pp.Nombre) AS nombre,
                    COALESCE(up.nombre, 'Unidad') AS nombre_unidad,
                    pp.id_catalogo_menu_pos,
-                   pp.es_personalizable,
+                   CASE WHEN pp.Id_receta_producto IS NOT NULL THEN 1 ELSE 0 END AS es_personalizable,
                    COALESCE(psuc.precio, pglob.precio) AS precio_venta
             FROM producto_presentacion pp
             LEFT JOIN producto_maestro pm
