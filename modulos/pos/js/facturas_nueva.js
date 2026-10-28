@@ -456,6 +456,13 @@ function renderizarCatalogoPorGrupos(lista) {
     lista.forEach(p => {
         const gId     = parseInt(p.id_grupo)    || 0;
         const gNombre = p.grupo    || 'Otros';
+
+        // Exclusión puntual: no mostrar la pestaña de Membresías en el catálogo (tiene acceso directo Quick Add abajo)
+        const esMembresia = gId === 7 || gNombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('membresia');
+        if (esMembresia) {
+            return;
+        }
+
         if (!_grupos.has(gId)) {
             _grupos.set(gId, { id: gId, nombre: gNombre, subgrupos: new Map() });
         }
