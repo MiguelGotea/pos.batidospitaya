@@ -10,10 +10,18 @@ require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $idCatalogo = isset($_GET['id_catalogo']) ? (int)$_GET['id_catalogo'] : 0;
-    if ($idCatalogo <= 0) {
+    // Acepta ids_catalogo (uno o varios separados por coma) o id_catalogo (legado)
+    $rawIds = isset($_GET['ids_catalogo']) ? $_GET['ids_catalogo']
+             : (isset($_GET['id_catalogo'])  ? $_GET['id_catalogo'] : '0');
+    // Filtrar: solo enteros positivos
+    $idsLimpios = array_filter(
+        array_map('intval', explode(',', $rawIds)),
+        fn($v) => $v > 0
+    );
+    if (empty($idsLimpios)) {
         throw new Exception('ID de catálogo no válido.');
     }
+    $placeholders = implode(',', array_fill(0, count($idsLimpios), '?'));
 
     $sucursal = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? null);
 
@@ -68,7 +76,7 @@ try {
             ON up.id = pp.id_unidad_producto
         LEFT JOIN pos_ventas_precios_producto psuc
             ON psuc.id_producto_presentacion = pp.id
-           AND psuc.cod_sucursal = :sucursal
+           AND psuc.cod_sucursal = ?
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
         LEFT JOIN pos_ventas_precios_producto pglob
@@ -76,16 +84,13 @@ try {
            AND pglob.cod_sucursal IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
-        WHERE pp.id_catalogo_menu_pos = :id_catalogo
+        WHERE pp.id_catalogo_menu_pos IN ($placeholders)
           AND pp.es_vendible = 'SI'
           AND pp.Activo = 'SI'
           AND (psuc.precio IS NOT NULL OR pglob.precio IS NOT NULL)
         ORDER BY pp.Nombre ASC
     ");
-    $stmt->execute([
-        ':id_catalogo' => $idCatalogo,
-        ':sucursal'    => $sucursal
-    ]);
+    $stmt->execute(array_merge([$sucursal], array_values($idsLimpios)));
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([

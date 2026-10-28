@@ -474,14 +474,14 @@ function renderizarCatalogoPorGrupos(lista) {
         }
         const subgrupo = grupo.subgrupos.get(sId);
 
-        // Agrupar por catalogo_menu_pos
+        // Agrupar por nombre de catalogo (un boton por nombre; puede haber varios id con el mismo nombre)
         const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
-        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '—';
-        if (!subgrupo.catalogos.has(cId)) {
-            subgrupo.catalogos.set(cId, { id: cId, nombre: cNombre, productos: [] });
+        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '-';
+        if (!subgrupo.catalogos.has(cNombre)) {
+            subgrupo.catalogos.set(cNombre, { ids: [], nombre: cNombre, productos: [] });
         }
-        subgrupo.catalogos.get(cId).productos.push(p);
-    });
+        subgrupo.catalogos.get(cNombre).ids.push(cId);
+        subgrupo.catalogos.get(cNombre).productos.push(p);
 
     // Render tabs (grupos)
     let tabsHtml = '';
@@ -513,12 +513,13 @@ function cambiarGrupo(grupoId) {
     grupo.subgrupos.forEach(sg => {
         html += `<div class="subgrupo-col">`;
         html += `<div class="subgrupo-header">${escHtml(sg.nombre)}</div>`;
-        // Cada botón = una clasificación (catalogo_menu_pos)
+        // Cada botón = un nombre de catalogo (puede agrupar varios id_catalogo_menu_pos)
         sg.catalogos.forEach(cat => {
             const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
+            const idsJson = JSON.stringify(cat.ids);
             html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
-                          onclick="abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
-                          onkeypress="if(event.key==='Enter')abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
+                          onclick="abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
+                          onkeypress="if(event.key==='Enter')abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
                      >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
         });
         html += `</div>`;
@@ -556,22 +557,24 @@ function filtrarProductos(q) {
         return;
     }
 
-    // Agrupar resultados por catalogo_menu_pos (igual que la vista normal)
+    // Agrupar resultados por nombre de catalogo (evitar duplicados por tamano)
     const catMap = new Map();
     filtrados.forEach(p => {
         const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
-        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '—';
-        if (!catMap.has(cId)) {
-            catMap.set(cId, { id: cId, nombre: cNombre, productos: [] });
+        const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '-';
+        if (!catMap.has(cNombre)) {
+            catMap.set(cNombre, { ids: [], nombre: cNombre, productos: [] });
         }
-        catMap.get(cId).productos.push(p);
+        catMap.get(cNombre).ids.push(cId);
+        catMap.get(cNombre).productos.push(p);
     });
 
     let html = '<div class="busqueda-resultados-grid">';
     catMap.forEach(cat => {
         const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
+        const idsJson = JSON.stringify(cat.ids);
         html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
-                      onclick="abrirModalSeleccionProducto(${cat.id}, '${escAttr(cat.nombre)}')"
+                      onclick="abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
                  >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
     });
     html += '</div>';
@@ -598,8 +601,10 @@ let _mspModoEdicion  = false;  // true si estamos editando un ítem ya existente
 let _mspIdxTicket    = -1;     // índice en detalleFactura (si es edición)
 
 /* ---- Abrir el modal de selección de producto de una clasificación ---- */
-function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
-    _mspIdCatalogo  = idCatalogo;
+function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
+    // idsCatalogo puede ser un array [1,2,3] o un entero legado
+    const _idsArray = Array.isArray(idsCatalogo) ? idsCatalogo : [idsCatalogo];
+    _mspIdCatalogo  = _idsArray[0];   // conservar primer ID como referencia
     _mspNombreCat   = nombreCatalogo;
     _mspProductos   = [];
     _mspIdxSelec    = -1;
@@ -633,11 +638,11 @@ function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
     modal.show();
 
-    // Cargar productos de este catalogo_menu_pos
+    // Cargar productos de este catalogo_menu_pos (puede ser uno o varios IDs)
     $.ajax({
         url: 'ajax/get_productos_catalogo.php',
         type: 'GET',
-        data: { id_catalogo: idCatalogo },
+        data: { ids_catalogo: _idsArray.join(',') },
         dataType: 'json',
         success: function (res) {
             if (!res.success || !res.data || res.data.length === 0) {
@@ -647,13 +652,12 @@ function abrirModalSeleccionProducto(idCatalogo, nombreCatalogo) {
             _mspProductos = res.data;
             _renderSelectorProductos();
 
-            // Si solo hay un producto: ocultar selector y subtitulo, seleccionar auto
+            // Seleccionar auto si solo hay una presentacion; subtitulo se oculta solo entonces
             if (_mspProductos.length === 1) {
-                $('#mpSelectorProductos').hide();
                 $('#mpSubtitulo').hide();
                 _mspSeleccionarProducto(0);
             } else {
-                $('#mpSubtitulo').text('Selecciona una opción');
+                $('#mpSubtitulo').text('Elige tamaño / presentación');
                 $('#mpSubtitulo').show();
             }
         },
