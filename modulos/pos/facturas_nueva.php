@@ -131,9 +131,8 @@ try {
                                 </div>
                             </div>
 
-
-                            <!-- Bloque: Potenciales (el carrito está cerca de calificar) -->
-                            <!-- Bloque: Casi aplican (el carrito esta cerca de calificar) -->
+                            <!-- Bloque: Casi aplican (el carrito está cerca de calificar) -->
+                            <div class="promociones-bloque mb-3" id="bloquePromosPotenciales" style="display:none;">
                                 <div class="promociones-sub-label">CASI APLICAN</div>
                                 <div class="promociones-grid-recomendados" id="gridPromosPotenciales">
                                     <!-- Generado dinámicamente por JS -->

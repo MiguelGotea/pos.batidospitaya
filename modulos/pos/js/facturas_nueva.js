@@ -1807,6 +1807,7 @@ function _mpRenderContenido(datos) {
                         <strong>${escHtml(ing.nombre_ingrediente)}</strong>
                         <small class="text-muted ms-auto">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
                     </div>
+                </div>
                 <div class="mp-ing-controles">
                     <!-- Combo buscable de sustitución (fuente: tabla extras) -->
                     <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}">

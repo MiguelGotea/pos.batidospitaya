@@ -120,7 +120,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: .875rem;
-    table-layout: fixed;
+
 }
 
 .tabla-detalle-factura thead th {
@@ -145,8 +145,8 @@
 }
 
 .tabla-detalle-factura tbody td {
-    padding: .4rem .5rem;
-    vertical-align: top;
+    padding: .4rem .65rem;
+    vertical-align: middle;
     color: #374151;
 }
 
@@ -2665,610 +2665,594 @@
     cursor: pointer;
     position: relative;
 
-.promo-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-}
+    .promo-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
 
-.promo-card-teal {
-    border-left: 4px solid #0E544C;
-    background: #f0fdfa;
-}
+    .promo-card-teal {
+        border-left: 4px solid #0E544C;
+        background: #f0fdfa;
+    }
 
-.promo-card-teal:hover {
-    border-color: #0E544C;
-}
+    .promo-card-teal:hover {
+        border-color: #0E544C;
+    }
 
-.promo-card-amber {
-    border-left: 4px solid #f59e0b;
-    background: #fffbeb;
-}
+    .promo-card-amber {
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+    }
 
-.promo-card-amber:hover {
-    border-color: #f59e0b;
-}
+    .promo-card-amber:hover {
+        border-color: #f59e0b;
+    }
 
-.promo-card-neutral {
-    border-left: 4px solid #94a3b8;
-    background: #f8fafc;
-    opacity: 0.75;
-    cursor: default;
-}
+    .promo-card-neutral {
+        border-left: 4px solid #94a3b8;
+        background: #f8fafc;
+        opacity: 0.75;
+        cursor: default;
+    }
 
-.promo-card-neutral:hover {
-    transform: none;
-    box-shadow: none;
-}
+    .promo-card-neutral:hover {
+        transform: none;
+        box-shadow: none;
+    }
 
-.promo-badge {
-    align-self: flex-start;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    padding: 2px 6px;
-    border-radius: 4px;
-    line-height: 1.2;
-}
+    .promo-badge {
+        align-self: flex-start;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        line-height: 1.2;
+    }
 
-.promo-badge-teal {
-    background: #ccfbf1;
-    color: #0f766e;
-}
+    .promo-badge-teal {
+        background: #ccfbf1;
+        color: #0f766e;
+    }
 
-.promo-badge-amber {
-    background: #fef3c7;
-    color: #b45309;
-}
+    .promo-badge-amber {
+        background: #fef3c7;
+        color: #b45309;
+    }
 
-.promo-badge-neutral {
-    background: #e2e8f0;
-    color: #475569;
-}
+    .promo-badge-neutral {
+        background: #e2e8f0;
+        color: #475569;
+    }
 
-.promo-title {
-    font-size: 0.86rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-top: 0.15rem;
-}
+    .promo-title {
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-top: 0.15rem;
+    }
 
-.promo-sub {
-    font-size: 0.72rem;
-    color: #64748b;
-    line-height: 1.3;
-}
+    .promo-sub {
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.3;
+    }
 
-/* Grid Aplicables */
-.promociones-grid-aplicables {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 0.75rem;
-}
+    /* Grid Aplicables */
+    .promociones-grid-aplicables {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.75rem;
+    }
 
-.promo-card-dark {
-    background: #0E544C;
-    border-radius: 8px;
-    padding: 0.45rem 0.75rem;
-    color: #ffffff;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    box-shadow: 0 2px 6px rgba(14, 84, 76, 0.18);
-    transition: transform 0.15s ease;
+    .promo-card-dark {
+        background: #0E544C;
+        border-radius: 8px;
+        padding: 0.45rem 0.75rem;
+        color: #ffffff;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        box-shadow: 0 2px 6px rgba(14, 84, 76, 0.18);
+        transition: transform 0.15s ease;
 
-.promo-card-dark:hover {
-    transform: translateY(-2px);
-}
+        .promo-card-dark:hover {
+            transform: translateY(-2px);
+        }
 
-.badge-rango-oro {
-    font-size: 0.64rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    color: #fde047;
-    text-transform: uppercase;
-}
+        .badge-rango-oro {
+            font-size: 0.64rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #fde047;
+            text-transform: uppercase;
+        }
 
-.badge-rango-canje {
-    font-size: 0.64rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    color: #86efac;
-    text-transform: uppercase;
-}
+        .badge-rango-canje {
+            font-size: 0.64rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: #86efac;
+            text-transform: uppercase;
+        }
 
-.promo-dark-title {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.25;
-}
+        .promo-dark-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.25;
+        }
 
-.btn-aplicar-promo {
-    align-self: flex-start;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 0.35rem 0.85rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    line-height: 1;
-}
+        .btn-aplicar-promo {
+            align-self: flex-start;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
 
-.btn-aplicar-oro {
-    background: #51B8AC;
-    color: #073832;
-    border: none;
-}
+        .btn-aplicar-oro {
+            background: #51B8AC;
+            color: #073832;
+            border: none;
+        }
 
-.btn-aplicar-oro:hover {
-    background: #38a599;
-    color: #ffffff;
-}
+        .btn-aplicar-oro:hover {
+            background: #38a599;
+            color: #ffffff;
+        }
 
-.btn-aplicar-outline {
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-}
+        .btn-aplicar-outline {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
 
-.btn-aplicar-outline:hover {
-    background: #ffffff;
-    color: #0E544C;
-    border-color: #ffffff;
-}
+        .btn-aplicar-outline:hover {
+            background: #ffffff;
+            color: #0E544C;
+            border-color: #ffffff;
+        }
 
-/* ============================================================
+        /* ============================================================
    SWITCH CANJEADO (PRODUCTO EN C$ 0.00 CON PRECIO TACHADO)
    ============================================================ */
 
-.switch-canje-pos {
-    position: relative;
-    display: inline-block;
-    width: 36px;
-    height: 20px;
-    margin: 0;
-    vertical-align: middle;
-}
+        .switch-canje-pos {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            margin: 0;
+            vertical-align: middle;
+        }
 
-.switch-canje-pos input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
+        .switch-canje-pos input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
 
-.slider-canje-pos {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    transition: background-color 0.2s ease;
-    border-radius: 20px;
-}
+        .slider-canje-pos {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: background-color 0.2s ease;
+            border-radius: 20px;
+        }
 
-.slider-canje-pos:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: #ffffff;
-    transition: transform 0.2s ease;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
+        .slider-canje-pos:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #ffffff;
+            transition: transform 0.2s ease;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
 
-.switch-canje-pos input:checked+.slider-canje-pos {
-    background-color: #0E544C;
-}
+        .switch-canje-pos input:checked+.slider-canje-pos {
+            background-color: #0E544C;
+        }
 
-.switch-canje-pos input:checked+.slider-canje-pos:before {
-    transform: translateX(16px);
-}
+        .switch-canje-pos input:checked+.slider-canje-pos:before {
+            transform: translateX(16px);
+        }
 
-.switch-canje-pos input:focus+.slider-canje-pos {
-    box-shadow: 0 0 0 2px rgba(14, 84, 76, 0.2);
-}
+        .switch-canje-pos input:focus+.slider-canje-pos {
+            box-shadow: 0 0 0 2px rgba(14, 84, 76, 0.2);
+        }
 
-/* Fila canjeada resaltado sutil */
-.fila-producto-principal.fila-canjeada td {
-    background-color: rgba(240, 253, 244, 0.5) !important;
-}
+        /* Fila canjeada resaltado sutil */
+        .fila-producto-principal.fila-canjeada td {
+            background-color: rgba(240, 253, 244, 0.5) !important;
+        }
 
-.precio-tachado-canje {
-    text-decoration: line-through;
-    color: #94a3b8 !important;
-    font-size: 0.74rem;
-    font-weight: 500;
-}
+        .precio-tachado-canje {
+            text-decoration: line-through;
+            color: #94a3b8 !important;
+            font-size: 0.74rem;
+            font-weight: 500;
+        }
 
-.precio-cero-canje {
-    color: #166534 !important;
-    font-size: 0.92rem;
-    font-weight: 800;
-}
+        .precio-cero-canje {
+            color: #166534 !important;
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
 
-/* Switch deshabilitado (cuando no es Cliente Club verificado) */
-.switch-canje-pos.switch-canje-deshabilitado {
-    opacity: 0.38;
-    cursor: not-allowed !important;
-}
+        /* Switch deshabilitado (cuando no es Cliente Club verificado) */
+        .switch-canje-pos.switch-canje-deshabilitado {
+            opacity: 0.38;
+            cursor: not-allowed !important;
+        }
 
-.switch-canje-pos.switch-canje-deshabilitado .slider-canje-pos {
-    cursor: not-allowed !important;
-    background-color: #e2e8f0;
-}
-
-
+        .switch-canje-pos.switch-canje-deshabilitado .slider-canje-pos {
+            cursor: not-allowed !important;
+            background-color: #e2e8f0;
+        }
 
 
-/* ============================================================
+
+
+        /* ============================================================
    PROMOCIONES DINÁMICAS — Nuevos estilos
    ============================================================ */
 
-/* Botón refrescar en header de promociones */
-.btn-refrescar-promos {
-    background: none;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    color: #64748b;
-    padding: 2px 8px;
-    font-size: .82rem;
-    cursor: pointer;
-    transition: all .18s;
-    line-height: 1.6;
-}
+        /* Botón refrescar en header de promociones */
+        .btn-refrescar-promos {
+            background: none;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            color: #64748b;
+            padding: 2px 8px;
+            font-size: .82rem;
+            cursor: pointer;
+            transition: all .18s;
+            line-height: 1.6;
+        }
 
-.btn-refrescar-promos:hover {
-    background: #f1f5f9;
-    color: #0E544C;
-    border-color: #0E544C;
-}
+        .btn-refrescar-promos:hover {
+            background: #f1f5f9;
+            color: #0E544C;
+            border-color: #0E544C;
+        }
 
-.btn-refrescar-promos.girando i {
-    display: inline-block;
-    animation: promoSpinOnce .6s linear;
-}
+        .btn-refrescar-promos.girando i {
+            display: inline-block;
+            animation: promoSpinOnce .6s linear;
+        }
 
-@keyframes promoSpinOnce {
-    from {
-        transform: rotate(0deg);
-    }
+        @keyframes promoSpinOnce {
+            from {
+                transform: rotate(0deg);
+            }
 
-    to {
-        transform: rotate(360deg);
-    }
-}
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
-/* Estados del panel de promociones */
-.promos-estado-carga,
-.promos-estado-vacio {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 4px;
-    color: #94a3b8;
-    font-size: .82rem;
-}
+        /* Estados del panel de promociones */
+        .promos-estado-carga,
+        .promos-estado-vacio {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 4px;
+            color: #94a3b8;
+            font-size: .82rem;
+        }
 
-.promos-estado-vacio i {
-    font-size: 1.1rem;
-}
+        .promos-estado-vacio i {
+            font-size: 1.1rem;
+        }
 
-/* Card de promo que ya fue aplicada/aprobada */
-.promo-card-aplica {
-    padding: 10px 12px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-}
+        /* Card de promo que ya fue aplicada/aprobada */
+        .promo-card-aplica {
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
 
-.promo-card-aplicada-activa {
-    background: #166534 !important;
-    padding: 10px 12px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-}
+        .promo-card-aplicada-activa {
+            background: #166534 !important;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
 
-.promo-card-aplicada-activa .promo-dark-title {
-    color: #fff;
-}
+        .promo-card-aplicada-activa .promo-dark-title {
+            color: #fff;
+        }
 
-/* Botón quitar promo aplicada */
-.btn-quitar-promo-aplicada {
-    background: rgba(255, 255, 255, .15);
-    border: 1px solid rgba(255, 255, 255, .4);
-    color: #fff;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: .78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .18s;
-    letter-spacing: .03em;
-    margin-top: 4px;
-}
+        /* Botón quitar promo aplicada */
+        .btn-quitar-promo-aplicada {
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .4);
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: .78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .18s;
+            letter-spacing: .03em;
+            margin-top: 4px;
+        }
 
-.btn-quitar-promo-aplicada:hover {
-    background: rgba(255, 255, 255, .28);
-}
+        .btn-quitar-promo-aplicada:hover {
+            background: rgba(255, 255, 255, .28);
+        }
 
-/* Subtítulo en card oscura */
-.promo-dark-sub {
-    font-size: .76rem;
-}
-/* ── Precio con descuento de promoción en tabla de detalle ── */
-.precio-con-promo-tachado {
-    text-decoration: line-through;
-    color: #94a3b8;
-    font-size: .78rem;
-    font-variant-numeric: tabular-nums;
-    display: block;
-}
+        /* Subtítulo en card oscura */
+        .promo-dark-sub {
+            font-size: .76rem;
+        }
 
-.precio-con-promo-final {
-    color: #166534;
-    font-weight: 700;
-    font-size: .92rem;
-    font-variant-numeric: tabular-nums;
-}
+        /* ── Precio con descuento de promoción en tabla de detalle ── */
+        .precio-con-promo-tachado {
+            text-decoration: line-through;
+            color: #94a3b8;
+            font-size: .78rem;
+            font-variant-numeric: tabular-nums;
+            display: block;
+        }
 
-.badge-promo-linea {
-    background: #dcfce7;
-    color: #166534;
-    border-radius: 4px;
-    padding: 1px 6px;
-    font-size: .68rem;
-    font-weight: 600;
-    display: inline-block;
-}
+        .precio-con-promo-final {
+            color: #166534;
+            font-weight: 700;
+            font-size: .92rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge-promo-linea {
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: .68rem;
+            font-weight: 600;
+            display: inline-block;
+        }
 
 
 
-/* ============================================================
+        /* ============================================================
    CLUB PITAYA — Badges de Puntos y Condición de Promoción
    ============================================================ */
 
-/* Badge: ítem es condición de una promoción activa */
-.badge-condicion-promo {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.67rem;
-    font-weight: 700;
-    color: #fff;
-    background: #f59e0b;
-    border-radius: 4px;
-    padding: 1px 5px;
-    letter-spacing: 0.02em;
-    vertical-align: middle;
-    white-space: nowrap;
-}
+        /* Badge: ítem es condición de una promoción activa */
+        .badge-condicion-promo {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.67rem;
+            font-weight: 700;
+            color: #fff;
+            background: #f59e0b;
+            border-radius: 4px;
+            padding: 1px 5px;
+            letter-spacing: 0.02em;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
 
-/* Badge: puntos de acumulación (verde) */
-.badge-puntos-acum {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.67rem;
-    font-weight: 600;
-    color: #15803d;
-    background: #dcfce7;
-    border-radius: 4px;
-    padding: 1px 5px;
-    vertical-align: middle;
-    white-space: nowrap;
-}
+        /* Badge: puntos de acumulación (verde) */
+        .badge-puntos-acum {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.67rem;
+            font-weight: 600;
+            color: #15803d;
+            background: #dcfce7;
+            border-radius: 4px;
+            padding: 1px 5px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
 
-/* Badge: costo de canje en puntos (rojo) */
-.badge-puntos-canje {
-    display: inline-block;
-    font-size: 0.67rem;
-    font-weight: 600;
-    color: #dc2626;
-    background: #fee2e2;
-    border-radius: 4px;
-    padding: 1px 5px;
-    white-space: nowrap;
-}
+        /* Badge: costo de canje en puntos (rojo) */
+        .badge-puntos-canje {
+            display: inline-block;
+            font-size: 0.67rem;
+            font-weight: 600;
+            color: #dc2626;
+            background: #fee2e2;
+            border-radius: 4px;
+            padding: 1px 5px;
+            white-space: nowrap;
+        }
 
-/* Alerta inline de saldo de puntos insuficiente */
-#alertaPuntosSaldo {
-    display: none;
-    background: #fef3c7;
-    border: 1px solid #f59e0b;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    color: #92400e;
-    margin-top: 6px;
-}
+        /* Alerta inline de saldo de puntos insuficiente */
+        #alertaPuntosSaldo {
+            display: none;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            color: #92400e;
+            margin-top: 6px;
+        }
 
-/* Botón Guardar bloqueado por puntos insuficientes */
-#btnGuardar.btn-bloqueado-puntos {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-}
+        /* Botón Guardar bloqueado por puntos insuficientes */
+        #btnGuardar.btn-bloqueado-puntos {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
 
 
-/* ============================================================
+        /* ============================================================
    MODAL DE SELECCIÓN DE PRODUCTO (Nuevo flujo de catálogo)
    ============================================================
    Selector horizontal de productos dentro del modal de personalización.
    Se muestra cuando el cajero hace clic en una clasificación del catálogo.
    ============================================================ */
 
-/* ── Wrapper del selector ─────────────────────────────────── */
-.mp-selector-productos-wrap {
-    background: #f0faf9;
-    border-bottom: 1.5px solid #cce8e5;
-    padding-bottom: 0.75rem;
-}
+        /* ── Wrapper del selector ─────────────────────────────────── */
+        .mp-selector-productos-wrap {
+            background: #f0faf9;
+            border-bottom: 1.5px solid #cce8e5;
+            padding-bottom: 0.75rem;
+        }
 
-/* ── Fila horizontal de botones ───────────────────────────── */
-.msp-productos-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: flex-start;
-}
+        /* ── Fila horizontal de botones ───────────────────────────── */
+        .msp-productos-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
 
-/* ── Botón de cada opción de producto ─────────────────────── */
-.msp-btn-producto {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.2rem;
-    padding: 0.45rem 0.9rem;
-    border-radius: 10px;
-    border: 1.5px solid #b2d8d4;
-    background: #ffffff;
-    cursor: pointer;
-    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
-    min-width: 80px;
-    max-width: 160px;
-    text-align: center;
-}
+        /* ── Botón de cada opción de producto ─────────────────────── */
+        .msp-btn-producto {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.45rem 0.9rem;
+            border-radius: 10px;
+            border: 1.5px solid #b2d8d4;
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
+            min-width: 80px;
+            max-width: 160px;
+            text-align: center;
+        }
 
-.msp-btn-producto:hover {
-    border-color: #0E544C;
-    background: #e6f7f5;
-    box-shadow: 0 2px 8px rgba(14,84,76,.13);
-    transform: translateY(-1px);
-}
+        .msp-btn-producto:hover {
+            border-color: #0E544C;
+            background: #e6f7f5;
+            box-shadow: 0 2px 8px rgba(14, 84, 76, .13);
+            transform: translateY(-1px);
+        }
 
-.msp-btn-producto.activo {
-    border-color: #0E544C;
-    background: #0E544C;
-    box-shadow: 0 3px 10px rgba(14,84,76,.22);
-}
+        .msp-btn-producto.activo {
+            border-color: #0E544C;
+            background: #0E544C;
+            box-shadow: 0 3px 10px rgba(14, 84, 76, .22);
+        }
 
-.msp-btn-producto.activo .msp-btn-nombre,
-.msp-btn-producto.activo .msp-btn-precio {
-    color: #ffffff;
-}
+        .msp-btn-producto.activo .msp-btn-nombre,
+        .msp-btn-producto.activo .msp-btn-precio {
+            color: #ffffff;
+        }
 
-.msp-btn-nombre {
-    font-size: .82rem;
-    font-weight: 600;
-    color: #1e293b;
-    line-height: 1.2;
-}
+        .msp-btn-nombre {
+            font-size: .82rem;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.2;
+        }
 
-.msp-btn-precio {
-    font-size: .75rem;
-    color: #0E544C;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-}
+        .msp-btn-precio {
+            font-size: .75rem;
+            color: #0E544C;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
 
 
-/* ============================================================
-   MEJORAS TÁCTILES POS — v2 Redesign
+
+        /* ============================================================
+   MEJORAS TÁCTILES POS v2 — parche quirúrgico sin romper grid
    ============================================================ */
 
-/* ---- Anti scroll horizontal: panel derecho factura ---- */
-.card-factura .table-responsive {
-    overflow-x: hidden !important;
-}
+        /* ---- Prevenir scroll horizontal en la tabla del ticket ----
+   SIN table-layout:fixed que rompe las columnas del grid principal */
+        .card-factura .table-responsive {
+            overflow-x: hidden;
+        }
 
-.tabla-detalle-factura th:first-child,
-.tabla-detalle-factura td:first-child {
-    overflow: hidden;
-    min-width: 0;
-}
+        /* La columna de PRODUCTO ocupa el espacio sobrante; las otras son fijas */
+        .tabla-detalle-factura thead th:first-child,
+        .tabla-detalle-factura tbody td:first-child {
+            min-width: 0;
+            overflow: hidden;
+        }
 
-/* ---- Badges de personalización: wrap natural ---- */
-.badge-pers-item {
-    white-space: normal !important;
-    word-break: break-word;
-    max-width: 100%;
-}
+        /* Badges de personalización: no fuerzan ancho horizontal */
+        .badge-pers-item {
+            white-space: normal !important;
+            word-break: break-word;
+            max-width: 140px;
+            display: inline-flex !important;
+            flex-wrap: wrap;
+        }
 
-/* ---- Qty buttons más grandes para touch ---- */
-.qty-btn {
-    width: 34px !important;
-    height: 34px !important;
-    font-size: 1rem !important;
-    border-radius: 6px !important;
-}
+        /* ---- Qty buttons más grandes para touch ---- */
+        .qty-btn {
+            width: 34px !important;
+            height: 34px !important;
+            font-size: 1rem !important;
+            border-radius: 6px !important;
+        }
 
-.qty-input {
-    width: 38px !important;
-    font-size: 0.92rem !important;
-    font-weight: 800 !important;
-}
+        /* ---- Métodos de pago: min-height para touch ---- */
+        .btn-metodo-pago {
+            min-height: 44px !important;
+            padding: 0.4rem 0.2rem !important;
+        }
 
-/* ---- Promo card: título compacto en layout horizontal ---- */
-.promo-card .promo-title {
-    font-size: 0.79rem;
-    margin-top: 0;
-    line-height: 1.3;
-}
+        /* ---- Feedback táctil inmediato en botones de catálogo ---- */
+        .producto-card-pos {
+            transition: transform 80ms ease, box-shadow 80ms ease, background 120ms ease !important;
+        }
 
-.promo-card .promo-sub {
-    font-size: 0.68rem;
-    line-height: 1.2;
-}
+        .producto-card-pos:active {
+            transform: scale(0.97) !important;
+            box-shadow: none !important;
+            background: #093b35 !important;
+        }
 
-.promo-card .promo-badge {
-    flex-shrink: 0;
-}
+        /* ---- Promo card horizontal: título y descripción compactos ---- */
+        .promo-card .promo-title {
+            font-size: 0.79rem;
+            margin-top: 0;
+            line-height: 1.3;
+        }
 
-.promo-card-dark .promo-dark-title {
-    font-size: 0.82rem;
-    line-height: 1.3;
-}
+        .promo-card .promo-sub {
+            font-size: 0.68rem;
+            line-height: 1.2;
+        }
 
-/* ---- Ingrediente modal: nombre e info en misma línea ---- */
-.mp-ing-nombre .d-flex {
-    flex-wrap: nowrap;
-    width: 100%;
-}
+        .promo-card-dark .promo-dark-title {
+            font-size: 0.82rem;
+            line-height: 1.3;
+        }
 
-.mp-ing-nombre strong {
-    font-size: 0.84rem;
-    color: #1e293b;
-    flex-shrink: 0;
-}
+        /* ---- Ingrediente modal: nombre y cantidad en misma fila ---- */
+        .mp-ing-nombre .d-flex {
+            width: 100%;
+            min-width: 0;
+        }
 
-.mp-ing-nombre small {
-    font-size: 0.74rem;
-    color: #64748b;
-    white-space: nowrap;
-}
+        .mp-ing-nombre strong {
+            font-size: 0.84rem;
+            color: #1e293b;
+        }
 
-/* ---- Botón Agregar membresía ---- */
-.btn-quick-add-membresia {
-    font-size: 0.78rem !important;
-    letter-spacing: 0.02em !important;
-}
-
-/* ---- Producto card: toque con feedback inmediato ---- */
-.producto-card-pos {
-    transition: transform 80ms ease, box-shadow 80ms ease, background 120ms ease !important;
-}
-
-.producto-card-pos:active {
-    transform: scale(0.97) !important;
-    box-shadow: none !important;
-    background: #093b35 !important;
-}
-
-/* ---- Métodos de pago: botones algo más altos para touch ---- */
-.btn-metodo-pago {
-    min-height: 44px !important;
-    padding: 0.4rem 0.2rem !important;
-}
-
-/* ---- Texto ítem nota: placeholder más claro ---- */
-.item-nota-input::placeholder {
-    font-size: 0.70rem !important;
-    color: #b0bec5 !important;
-}
+        .mp-ing-nombre small {
+            font-size: 0.74rem;
+            color: #64748b;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
