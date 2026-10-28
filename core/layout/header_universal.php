@@ -708,15 +708,38 @@ function renderHeader($usuario, $titulo = '')
         }
 
         // =========================================================================
-        // HEARTBEAT / PING DE SESIÓN (Renovación periódica y detección de 8h/12am)
+        // HEARTBEAT / PING DE SESION (Renovacion periodica y deteccion de 8h/12am)
+        // =========================================================================
+        // - Ping cada 5 minutos para renovar last_activity en el servidor.
+        // - BroadcastChannel: si una pestana detecta sesion expirada, notifica a TODAS
+        //   las demas para que tambien redirijan al login con su propia URL de retorno.
+        // - visibilitychange: ping inmediato al volver a poner en foco la pestana
+        //   (por si paso mucho tiempo en background con throttling del browser).
+        // - Doble verificacion antes de forzar logout (descarta falsos positivos de red).
         // =========================================================================
         (function() {
             const PING_INTERVAL_MS = 5 * 60 * 1000; // Cada 5 minutos
-            const MIN_PING_GAP_MS  = 60 * 1000;     // Mínimo 1 minuto entre pings por visibilitychange
+            const MIN_PING_GAP_MS  = 60 * 1000;     // Minimo 1 minuto entre pings por visibilitychange
             let pingTimer = null;
             let visibilityDebounceTimer = null;
             let isCheckingSession = false;
             let lastPingTime = Date.now();
+            let sessionExpiredHandled = false;
+
+            // BroadcastChannel: coordina entre todas las pestanas del ERP.
+            // Si una detecta expiracion, todas reaccionan con su propia URL de retorno.
+            const bc = (typeof BroadcastChannel !== 'undefined')
+                ? new BroadcastChannel('erp_session_hb')
+                : null;
+
+            if (bc) {
+                bc.onmessage = function(e) {
+                    if (e.data && e.data.type === 'SESSION_EXPIRED' && !sessionExpiredHandled) {
+                        // Otra pestana confirmo que la sesion expiro; redirigir esta tambien.
+                        manejarSesionExpirada('Tu sesion ha expirado.');
+                    }
+                };
+            }
 
             function ejecutarPing(esReintento = false) {
                 if (isCheckingSession) return Promise.resolve(true);
@@ -734,16 +757,16 @@ function renderHeader($usuario, $titulo = '')
                     if (response.status === 401) {
                         return response.json().catch(() => ({ status: 'expired' })).then(data => {
                             if (!esReintento) {
-                                // Reintentar una vez tras 2 segundos para descartar colisiones o bloqueos momentáneos
+                                // Primer 401: reintentar tras 3 segundos para descartar
+                                // falsos positivos (perdida momentanea de red, restart de PHP-FPM, etc.)
                                 isCheckingSession = false;
                                 return new Promise(resolve => {
-                                    setTimeout(() => {
-                                        ejecutarPing(true).then(resolve);
-                                    }, 2000);
+                                    setTimeout(() => ejecutarPing(true).then(resolve), 3000);
                                 });
                             }
-                            // Si se confirma en el segundo intento, la sesión expiró de forma legítima
-                            manejarSesionExpirada(data.message || 'Tu sesión ha expirado.');
+                            // Segundo 401 consecutivo: sesion realmente expirada.
+                            if (bc) bc.postMessage({ type: 'SESSION_EXPIRED' });
+                            manejarSesionExpirada(data.message || 'Tu sesion ha expirado.');
                             return false;
                         });
                     }
@@ -754,18 +777,17 @@ function renderHeader($usuario, $titulo = '')
                         if (!esReintento) {
                             isCheckingSession = false;
                             return new Promise(resolve => {
-                                setTimeout(() => {
-                                    ejecutarPing(true).then(resolve);
-                                }, 2000);
+                                setTimeout(() => ejecutarPing(true).then(resolve), 3000);
                             });
                         }
-                        manejarSesionExpirada(data.message || 'Tu sesión ha expirado.');
+                        if (bc) bc.postMessage({ type: 'SESSION_EXPIRED' });
+                        manejarSesionExpirada(data.message || 'Tu sesion ha expirado.');
                     }
                     return true;
                 })
                 .catch(err => {
-                    // Error de red momentáneo: no forzar redirección para no interrumpir offline breve
-                    console.warn('[Heartbeat] Error de conexión momentáneo:', err);
+                    // Error de red momentaneo: no forzar redireccion para no interrumpir offline breve
+                    console.warn('[Heartbeat] Error de conexion momentaneo:', err);
                     return true;
                 })
                 .finally(() => {
@@ -774,17 +796,23 @@ function renderHeader($usuario, $titulo = '')
             }
 
             function manejarSesionExpirada(mensaje) {
+                if (sessionExpiredHandled) return;
+                sessionExpiredHandled = true;
                 if (pingTimer) clearInterval(pingTimer);
                 if (visibilityDebounceTimer) clearTimeout(visibilityDebounceTimer);
                 const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
-                const msg = encodeURIComponent(mensaje || 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+                const msg = encodeURIComponent(mensaje || 'Tu sesion ha expirado. Por favor inicia sesion nuevamente.');
                 window.location.href = getBaseUrl() + '/login.php?redirect=' + currentPath + '&error=' + msg;
             }
 
-            // Iniciar intervalo periódico de 5 minutos
+            // Iniciar intervalo periodico de 5 minutos
             pingTimer = setInterval(() => ejecutarPing(false), PING_INTERVAL_MS);
 
-            // Verificar al reactivar la pestaña con debounce y respetando el gap mínimo
+            // Verificar al reactivar la pestana con debounce y respetando el gap minimo.
+            // Esto cubre el caso de que el browser throttle el setInterval en background
+            // y pasen mas de 8 horas sin pings. Al volver a poner la pestana en foco,
+            // se hace un ping inmediato para detectar la expiracion antes de que el usuario
+            // intente hacer algo.
             document.addEventListener('visibilitychange', function() {
                 if (document.visibilityState === 'visible') {
                     if (visibilityDebounceTimer) clearTimeout(visibilityDebounceTimer);
