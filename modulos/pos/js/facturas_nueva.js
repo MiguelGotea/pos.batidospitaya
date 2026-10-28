@@ -450,6 +450,15 @@ function cargarProductosElegibles() {
  * El cajero elige el producto concreto, configura opciones y da "Aplicar".
  * El ítem se agrega solo al presionar "Aplicar".
  */
+/* ---- Helper: abrir modal desde data attributes del card (evita conflictos de comillas) ---- */
+function _abrirCatalogoDesdeCard(el) {
+    try {
+        const ids    = JSON.parse(el.getAttribute('data-ids'));
+        const nombre = el.getAttribute('data-nombre');
+        abrirModalSeleccionProducto(ids, nombre);
+    } catch(e) { console.error('_abrirCatalogoDesdeCard error', e); }
+}
+
 function renderizarCatalogoPorGrupos(lista) {
     _grupos = new Map();
 
@@ -517,10 +526,7 @@ function cambiarGrupo(grupoId) {
         sg.catalogos.forEach(cat => {
             const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
             const idsJson = JSON.stringify(cat.ids);
-            html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
-                          onclick="abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
-                          onkeypress="if(event.key==='Enter')abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
-                     >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+            html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)" onkeypress="if(event.key==='Enter')_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
         });
         html += `</div>`;
     });
@@ -573,9 +579,7 @@ function filtrarProductos(q) {
     catMap.forEach(cat => {
         const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
         const idsJson = JSON.stringify(cat.ids);
-        html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button"
-                      onclick="abrirModalSeleccionProducto(${idsJson}, '${escAttr(cat.nombre)}')"
-                 >${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+        html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
     });
     html += '</div>';
     $('#catalogoPanel').html(html);
