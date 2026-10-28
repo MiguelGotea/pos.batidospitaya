@@ -120,6 +120,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: .875rem;
+    table-layout: fixed;
 }
 
 .tabla-detalle-factura thead th {
@@ -144,8 +145,8 @@
 }
 
 .tabla-detalle-factura tbody td {
-    padding: .4rem .65rem;
-    vertical-align: middle;
+    padding: .4rem .5rem;
+    vertical-align: top;
     color: #374151;
 }
 
@@ -1429,7 +1430,7 @@
 
 /* ---- Card de producto (catálogo) ---- */
 .producto-card-pos {
-    background: linear-gradient(135deg, #1A9A89 0%, #0E544C 100%);
+    background: #1A9A89;
     color: #fff;
     border-radius: 8px;
     padding: .65rem .85rem;
@@ -1447,7 +1448,7 @@
 .producto-card-pos:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(14, 84, 76, .3);
-    background: linear-gradient(135deg, #21B9A5 0%, #0E544C 100%);
+    background: #1A9A89;
 }
 
 .producto-card-pos:active {
@@ -1531,8 +1532,8 @@
 
 .metodos-pago-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.4rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.35rem;
 }
 
 .btn-metodo-pago {
@@ -2541,7 +2542,7 @@
 
 /* ---- Banner Club Pitaya ---- */
 .banner-club-pitaya-pos {
-    background: linear-gradient(135deg, #0E544C 0%, #134e4a 100%);
+    background: #0E544C;
     border-radius: 12px;
     padding: 0.9rem 1.25rem;
     display: flex;
@@ -2654,15 +2655,15 @@
 .promo-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 9px;
-    padding: 0.75rem 0.9rem;
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
     transition: all 0.15s ease;
     cursor: pointer;
     position: relative;
-}
 
 .promo-card:hover {
     transform: translateY(-2px);
@@ -2746,16 +2747,16 @@
 
 .promo-card-dark {
     background: #0E544C;
-    border-radius: 9px;
-    padding: 0.75rem 0.9rem;
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
     color: #ffffff;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.65rem;
-    box-shadow: 0 3px 8px rgba(14, 84, 76, 0.18);
+    gap: 0.5rem;
+    box-shadow: 0 2px 6px rgba(14, 84, 76, 0.18);
     transition: transform 0.15s ease;
-}
 
 .promo-card-dark:hover {
     transform: translateY(-2px);
@@ -3165,4 +3166,109 @@
     color: #0E544C;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   MEJORAS TÁCTILES POS — v2 Redesign
+   ============================================================ */
+
+/* ---- Anti scroll horizontal: panel derecho factura ---- */
+.card-factura .table-responsive {
+    overflow-x: hidden !important;
+}
+
+.tabla-detalle-factura th:first-child,
+.tabla-detalle-factura td:first-child {
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* ---- Badges de personalización: wrap natural ---- */
+.badge-pers-item {
+    white-space: normal !important;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+/* ---- Qty buttons más grandes para touch ---- */
+.qty-btn {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
+    border-radius: 6px !important;
+}
+
+.qty-input {
+    width: 38px !important;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+}
+
+/* ---- Promo card: título compacto en layout horizontal ---- */
+.promo-card .promo-title {
+    font-size: 0.79rem;
+    margin-top: 0;
+    line-height: 1.3;
+}
+
+.promo-card .promo-sub {
+    font-size: 0.68rem;
+    line-height: 1.2;
+}
+
+.promo-card .promo-badge {
+    flex-shrink: 0;
+}
+
+.promo-card-dark .promo-dark-title {
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+/* ---- Ingrediente modal: nombre e info en misma línea ---- */
+.mp-ing-nombre .d-flex {
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.mp-ing-nombre strong {
+    font-size: 0.84rem;
+    color: #1e293b;
+    flex-shrink: 0;
+}
+
+.mp-ing-nombre small {
+    font-size: 0.74rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* ---- Botón Agregar membresía ---- */
+.btn-quick-add-membresia {
+    font-size: 0.78rem !important;
+    letter-spacing: 0.02em !important;
+}
+
+/* ---- Producto card: toque con feedback inmediato ---- */
+.producto-card-pos {
+    transition: transform 80ms ease, box-shadow 80ms ease, background 120ms ease !important;
+}
+
+.producto-card-pos:active {
+    transform: scale(0.97) !important;
+    box-shadow: none !important;
+    background: #093b35 !important;
+}
+
+/* ---- Métodos de pago: botones algo más altos para touch ---- */
+.btn-metodo-pago {
+    min-height: 44px !important;
+    padding: 0.4rem 0.2rem !important;
+}
+
+/* ---- Texto ítem nota: placeholder más claro ---- */
+.item-nota-input::placeholder {
+    font-size: 0.70rem !important;
+    color: #b0bec5 !important;
 }

@@ -1,13 +1,13 @@
-/* ============================================================
+﻿/* ============================================================
    Estilos Premium para Modales (ERP Batidos Pitaya)
    Glassmorphism, Sombras Suaves y Compatibilidad Total
    ============================================================ */
 
 /* 1. Backdrop Glassmorphic (Bootstrap 5 y Nativos) */
 .modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.45) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
+    background-color: rgba(0, 0, 0, 0.30) !important;
+    backdrop-filter: blur(5px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(5px) saturate(140%) !important;
 }
 
 /* Modales Nativos Legacy (donde .modal-backdrop actúa como contenedor directo) */

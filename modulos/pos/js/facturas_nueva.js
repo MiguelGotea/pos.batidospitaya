@@ -855,7 +855,7 @@ function actualizarTablaDetalle() {
                             <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
                             ${badgeCondicion}${badgeAcum}
                         </div>
-                        ${item.unidad ? `<small class="d-block text-muted" style="font-size:.76rem;">${escHtml(item.unidad)}</small>` : ''}
+
                         ${badgePtsCanje}
                         ${resumenPers ? `<div class="mt-1 d-flex flex-wrap gap-1">${resumenPers}</div>` : ''}
                     </div>
@@ -1803,9 +1803,10 @@ function _mpRenderContenido(datos) {
             html += `
             <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}">
                 <div class="mp-ing-nombre">
-                    <strong>${escHtml(ing.nombre_ingrediente)}</strong>
-                    <small class="text-muted">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
-                </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <strong>${escHtml(ing.nombre_ingrediente)}</strong>
+                        <small class="text-muted ms-auto">${ing.cantidad} ${escHtml(ing.unidad_ingrediente)}</small>
+                    </div>
                 <div class="mp-ing-controles">
                     <!-- Combo buscable de sustitución (fuente: tabla extras) -->
                     <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}">
@@ -1895,15 +1896,6 @@ function _mpRenderContenido(datos) {
 
         html += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
     }
-
-    /* ---- SECCIÓN: Combos Sugeridos (placeholder — funcionalidad pendiente) ---- */
-    /* TODO: Cuando se definan los combos del menú, mostrar sugerencias relacionadas aquí.
-       Pendiente: diseñar tabla de combos y lógica de sugerencias por producto. */
-    html += `
-    <div class="mp-seccion mp-seccion-placeholder">
-        <div class="mp-seccion-header"><i class="bi bi-box-seam"></i> Combos Sugeridos <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">(Próximamente)</small></div>
-        <div class="mp-placeholder-msg"><i class="bi bi-clock-history me-1"></i> Función disponible cuando se configuren los combos del menú.</div>
-    </div>`;
 
     html += '</div>'; // cierre mp-body-inner
     $('#mpCuerpo').html(html);

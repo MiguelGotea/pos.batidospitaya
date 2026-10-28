@@ -17,7 +17,7 @@ try {
     );
     $_tcStmt->execute();
     $_tcRow = $_tcStmt->fetch(PDO::FETCH_ASSOC);
-    $tipoCambioUSD_php = $_tcRow ? (float)$_tcRow['tasa'] : 0;
+    $tipoCambioUSD_php = $_tcRow ? (float) $_tcRow['tasa'] : 0;
 } catch (Exception $_tcEx) {
     $tipoCambioUSD_php = 0;
 }
@@ -61,7 +61,8 @@ try {
                                     <i class="bi bi-search buscador-catalogo-icon"></i>
                                     <input type="text" id="buscarProducto" class="buscador-catalogo-input"
                                         placeholder="Buscar producto por nombre, código..." autocomplete="off">
-                                    <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button" style="display:none;">
+                                    <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button"
+                                        style="display:none;">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
@@ -90,11 +91,13 @@ try {
                                 </div>
                                 <div class="banner-club-text">
                                     <h6 class="banner-club-titulo mb-0">Vender Membresía Club Pitaya</h6>
-                                    <span class="banner-club-sub">¡Suma Puntos Ahora! Beneficios exclusivos para el cliente.</span>
+                                    <span class="banner-club-sub">¡Suma Puntos Ahora! Beneficios exclusivos para el
+                                        cliente.</span>
                                 </div>
                             </div>
-                            <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia" title="Agregar membresía a la orden">
-                                QUICK ADD <i class="bi bi-plus-lg ms-1"></i>
+                            <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia"
+                                title="Agregar membresía a la orden">
+                                Agregar <i class="bi bi-plus-lg ms-1"></i>
                             </button>
                         </div>
 
@@ -102,7 +105,8 @@ try {
                         <div class="seccion-promociones-pos" id="seccionPromociones">
                             <div class="promociones-header-pos mb-2 d-flex align-items-center justify-content-between">
                                 <span class="promociones-main-title">PROMOCIONES</span>
-                                <button type="button" class="btn-refrescar-promos" id="btnRefrescarPromos" title="Evaluar promociones con el pedido actual">
+                                <button type="button" class="btn-refrescar-promos" id="btnRefrescarPromos"
+                                    title="Evaluar promociones con el pedido actual">
                                     <i class="bi bi-arrow-clockwise"></i>
                                 </button>
                             </div>
@@ -119,30 +123,31 @@ try {
                                 <span class="text-muted small">No hay promociones activas en este momento.</span>
                             </div>
 
-                            <!-- Bloque: Disponibles (todas las activas vigentes) -->
-                            <div class="promociones-bloque mb-3" id="bloquePromosTodas" style="display:none;">
-                                <div class="promociones-sub-label">DISPONIBLES</div>
-                                <div class="promociones-grid-recomendados" id="gridPromosTodas">
-                                    <!-- Generado dinámicamente por JS -->
-                                </div>
-                            </div>
-
-                            <!-- Bloque: Aplican ahora (carrito cumple condiciones) -->
+                            <!-- Bloque: Aplicados (carrito cumple condiciones) -->
                             <div class="promociones-bloque mb-3" id="bloquePromosAplican" style="display:none;">
-                                <div class="promociones-sub-label">APLICAN AHORA</div>
+                                <div class="promociones-sub-label">APLICADOS</div>
                                 <div class="promociones-grid-aplicables" id="gridPromosAplican">
                                     <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>
 
+
                             <!-- Bloque: Potenciales (el carrito está cerca de calificar) -->
-                            <div class="promociones-bloque" id="bloquePromosPotenciales" style="display:none;">
-                                <div class="promociones-sub-label">CASI CALIFICAN</div>
+                            <!-- Bloque: Casi aplican (el carrito esta cerca de calificar) -->
+                                <div class="promociones-sub-label">CASI APLICAN</div>
                                 <div class="promociones-grid-recomendados" id="gridPromosPotenciales">
                                     <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>
 
+
+                            <!-- Bloque: Disponibles (todas las activas vigentes) -->
+                            <div class="promociones-bloque" id="bloquePromosTodas" style="display:none;">
+                                <div class="promociones-sub-label">DISPONIBLES</div>
+                                <div class="promociones-grid-recomendados" id="gridPromosTodas">
+                                    <!-- Generado dinámicamente por JS -->
+                                </div>
+                            </div>
                         </div><!-- /seccion-promociones-pos -->
 
                     </div><!-- /col-catalogo-promos -->
@@ -161,7 +166,8 @@ try {
                                             <span class="radio-label">CLUB PITAYA</span>
                                         </label>
                                         <label class="custom-radio-cliente">
-                                            <input type="radio" name="tipo_cliente" value="general" checked id="tipoClienteGeneral">
+                                            <input type="radio" name="tipo_cliente" value="general" checked
+                                                id="tipoClienteGeneral">
                                             <span class="radio-mark"></span>
                                             <span class="radio-label">CLIENTE GENERAL</span>
                                         </label>
@@ -172,9 +178,11 @@ try {
                                         <div class="col-sm-5 col-12" id="colMembresia" style="display: none;">
                                             <label for="membresiaCliente" class="form-label-pos">N° MEMBRESÍA</label>
                                             <div class="input-group input-group-pos">
-                                                <input type="text" class="form-control form-control-pos" id="membresiaCliente"
-                                                    name="membresia" placeholder="Ej: 9872" autocomplete="off">
-                                                <button class="btn btn-pos-search" type="button" id="btnBuscarMembresia" title="Buscar / Ver Historial">
+                                                <input type="text" class="form-control form-control-pos"
+                                                    id="membresiaCliente" name="membresia" placeholder="Ej: 9872"
+                                                    autocomplete="off">
+                                                <button class="btn btn-pos-search" type="button" id="btnBuscarMembresia"
+                                                    title="Buscar / Ver Historial">
                                                     <i class="bi bi-search"></i>
                                                 </button>
                                             </div>
@@ -183,14 +191,18 @@ try {
                                         <div class="col-12" id="colNombreCliente">
                                             <label for="nombreCliente" class="form-label-pos">
                                                 NOMBRE CLIENTE
-                                                <span id="clienteCheckVerificado" style="display:none;" class="check-verificado-badge" title="Miembro Club Pitaya verificado">
+                                                <span id="clienteCheckVerificado" style="display:none;"
+                                                    class="check-verificado-badge"
+                                                    title="Miembro Club Pitaya verificado">
                                                     <i class="bi bi-check-circle-fill"></i>
                                                 </span>
                                             </label>
                                             <input type="text" class="form-control form-control-pos" id="nombreCliente"
-                                                name="nombre_cliente" placeholder="Escriba nombre del cliente casual..." style="background-color: #fff;">
+                                                name="nombre_cliente" placeholder="Escriba nombre del cliente casual..."
+                                                style="background-color: #fff;">
                                             <input type="hidden" id="idClienteClub" name="id_cliente_club" value="">
-                                            <input type="hidden" id="fechaFactura" name="fecha" value="<?php echo $hoy; ?>">
+                                            <input type="hidden" id="fechaFactura" name="fecha"
+                                                value="<?php echo $hoy; ?>">
                                             <input type="hidden" id="numeroFactura" name="numero_factura" value="AUTO">
                                         </div>
                                     </div>
@@ -252,28 +264,35 @@ try {
                                 <div class="seccion-metodos-pago px-3 py-2 border-top">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
                                         <span class="titulo-seccion-pago">MÉTODO DE PAGO</span>
-                                        <small class="text-muted" style="font-size: .72rem;">Clic para agregar/combinar</small>
+                                        <small class="text-muted" style="font-size: .72rem;">Toca para agregar</small>
                                     </div>
                                     <div class="metodos-pago-grid mb-2">
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo" onclick="agregarMetodoPago('efectivo')">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo"
+                                            onclick="agregarMetodoPago('efectivo')">
                                             <i class="bi bi-cash-stack"></i>
                                             <span>EFECTIVO</span>
                                         </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoPOS" onclick="agregarMetodoPago('pos')">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoPOS"
+                                            onclick="agregarMetodoPago('pos')">
                                             <i class="bi bi-credit-card-2-front"></i>
                                             <span>POS</span>
                                         </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia" onclick="agregarMetodoPago('transferencia')">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia"
+                                            onclick="agregarMetodoPago('transferencia')">
                                             <i class="bi bi-bank"></i>
                                             <span>TRANSF.</span>
                                         </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoCupon" onclick="agregarMetodoPago('cupon')" title="Agregar pago con cupón de descuento">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoCupon"
+                                            onclick="agregarMetodoPago('cupon')"
+                                            title="Agregar pago con cupón de descuento">
                                             <i class="bi bi-ticket-perforated"></i>
                                             <span>CUPÓN</span>
                                         </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar" onclick="agregarMetodoPago('efectivo_dolar')" title="Pago en efectivo dólares USD">
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar"
+                                            onclick="agregarMetodoPago('efectivo_dolar')"
+                                            title="Pago en efectivo dólares USD">
                                             <i class="bi bi-cash-coin"></i>
-                                            <span>EFEC. $</span>
+                                            <span>Efectivo USD</span>
                                         </button>
                                     </div>
 
@@ -292,7 +311,8 @@ try {
                                             <div class="d-flex align-items-center gap-2">
                                                 <span class="lbl-desglose mb-0">Propina (2%)</span>
                                                 <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
-                                                    <input class="form-check-input switch-propina-pitaya" type="checkbox" id="switchPropina">
+                                                    <input class="form-check-input switch-propina-pitaya"
+                                                        type="checkbox" id="switchPropina">
                                                 </div>
                                             </div>
                                             <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
@@ -302,7 +322,8 @@ try {
                                             <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
                                         </div>
                                         <!-- Estado de cobertura de pagos -->
-                                        <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2" style="display: none;"></div>
+                                        <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2"
+                                            style="display: none;"></div>
                                     </div>
                                 </div>
 
@@ -325,7 +346,8 @@ try {
     </div>
 
     <!-- Modal Historial de Productos — Clientes Club -->
-    <div class="modal fade" id="modalHistorialCliente" tabindex="-1" aria-labelledby="modalHistorialClienteLabel" aria-hidden="true">
+    <div class="modal fade" id="modalHistorialCliente" tabindex="-1" aria-labelledby="modalHistorialClienteLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg modal-pos-custom">
                 <div class="modal-header modal-header-pos">
@@ -334,15 +356,18 @@ try {
                             <i class="bi bi-person-vcard"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title mb-0" id="modalHistorialClienteLabel">Historial de Productos — Club Pitaya</h5>
+                            <h5 class="modal-title mb-0" id="modalHistorialClienteLabel">Historial de Productos — Club
+                                Pitaya</h5>
                             <span class="modal-subtitle-pos" id="modalSubtituloCliente">Cargando datos...</span>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     <!-- Resumen del Miembro Club -->
-                    <div class="cliente-resumen-banner mb-3 p-3 rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div
+                        class="cliente-resumen-banner mb-3 p-3 rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
                             <span class="text-muted small d-block">MIEMBRO CLUB PITAYA</span>
                             <strong class="fs-5 text-dark" id="modalNombreCliente">—</strong>
@@ -379,7 +404,8 @@ try {
                             <tbody id="tablaHistorialBody">
                                 <tr>
                                     <td colspan="6" class="text-center py-4 text-muted">
-                                        <span class="spinner-border spinner-border-sm me-2"></span> Cargando historial...
+                                        <span class="spinner-border spinner-border-sm me-2"></span> Cargando
+                                        historial...
                                     </td>
                                 </tr>
                             </tbody>
@@ -402,7 +428,8 @@ try {
     </div>
 
     <!-- ====== MODAL: Selección de Producto y Personalización de Receta ====== -->
-    <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel" aria-hidden="true">
+    <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg modal-pos-custom">
                 <div class="modal-header modal-header-pos">
@@ -412,10 +439,12 @@ try {
                         </div>
                         <div>
                             <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Seleccionar Producto</h5>
-                            <span class="modal-subtitle-pos" id="mpSubtitulo">Elige una opción y ajusta tus preferencias</span>
+                            <span class="modal-subtitle-pos" id="mpSubtitulo">Elige una opción y ajusta tus
+                                preferencias</span>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
 
                 <!-- Selector horizontal de producto de la clasificación (visible al venir del catálogo) -->
@@ -438,7 +467,8 @@ try {
                         Extras: <strong id="mpMontoExtras">C$ 0.00</strong>
                     </span>
                     <div class="d-flex gap-2 ms-auto">
-                        <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn-cancelar-factura px-4"
+                            data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn-guardar-factura px-4" id="mpBtnGuardar">
                             <i class="bi bi-check2-circle me-1"></i> Aplicar
                         </button>
