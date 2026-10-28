@@ -1,4 +1,4 @@
-# Contexto Técnico: Módulo de Facturación / POS
+﻿# Contexto Técnico: Módulo de Facturación / POS
 ## Batidos Pitaya ERP — `u839374897_erp`
 **Versión del documento:** 1.2 | **Fecha:** 2026-05-05
 
@@ -74,41 +74,20 @@ Historial de precios por producto. Vigencia definida por `fecha_desde` / `fecha_
 ### 4.2 Club Pitaya — Puntos
 
 #### `pos_ventas_puntos_reglas`
-Reglas de acumulación Y canje de puntos. Modelo jerarquía + override con historial.
+**Tabla unificada** para reglas de acumulacion Y canje de puntos. Modelo jerarquia (catalogo menu POS + override por presentacion) con historial cronologico.
 
 **Tipos de regla** (`tipo_regla`): `'acumulacion'` | `'canje'`
 
-**Jerarquía**: El motor busca primero `id_producto` específico; si no hay override, usa la regla del `id_grupo`.
+**Jerarquia de busqueda** (motor en `facturas_guardar.php`):
+1. Busca regla vigente con `tipo_regla + id_catalogo_menu_pos + id_producto` especifico
+2. Si no hay, busca regla del catalogo base (`id_producto IS NULL`)
+3. Si tampoco hay, usa fallback de 1 punto por unidad (solo acumulacion)
 
-**Reglas actuales de acumulación**:
-| Grupo | Puntos/unidad |
-|---|---|
-| Batidos | 1.0 |
-| Waffles | 1.5 |
-| Bowls | 1.5 |
-| Fruto seco grande | 1.0 |
-| Fruto seco pequeño | 0.8 (override de producto) |
+**Campos clave**: `tipo_regla`, `id_catalogo_menu_pos` (FK -> `catalogo_menu_pos`), `id_producto` (NULL = aplica al catalogo completo), `puntos`, `fecha_desde`, `fecha_hasta`
 
-**Campos clave**: `tipo_regla`, `id_grupo` (FK → `grupo_presentacion_producto`), `id_producto` (NULL = regla de grupo), `puntos`, `fecha_desde`, `fecha_hasta`
+**Historial**: Al cambiar la politica, se cierra la regla anterior (`fecha_hasta`) y se crea una nueva con nueva `fecha_desde`. Las facturas historicas calculan puntos con la regla vigente en su fecha.
 
-**Historial**: Al cambiar la política, se cierra la regla anterior (`fecha_hasta`) y se crea una nueva. Las facturas históricas calculan puntos con la regla vigente en su `fecha_hora`.
-
-#### `pos_ventas_puntos_catalogo_canje`
-Catálogo de lo que puede canjearse con puntos.
-
-**Catálogo actual**:
-| Puntos | Canje |
-|---|---|
-| 3 | Agrandar batido |
-| 3 | Renovación de tarjeta |
-| 5 | 2 galletas de avena Pitaya |
-| 8 | Fruto seco pequeño |
-| 10 | Batido Clásico/Especial 16oz |
-| 12 | Batido Proteico/Premium 16oz |
-| 15 | Waffle Clásico |
-| 18 | Bowl (no Açaí) |
-
-Actualmente el canje solo aplica a batidos 16oz dentro de la factura. `id_producto_canjeable` → FK a `producto_presentacion`.
+> **Nota**: La tabla `pos_ventas_puntos_catalogo_canje` fue eliminada. Todo el catalogo de canje ahora vive en `pos_ventas_puntos_reglas` con `tipo_regla = 'canje'`.
 
 ### 4.3 Factura (Núcleo)
 
@@ -386,27 +365,27 @@ Interfaz para administrar los precios de venta base (globales) y por sucursal (o
 - Backend: `modulos/ventas/ajax/precios_get_datos.php`, `precios_guardar.php`, `precios_get_sucursales.php`, `precios_get_historial.php`
 - BD de Soporte: `pos_ventas_precios_producto` (historial cronológico de precios).
 
-### Página C: Control del Club Pitaya (Reglas y Catálogo)
-Interfaz dividida en dos módulos separados (`puntos_reglas.php` y `puntos_catalogo.php`) para administrar el ecosistema completo del programa de lealtad.
+### Página C: Control del Club Pitaya (`puntos_reglas.php`)
+Interfaz unificada en una sola pagina para administrar el ecosistema completo del programa de lealtad: acumulacion y canje de puntos.
 
 **Flujo Implementado:**
-1. **Reglas de Acumulación (`puntos_reglas.php`)**:
-   - Tabla que muestra cómo se ganan los puntos, cruzando datos con `grupo_presentacion_producto` y `producto_presentacion`.
-   - Soporta jerarquía: Regla de Grupo vs Excepción (Override) de Producto específico.
-   - **Cierre Manual**: A diferencia de los precios, cuando el usuario edita una regla, bloquea el grupo/producto y solo le permite modificar los puntos o definir manualmente la `fecha_hasta` para darla de baja.
-2. **Catálogo de Recompensas (`puntos_catalogo.php`)**:
-   - Tabla enfocada en cómo se gastan los puntos, permitiendo ordenar los ítems visualmente (`orden`).
-   - El premio puede ser un producto físico del POS (`id_producto_canjeable`) para rebajar inventario, o dejarse en blanco para servicios/premios externos.
-   - Permite activar/desactivar premios rápidamente.
-3. **Navegación**: Ambas páginas tienen un header con pestañas (Tabs) que permiten alternar entre "Cómo ganar puntos" y "Catálogo de Recompensas".
-4. **Permisos**: Dos herramientas separadas en `tools_erp` (`puntos_reglas` y `puntos_catalogo`) para flexibilidad de acceso por operario.
+1. **Tab Acumulacion (`Como ganar puntos`)**:
+   - Tabla que muestra como se ganan los puntos, cruzando datos con `catalogo_menu_pos`, `subgrupo_presentacion_producto` y `grupo_presentacion_producto`.
+   - Soporta jerarquia: Regla del Catalogo Menu POS vs Excepcion (Override) de Producto/Presentacion especifico.
+   - Al editar una regla, bloquea grupo/catalogo/producto y solo permite modificar los puntos o la `fecha_hasta` (baja).
+2. **Tab Canje (`Catalogo de Canje`)**:
+   - Tabla que muestra cuantos puntos cuesta canjear cada item del catalogo Menu POS.
+   - Misma logica de jerarquia y override que acumulacion.
+   - Usa el mismo modal y la misma tabla `pos_ventas_puntos_reglas`, con `tipo_regla = 'canje'`.
+3. **Un solo modal**: El modal adapta su titulo, subtitulo y etiqueta del campo `puntos` segun el tab activo (`tipo_regla` como campo oculto).
+4. **Permisos**: Control de acceso por operario con `tools_erp` (`puntos_reglas`).
 
-**Archivos del Módulo:**
-- Vistas: `modulos/marketing/puntos_reglas.php`, `modulos/marketing/puntos_catalogo.php`
-- Recursos: `css/puntos_reglas.css`, `js/puntos_reglas.js`, `js/puntos_catalogo.js`
-- Backend: `ajax/puntos_get_reglas.php`, `puntos_guardar_regla.php`, `puntos_get_catalogo.php`, `puntos_guardar_catalogo.php`, `puntos_get_grupos_productos.php`
-- BD de Soporte: `pos_ventas_puntos_reglas`, `pos_ventas_puntos_catalogo_canje`.
----
+**Archivos del Modulo:**
+- Vista y UI: `modulos/marketing/puntos_reglas.php`, `css/puntos_reglas.css`, `js/puntos_reglas.js`
+- Backend: `ajax/puntos_get_reglas.php?tipo=acumulacion|canje`, `ajax/puntos_guardar_regla.php`, `ajax/puntos_get_catalogos_cascada.php`
+- BD de Soporte: `pos_ventas_puntos_reglas` (tabla unificada acumulacion + canje).
+
+> **Eliminados**: `puntos_catalogo.php`, `js/puntos_catalogo.js`, `ajax/puntos_get_catalogo.php`, `ajax/puntos_guardar_catalogo.php`, `ajax/puntos_get_grupos_productos.php`, tabla `pos_ventas_puntos_catalogo_canje`.
 
 ## 9. Comandos Útiles
 
