@@ -199,7 +199,7 @@ async function cargarCatalogoMenuPos() {
             let html = '<option value="">Seleccione...</option>';
             data.catalogos.forEach(c => {
                 const label = c.tamano_producto ? c.nombre + ' ' + c.tamano_producto : c.nombre;
-                html += `<option value="${c.id}">`</option>`;
+                html += `<option value="${c.id}">${label}</option>`;
             });
             sel.html(html);
         }
