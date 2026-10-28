@@ -470,7 +470,8 @@ try {
         'promos_aplicadas' => $promos_aplicadas,
         // IDs de presentación que actuaron como condición en alguna promo calificada o aplicada
         // El frontend usa esto para excluirlos de acumulación/canje de puntos
-        'items_condicion' => array_values($items_condicion),
+        // Objeto {id_presentacion: qty_usada_como_condicion} — NO usar array_values() para preservar las keys
+        'items_condicion' => $items_condicion,
     ]);
 
 } catch (Exception $e) {
