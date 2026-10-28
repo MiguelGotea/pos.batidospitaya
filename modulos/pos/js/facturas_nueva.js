@@ -694,10 +694,9 @@ function _mspSeleccionarProducto(idx) {
         monto_extras:             0
     };
 
-    // Si hay un ítem existente en el ticket de este mismo producto (edición), precargar su personalización
-    const existente = detalleFactura.find(d => parseInt(d.id_presentacion) === parseInt(p.id));
-    if (existente && existente.personalizacion) {
-        _mpDraft = JSON.parse(JSON.stringify(existente.personalizacion));
+    // Solo si estamos en modo edición de un ítem del ticket, precargar su personalización
+    if (_mspModoEdicion && _mspIdxTicket >= 0 && detalleFactura[_mspIdxTicket] && detalleFactura[_mspIdxTicket].personalizacion) {
+        _mpDraft = JSON.parse(JSON.stringify(detalleFactura[_mspIdxTicket].personalizacion));
     }
 
     // Mostrar spinner mientras carga receta

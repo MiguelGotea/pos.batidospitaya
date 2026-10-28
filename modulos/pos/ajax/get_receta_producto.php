@@ -1,10 +1,10 @@
-﻿<?php
+<?php
 /**
  * get_receta_producto.php — Datos de Receta para Personalización en el POS
  *
  * Devuelve:
  *  - ingredientes: componentes de la receta base del producto
- *  - endulzantes: endulzantes activos (lista global + endulzante sugerido por asignación)
+ *  - endulzantes: endulzantes activos (solo si el grupo del producto tiene lleva_endulzante = 1)
  *  - extras: lista de extras activos con precio (SÍ alteran el monto total)
  *  - ingredientes_alternativos: catálogo para sustitución (presentacion_receta=1)
  *
@@ -76,46 +76,33 @@ try {
     }
 
     // =================================================================
-    // 3. Endulzantes activos (lista completa para dropdown)
+    // 3. Endulzantes activos (según si el grupo del producto lleva_endulzante = 1)
     // =================================================================
-    $stmtEndulzantes = $conn->prepare("
-        SELECT id, nombre, nombre_opcion, unidad_medida
-        FROM endulzantes
-        WHERE activo = 1
-        ORDER BY orden ASC, nombre ASC, id ASC
-    ");
-    $stmtEndulzantes->execute();
-    $endulzantes = $stmtEndulzantes->fetchAll(PDO::FETCH_ASSOC);
-
-    // Endulzante sugerido por defecto (asignación producto > subgrupo > grupo)
-    $stmtEndDefault = $conn->prepare("
-        SELECT ea.endulzante_id
-        FROM endulzantes_asignaciones ea
-        WHERE ea.activo = 1
-          AND (
-                ea.producto_id = :pid
-             OR (ea.producto_id IS NULL AND ea.subgrupo_id = (
-                    SELECT cmp_e.id_subgrupo
-                    FROM producto_presentacion pp_e
-                    LEFT JOIN catalogo_menu_pos cmp_e ON pp_e.id_catalogo_menu_pos = cmp_e.id
-                    WHERE pp_e.id = :pid2 LIMIT 1
-                ))
-             OR (ea.producto_id IS NULL AND ea.subgrupo_id IS NULL AND ea.grupo_id = (
-                    SELECT sg.id_grupo_presentacion_producto
-                    FROM producto_presentacion pp2
-                    LEFT JOIN catalogo_menu_pos cmp2 ON pp2.id_catalogo_menu_pos = cmp2.id
-                    JOIN subgrupo_presentacion_producto sg ON sg.id = cmp2.id_subgrupo
-                    WHERE pp2.id = :pid3 LIMIT 1
-                ))
-          )
-        ORDER BY
-            CASE WHEN ea.producto_id  IS NOT NULL THEN 0
-                 WHEN ea.subgrupo_id  IS NOT NULL THEN 1
-                 ELSE 2 END ASC
+    $stmtGrupo = $conn->prepare("
+        SELECT COALESCE(g.lleva_endulzante, 0) AS lleva_endulzante
+        FROM producto_presentacion pp
+        LEFT JOIN catalogo_menu_pos cmp ON pp.id_catalogo_menu_pos = cmp.id
+        LEFT JOIN subgrupo_presentacion_producto sg ON cmp.id_subgrupo = sg.id
+        LEFT JOIN grupo_presentacion_producto g ON sg.id_grupo_presentacion_producto = g.id
+        WHERE pp.id = :pid
         LIMIT 1
     ");
-    $stmtEndDefault->execute([':pid' => $idPresentacion, ':pid2' => $idPresentacion, ':pid3' => $idPresentacion]);
-    $endulzanteDefault = $stmtEndDefault->fetchColumn();
+    $stmtGrupo->execute([':pid' => $idPresentacion]);
+    $llevaEndulzante = (int)$stmtGrupo->fetchColumn();
+
+    $endulzantes = [];
+    if ($llevaEndulzante === 1) {
+        $stmtEndulzantes = $conn->prepare("
+            SELECT id, nombre, nombre_opcion, unidad_medida
+            FROM endulzantes
+            WHERE activo = 1
+            ORDER BY orden ASC, nombre ASC, id ASC
+        ");
+        $stmtEndulzantes->execute();
+        $endulzantes = $stmtEndulzantes->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    $endulzanteDefault = null;
 
     // =================================================================
     // 4. Extras activos (precio propio — SÍ alteran el total de la orden)
@@ -155,7 +142,7 @@ try {
         'receta'                    => $receta,
         'ingredientes'              => $ingredientes,
         'endulzantes'               => $endulzantes,
-        'endulzante_default_id'     => $endulzanteDefault ? (int)$endulzanteDefault : null,
+        'endulzante_default_id'     => null,
         'extras'                    => $extras,
         'ingredientes_alternativos' => $ingredientesAlternativos,
     ]);
