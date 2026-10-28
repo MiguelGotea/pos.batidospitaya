@@ -492,6 +492,7 @@ function renderizarCatalogoPorGrupos(lista) {
         subgrupo.catalogos.get(cNombre).ids.push(cId);
         subgrupo.catalogos.get(cNombre).productos.push(p);
 
+    });
     // Render tabs (grupos)
     let tabsHtml = '';
     let firstGrupoId = null;
