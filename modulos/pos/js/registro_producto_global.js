@@ -1,4 +1,4 @@
-// ============================================
+﻿// ============================================
 // VARIABLES GLOBALES
 // ============================================
 
@@ -185,6 +185,30 @@ async function cargarSubgrupos() {
 }
 
 // ============================================
+// CARGAR CATÁLOGO MENÚ POS
+// ============================================
+async function cargarCatalogoMenuPos() {
+    const idSubgrupo = $('#subgrupo').val();
+    const sel = $('#catalogoMenuPos');
+    sel.html('<option value="">Seleccione subgrupo primero...</option>');
+    if (!idSubgrupo) return;
+    try {
+        const response = await fetch('ajax/registro_producto_get_catalogos.php?accion=catalogo_menu_pos&id_subgrupo=' + idSubgrupo);
+        const data = await response.json();
+        if (data.success) {
+            let html = '<option value="">Seleccione...</option>';
+            data.catalogos.forEach(c => {
+                const label = c.tamano_producto ? c.nombre + ' ' + c.tamano_producto : c.nombre;
+                html += `<option value="${c.id}">`</option>`;
+            });
+            sel.html(html);
+        }
+    } catch (error) {
+        console.error('Error cargando catálogo menú POS:', error);
+    }
+}
+
+// ============================================
 // CARGAR DATOS DEL PRODUCTO (EDICIÓN)
 // ============================================
 
@@ -207,10 +231,12 @@ async function cargarDatosProducto() {
             $('#esFabricable').prop('checked', p.es_fabricable === 'SI');
             $('#compraTienda').prop('checked', parseInt(p.compra_tienda) === 1);
 
-            if (p.id_subgrupo_presentacion_producto) {
+            if (p.id_catalogo_menu_pos) {
                 $('#grupo').val(p.id_grupo);
-                await cargarSubgrupos(); // Await the subgrupos loading
-                $('#subgrupo').val(p.id_subgrupo_presentacion_producto);
+                await cargarSubgrupos();
+                $('#subgrupo').val(p.id_subgrupo_via_catalogo);
+                await cargarCatalogoMenuPos();
+                $('#catalogoMenuPos').val(p.id_catalogo_menu_pos);
             }
 
             // Receta

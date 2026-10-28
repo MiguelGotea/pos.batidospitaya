@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * ajax/evaluar_promociones.php
  * Motor de evaluación de promociones para el POS de ventas.
@@ -174,18 +174,26 @@ try {
                         $has_product_cond = true;
                         $match_found = false;
                         $new_qualifying = [];
-                        // BD guarda las claves como grupo_id / subgrupo_id (a veces id_grupo) — normalizar ambas
-                        $req_grupo = (int) ($valor['grupo_id'] ?? $valor['id_grupo'] ?? 0);
+                        // BD guarda las claves como grupo_id / subgrupo_id / catalogo_id — normalizar
+                        $req_grupo    = (int) ($valor['grupo_id']   ?? $valor['id_grupo']   ?? 0);
                         $req_subgrupo = (int) ($valor['subgrupo_id'] ?? $valor['id_subgrupo'] ?? 0);
+                        $req_catalogo = (int) ($valor['catalogo_id'] ?? 0);
                         $req_cantidad = (int) ($valor['cantidad'] ?? 1);
-                        $nombre_display = $valor['nombre_grupo'] ?? $valor['nombre_subgrupo'] ?? ('Grupo ID ' . $req_grupo);
-                        if ($req_subgrupo)
+                        $nombre_display = $valor['nombre_grupo'] ?? ('Grupo ID ' . $req_grupo);
+                        if ($req_catalogo)
+                            $nombre_display .= ' / ' . ($valor['nombre_catalogo'] ?? 'Catálogo ID ' . $req_catalogo);
+                        elseif ($req_subgrupo)
                             $nombre_display .= ' / ' . ($valor['nombre_subgrupo'] ?? 'Subgrupo ' . $req_subgrupo);
 
                         foreach ($qualifying_indices as $idx) {
                             $it = $cart[$idx];
                             $grupo_ok = ($req_grupo === 0 || (int) ($it['id_grupo'] ?? 0) === $req_grupo);
-                            $subgrupo_ok = ($req_subgrupo === 0 || (int) ($it['id_subgrupo'] ?? 0) === $req_subgrupo);
+                            // Nivel catálogo (más específico): si hay catalogo_id, omite filtro de subgrupo
+                            if ($req_catalogo > 0) {
+                                $subgrupo_ok = ((int) ($it['id_catalogo_menu_pos'] ?? 0) === $req_catalogo);
+                            } else {
+                                $subgrupo_ok = ($req_subgrupo === 0 || (int) ($it['id_subgrupo'] ?? 0) === $req_subgrupo);
+                            }
                             if ($grupo_ok && $subgrupo_ok && $it['cantidad_libre'] > 0) {
                                 $new_qualifying[] = $idx;
                                 $match_found = true;

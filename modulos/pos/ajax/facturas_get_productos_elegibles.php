@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // facturas_get_productos_elegibles.php
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -29,9 +29,11 @@ try {
             FROM producto_presentacion pp
             LEFT JOIN producto_maestro pm 
                 ON pp.id_producto_maestro = pm.id
-            LEFT JOIN subgrupo_presentacion_producto sg 
-                ON pp.id_subgrupo_presentacion_producto = sg.id
-            LEFT JOIN grupo_presentacion_producto g 
+            LEFT JOIN catalogo_menu_pos cmp
+                ON pp.id_catalogo_menu_pos = cmp.id
+            LEFT JOIN subgrupo_presentacion_producto sg
+                ON cmp.id_subgrupo = sg.id
+            LEFT JOIN grupo_presentacion_producto g
                 ON sg.id_grupo_presentacion_producto = g.id
             LEFT JOIN unidad_producto up 
                 ON pp.id_unidad_producto = up.id

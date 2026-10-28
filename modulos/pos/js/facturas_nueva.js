@@ -1961,11 +1961,13 @@ function evaluarPromocionesConCarrito() {
             const prod = todosProductos.find(function (p) { return p.id === d.id_presentacion; }) || {};
             return {
                 id:          d.id_presentacion,
-                id_grupo:    parseInt(prod.id_grupo    || 0),
-                id_subgrupo: parseInt(prod.id_subgrupo || 0),
-                precio:      parseFloat(d.precio_unitario || 0),
-                cantidad:    parseInt(d.cantidad || 1),
-                nombre:      d.nombre || prod.Nombre || '',
+                id_grupo:             parseInt(prod.id_grupo    || 0),
+                id_subgrupo:          parseInt(prod.id_subgrupo || 0),
+                id_catalogo_menu_pos: parseInt(prod.id_catalogo_menu_pos || 0),
+                id_producto_maestro:  parseInt(prod.id_producto_maestro || 0),
+                precio:               parseFloat(d.precio_unitario || 0),
+                cantidad:             parseInt(d.cantidad || 1),
+                nombre:               d.nombre || prod.Nombre || '',
             };
         });
 

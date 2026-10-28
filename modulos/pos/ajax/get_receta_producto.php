@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * get_receta_producto.php — Datos de Receta para Personalización en el POS
  *
@@ -95,13 +95,16 @@ try {
           AND (
                 ea.producto_id = :pid
              OR (ea.producto_id IS NULL AND ea.subgrupo_id = (
-                    SELECT id_subgrupo_presentacion_producto
-                    FROM producto_presentacion WHERE id = :pid2 LIMIT 1
+                    SELECT cmp_e.id_subgrupo
+                    FROM producto_presentacion pp_e
+                    LEFT JOIN catalogo_menu_pos cmp_e ON pp_e.id_catalogo_menu_pos = cmp_e.id
+                    WHERE pp_e.id = :pid2 LIMIT 1
                 ))
              OR (ea.producto_id IS NULL AND ea.subgrupo_id IS NULL AND ea.grupo_id = (
                     SELECT sg.id_grupo_presentacion_producto
                     FROM producto_presentacion pp2
-                    JOIN subgrupo_presentacion_producto sg ON sg.id = pp2.id_subgrupo_presentacion_producto
+                    LEFT JOIN catalogo_menu_pos cmp2 ON pp2.id_catalogo_menu_pos = cmp2.id
+                    JOIN subgrupo_presentacion_producto sg ON sg.id = cmp2.id_subgrupo
                     WHERE pp2.id = :pid3 LIMIT 1
                 ))
           )
