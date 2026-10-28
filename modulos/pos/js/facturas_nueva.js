@@ -1,4 +1,4 @@
-/* ===================================================
+﻿/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -1955,34 +1955,9 @@ $('#btnQuickAddMembresia').on('click', function () {
         cambiarTipoCliente('club');
     }
 
-    // Agregar la línea de Membresía al ticket tal como en el mockup
-    const idMembresiaVirtual = -1;
-    const existe = detalleFactura.find(d => d.id_presentacion === idMembresiaVirtual);
-    if (!existe) {
-        detalleFactura.unshift({
-            id_presentacion:      idMembresiaVirtual,
-            nombre:               'Membresía Club Pitaya',
-            unidad:               'N/A',
-            precio_unitario_base: 150,
-            precio_unitario:      150,
-            cantidad:             1,
-            costo_total_iva:      150,
-            notas:                'Ingresar número de membresía',
-            es_personalizable:    false,
-            personalizacion:      {}
-        });
-        actualizarTablaDetalle();
-
-        Swal.fire({
-            icon: 'info',
-            title: 'Membresía agregada a la orden',
-            text: 'Membresía Club Pitaya (C$ 150.00) agregada al ticket para venta rápida.',
-            toast: true,
-            position: 'top-end',
-            timer: 2500,
-            showConfirmButton: false
-        });
-    } else {
+    // Verificar si ya existe una membresía en el ticket (por id_catalogo_menu_pos = 13)
+    const existe = detalleFactura.find(d => d.id_catalogo_menu_pos == 13);
+    if (existe) {
         Swal.fire({
             icon: 'warning',
             title: 'Membresía ya agregada',
@@ -1992,7 +1967,62 @@ $('#btnQuickAddMembresia').on('click', function () {
             timer: 2000,
             showConfirmButton: false
         });
+        return;
     }
+
+    // Buscar el producto real de membresía desde BD (id_catalogo_menu_pos = 13, activo)
+    $.get('ajax/get_producto_membresia.php', function (res) {
+        if (!res.success || !res.data) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Producto no encontrado',
+                text: res.message || 'No se encontró un producto de membresía activo.',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        const p = res.data;
+        const precio = parseFloat(p.precio_venta) || 0;
+
+        detalleFactura.unshift({
+            id_presentacion:      parseInt(p.id),
+            id_catalogo_menu_pos: parseInt(p.id_catalogo_menu_pos),
+            nombre:               p.nombre,
+            unidad:               p.nombre_unidad || 'Unidad',
+            precio_unitario_base: precio,
+            precio_unitario:      precio,
+            cantidad:             1,
+            costo_total_iva:      precio,
+            notas:                'Ingresar número de membresía',
+            es_personalizable:    false,
+            personalizacion:      {}
+        });
+        actualizarTablaDetalle();
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Membresía agregada a la orden',
+            text: p.nombre + ' (C$ ' + precio.toFixed(2) + ') agregada al ticket.',
+            toast: true,
+            position: 'top-end',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }).fail(function () {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo obtener el producto de membresía.',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+        });
+    });
 });
 
 
