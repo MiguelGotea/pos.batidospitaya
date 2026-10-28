@@ -637,9 +637,10 @@ function actualizarTablaDetalle() {
         const badgeAcum = esClubValido && item.puntos_acumulacion != null && !item.es_canjeado && !item.es_condicion_promo
             ? `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts por unidad">⭐ +${item.puntos_acumulacion} pts</span>`
             : '';
-        // Badge de costo de canje: visible solo cuando el producto tiene regla de canje, cliente club activo, y no es condición
-        const badgePtsCanje = esClubValido && item.puntos_canje != null && !item.es_condicion_promo && !item.es_canjeado
-            ? `<small class="badge-puntos-canje d-block mt-1" title="Cuesta ${item.puntos_canje} pts para canjearlo">🔴 ${item.puntos_canje} pts</small>`
+        // Badge de costo de canje: visible SOLO cuando el toggle de canjeado está activo
+        // (muestra cuántos puntos se están descontando en esta operación)
+        const badgePtsCanje = esClubValido && item.es_canjeado && item.puntos_canje != null && !item.es_condicion_promo
+            ? `<small class="badge-puntos-canje d-block mt-1" title="Canjeando por ${item.puntos_canje} pts">🔴 -${item.puntos_canje} pts</small>`
             : '';
         // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo
         const esCanjeable = esClubValido && item.puntos_canje != null && !item.es_condicion_promo;

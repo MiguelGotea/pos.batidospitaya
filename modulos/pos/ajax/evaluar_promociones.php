@@ -276,14 +276,6 @@ try {
 
         // ¿Califica completamente?
         if ($conds_met === $total_conds && !empty($qualifying_indices)) {
-            // Acumular ítems del carrito que sirvieron como condición para esta promo
-            foreach ($qualifying_indices as $qi) {
-                $id_presentacion = (int)($cart[$qi]['id'] ?? 0);
-                if ($id_presentacion > 0) {
-                    $items_condicion[$id_presentacion] = $id_presentacion;
-                }
-            }
-
             $aplicado = false;
             $monto_descuento_promo = 0;
 
@@ -375,6 +367,13 @@ try {
             if ($aplicado) {
                 $resumen_promo = 'Ahorro: C$' . number_format($monto_descuento_promo, 2);
                 if (in_array($promo_id, $approved_ids)) {
+                    // Promo aprobada: marcar sus ítems condición para excluirlos de puntos
+                    foreach ($qualifying_indices as $qi) {
+                        $id_cond = (int)($cart[$qi]['id'] ?? 0);
+                        if ($id_cond > 0) {
+                            $items_condicion[$id_cond] = $id_cond;
+                        }
+                    }
                     // Ya aprobada → registrar como aplicada
                     $promos_aplicadas[] = [
                         'id' => $p['id'],
