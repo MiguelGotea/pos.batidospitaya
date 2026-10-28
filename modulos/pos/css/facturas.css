@@ -3029,3 +3029,68 @@
     display: inline-block;
 }
 
+
+
+/* ============================================================
+   CLUB PITAYA — Badges de Puntos y Condición de Promoción
+   ============================================================ */
+
+/* Badge: ítem es condición de una promoción activa */
+.badge-condicion-promo {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #fff;
+    background: #f59e0b;
+    border-radius: 4px;
+    padding: 1px 5px;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* Badge: puntos de acumulación (verde) */
+.badge-puntos-acum {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: #15803d;
+    background: #dcfce7;
+    border-radius: 4px;
+    padding: 1px 5px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* Badge: costo de canje en puntos (rojo) */
+.badge-puntos-canje {
+    display: inline-block;
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: #dc2626;
+    background: #fee2e2;
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+}
+
+/* Alerta inline de saldo de puntos insuficiente */
+#alertaPuntosSaldo {
+    display: none;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    color: #92400e;
+    margin-top: 6px;
+}
+
+/* Botón Guardar bloqueado por puntos insuficientes */
+#btnGuardar.btn-bloqueado-puntos {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

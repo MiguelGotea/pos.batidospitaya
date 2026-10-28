@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // facturas_get_productos_elegibles.php
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -26,7 +26,41 @@ try {
                        WHEN psuc.precio IS NOT NULL THEN 'sucursal'
                        WHEN pglob.precio IS NOT NULL THEN 'global'
                        ELSE 'sin_precio'
-                   END AS origen_precio
+                   END AS origen_precio,
+                   -- Puntos de acumulación vigentes: excepción por presentación tiene prioridad sobre catálogo general
+                   COALESCE(
+                       (SELECT puntos FROM pos_ventas_puntos_reglas
+                         WHERE tipo_regla = 'acumulacion'
+                           AND id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+                           AND id_producto = pp.id
+                           AND fecha_desde <= CURDATE()
+                           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+                         ORDER BY fecha_desde DESC LIMIT 1),
+                       (SELECT puntos FROM pos_ventas_puntos_reglas
+                         WHERE tipo_regla = 'acumulacion'
+                           AND id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+                           AND id_producto IS NULL
+                           AND fecha_desde <= CURDATE()
+                           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+                         ORDER BY fecha_desde DESC LIMIT 1)
+                   ) AS puntos_acumulacion,
+                   -- Puntos de canje vigentes: misma lógica de prioridad
+                   COALESCE(
+                       (SELECT puntos FROM pos_ventas_puntos_reglas
+                         WHERE tipo_regla = 'canje'
+                           AND id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+                           AND id_producto = pp.id
+                           AND fecha_desde <= CURDATE()
+                           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+                         ORDER BY fecha_desde DESC LIMIT 1),
+                       (SELECT puntos FROM pos_ventas_puntos_reglas
+                         WHERE tipo_regla = 'canje'
+                           AND id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+                           AND id_producto IS NULL
+                           AND fecha_desde <= CURDATE()
+                           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+                         ORDER BY fecha_desde DESC LIMIT 1)
+                   ) AS puntos_canje
             FROM producto_presentacion pp
             LEFT JOIN producto_maestro pm 
                 ON pp.id_producto_maestro = pm.id

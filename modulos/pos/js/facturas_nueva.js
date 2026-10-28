@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -355,18 +355,61 @@ function renderizarPaginacionModal(totalRegistros, pagActual, totalPaginas) {
 function actualizarPuntosFactura() {
     const isClub = $('input[name="tipo_cliente"]:checked').val() === 'club';
     if (!isClub || !clienteActual) {
-        $('#txtPuntosEstaFactura').text('+0');
-        $('#txtTotalPuntos').text('0');
+        $('#txtPuntosEstaFactura').text('+0').removeClass('text-danger text-success');
+        $('#txtTotalPuntos').text('0').removeClass('text-danger');
+        $('#btnGuardar').prop('disabled', false).removeClass('btn-bloqueado-puntos');
+        $('#alertaPuntosSaldo').hide();
         return;
     }
 
-    // Puntos estimados: 1 punto por cada unidad de producto vendible (excluye canjeados)
-    const puntosEstaFactura = detalleFactura.reduce((s, d) => s + (!d.es_canjeado ? (parseFloat(d.cantidad) || 0) : 0), 0);
-    const puntosAnteriores = parseFloat(clienteActual.puntos_anteriores) || 0;
-    const totalPuntos = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
+    // Calcular puntos ganados y canjeados con las reglas reales de BD
+    let puntosGanados   = 0;
+    let puntosCanjeados = 0;
 
-    $('#txtPuntosEstaFactura').text(`+${puntosEstaFactura}`);
-    $('#txtTotalPuntos').text(totalPuntos.toFixed(2));
+    detalleFactura.forEach(function (d) {
+        // Ítems condición de promo quedan completamente excluidos de puntos
+        if (d.es_condicion_promo) return;
+
+        const cant = parseFloat(d.cantidad) || 0;
+        if (d.es_canjeado) {
+            // Canje: resta los puntos configurados en BD (null → 0, no debería ocurrir si toggle oculto)
+            const ptsCanje = (d.puntos_canje != null) ? parseFloat(d.puntos_canje) : 0;
+            puntosCanjeados += ptsCanje * cant;
+        } else {
+            // Acumulación: suma solo si hay regla configurada (null → 0, no acumula)
+            const ptsAcum = (d.puntos_acumulacion != null) ? parseFloat(d.puntos_acumulacion) : 0;
+            puntosGanados += ptsAcum * cant;
+        }
+    });
+
+    const puntosEstaFactura = Math.round((puntosGanados - puntosCanjeados) * 100) / 100;
+    const puntosAnteriores  = parseFloat(clienteActual.puntos_anteriores) || 0;
+    const totalPuntos       = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
+
+    // Formato: +3.00 ó -7.00
+    const signo = puntosEstaFactura >= 0 ? '+' : '';
+    $('#txtPuntosEstaFactura')
+        .text(`${signo}${puntosEstaFactura.toFixed(2)}`)
+        .toggleClass('text-danger', puntosEstaFactura < 0)
+        .toggleClass('text-success', puntosEstaFactura >= 0);
+
+    $('#txtTotalPuntos')
+        .text(totalPuntos.toFixed(2))
+        .toggleClass('text-danger', totalPuntos < 0);
+
+    // Bloquear Guardar si el saldo total resultante es negativo
+    const saldoInsuficiente = totalPuntos < 0;
+    $('#btnGuardar')
+        .prop('disabled', saldoInsuficiente)
+        .toggleClass('btn-bloqueado-puntos', saldoInsuficiente);
+
+    if (saldoInsuficiente) {
+        $('#alertaPuntosSaldo')
+            .show()
+            .text(`Puntos insuficientes: el socio tiene ${puntosAnteriores.toFixed(2)} pts y esta factura requiere ${puntosCanjeados.toFixed(2)} pts de canje.`);
+    } else {
+        $('#alertaPuntosSaldo').hide();
+    }
 }
 
 
@@ -496,6 +539,9 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
     const precioNum = parseFloat(precio) || 0;
     const existe = detalleFactura.find(d => d.id_presentacion === id);
 
+    // Buscar el objeto completo del producto en el catálogo para obtener reglas de puntos
+    const prodCatalogo = todosProductos.find(p => parseInt(p.id) === parseInt(id)) || {};
+
     if (existe) {
         // Si ya existe, solo incrementa cantidad (no vuelve a abrir modal)
         existe.cantidad += 1;
@@ -522,6 +568,11 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
         es_canjeado:          false,
         descuento_promo:      0,   // Descuento monetario aplicado por promociones
         promos_en_item:       [],  // [{id, nombre}] de promos que afectan este item
+        es_condicion_promo:   false, // true si este ítem es condición de una promo calificada
+        // Reglas de puntos desde BD (null = sin regla configurada)
+        puntos_acumulacion:   prodCatalogo.puntos_acumulacion != null ? parseFloat(prodCatalogo.puntos_acumulacion) : null,
+        puntos_canje:         prodCatalogo.puntos_canje        != null ? parseFloat(prodCatalogo.puntos_canje)        : null,
+        id_catalogo_menu_pos: prodCatalogo.id_catalogo_menu_pos ? parseInt(prodCatalogo.id_catalogo_menu_pos) : null,
         personalizacion: {
             ingredientes_quitados:   [],  // [{ id_componente, nombre_componente }]
             ingredientes_sustituidos:[],  // [{ id_componente, nombre_original, id_nuevo, nombre_nuevo }]
@@ -579,13 +630,31 @@ function actualizarTablaDetalle() {
         if (pers.extras_agregados && pers.extras_agregados.length)
             resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
 
+        // Badges de puntos Club Pitaya (solo visibles con cliente club activo)
+        const badgeCondicion = esClubValido && item.es_condicion_promo
+            ? `<span class="badge-condicion-promo ms-1" title="Condición de promoción activa — no acumula puntos ni es canjeable"><i class="bi bi-tag-fill me-1"></i>COND.</span>`
+            : '';
+        const badgeAcum = esClubValido && item.puntos_acumulacion != null && !item.es_canjeado && !item.es_condicion_promo
+            ? `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts por unidad">⭐ +${item.puntos_acumulacion} pts</span>`
+            : '';
+        // Badge de costo de canje: visible solo cuando el producto tiene regla de canje, cliente club activo, y no es condición
+        const badgePtsCanje = esClubValido && item.puntos_canje != null && !item.es_condicion_promo && !item.es_canjeado
+            ? `<small class="badge-puntos-canje d-block mt-1" title="Cuesta ${item.puntos_canje} pts para canjearlo">🔴 ${item.puntos_canje} pts</small>`
+            : '';
+        // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo
+        const esCanjeable = esClubValido && item.puntos_canje != null && !item.es_condicion_promo;
+
         html += `
         <tr id="fila-${item.id_presentacion}" class="fila-producto-principal ${item.es_canjeado ? 'fila-canjeada' : ''}" data-idx="${idx}">
             <td>
                 <div class="d-flex align-items-start gap-1">
                     <div class="flex-grow-1">
-                        <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
+                        <div class="d-flex align-items-center flex-wrap gap-1">
+                            <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
+                            ${badgeCondicion}${badgeAcum}
+                        </div>
                         ${item.unidad ? `<small class="d-block text-muted" style="font-size:.76rem;">${escHtml(item.unidad)}</small>` : ''}
+                        ${badgePtsCanje}
                         ${resumenPers ? `<div class="mt-1 d-flex flex-wrap gap-1">${resumenPers}</div>` : ''}
                     </div>
                     ${item.es_personalizable ? `<button type="button" class="btn-personalizar-fila" onclick="abrirModalPersonalizacion(${idx})" title="Personalizar receta">
@@ -634,11 +703,17 @@ function actualizarTablaDetalle() {
                 `}
             </td>
             <td class="text-center" style="width:65px;">
-                <label class="switch-canje-pos ${!esClubValido ? 'switch-canje-deshabilitado' : ''}"
-                       title="${!esClubValido ? 'Canje disponible únicamente para miembros verificados del Club Pitaya' : (item.es_canjeado ? 'Desmarcar canje' : 'Marcar como producto canjeado (C$ 0.00)')}">
-                    <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} ${!esClubValido ? 'disabled' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
+                ${esCanjeable || item.es_canjeado ? `
+                <label class="switch-canje-pos"
+                       title="${item.es_canjeado ? 'Desmarcar canje' : `Canjear por ${item.puntos_canje} pts`}">
+                    <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
                     <span class="slider-canje-pos"></span>
-                </label>
+                </label>` : (esClubValido ? '' : `
+                <label class="switch-canje-pos switch-canje-deshabilitado"
+                       title="Canje disponible únicamente para miembros verificados del Club Pitaya">
+                    <input type="checkbox" disabled>
+                    <span class="slider-canje-pos"></span>
+                </label>`)}
             </td>
             <td class="text-center" style="width:40px;">
                 <button class="btn-eliminar-fila" onclick="eliminarItem(${idx})" title="Quitar">
@@ -686,6 +761,26 @@ function toggleCanjeadoItem(idx, checked) {
     }
 
     const item = detalleFactura[idx];
+
+    // Validación: el producto debe tener regla de canje configurada
+    if (checked && item.puntos_canje == null) {
+        actualizarTablaDetalle(); // revertir visualmente
+        return;
+    }
+
+    // Validación: no puede canjearse si es condición de una promo activa
+    if (checked && item.es_condicion_promo) {
+        actualizarTablaDetalle(); // revertir visualmente
+        Swal.fire({
+            icon: 'warning',
+            title: 'No disponible para canje',
+            text: 'Este producto es condición de una promoción activa y no puede ser canjeado con puntos.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#0E544C'
+        });
+        return;
+    }
+
     item.es_canjeado = checked;
 
     if (checked) {
@@ -2060,11 +2155,22 @@ function renderPromosEvaluadas(res) {
     }
 
     // ══ APLICAR DESCUENTOS AL CARRITO ════════════════════════════
-    // 1. Reset todos los descuentos de promo en detalleFactura
+    // 1. Reset todos los descuentos de promo y flags de condición en detalleFactura
     detalleFactura.forEach(function (d) {
-        d.descuento_promo = 0;
-        d.promos_en_item  = [];
+        d.descuento_promo    = 0;
+        d.promos_en_item     = [];
+        d.es_condicion_promo = false;
     });
+
+    // Marcar ítems que son condición de alguna promo calificada/aplicada
+    var idsCondicion = res.items_condicion || [];
+    if (idsCondicion.length > 0) {
+        detalleFactura.forEach(function (d) {
+            if (idsCondicion.indexOf(parseInt(d.id_presentacion)) !== -1) {
+                d.es_condicion_promo = true;
+            }
+        });
+    }
     _promoDescuentoGlobal = 0;
 
     // 2. Aplicar descuentos por ítem (promos_aplicadas devuelve items con descuento_total)

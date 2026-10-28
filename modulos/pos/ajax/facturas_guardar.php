@@ -83,31 +83,36 @@ try {
         $idPresentacion    = isset($item['id_presentacion']) ? (int)$item['id_presentacion'] : 0;
         $idCatMenuPos      = isset($item['id_catalogo_menu_pos']) ? (int)$item['id_catalogo_menu_pos'] : null;
         $esCanjeadoItem    = ($tipoCliente === 'club' && !empty($item['es_canjeado']));
+        // Ítems condición de promo: excluidos de acumulación y canje de puntos
+        $esCondicionPromo  = !empty($item['es_condicion_promo']);
 
         if ($idPresentacion <= 0) throw new Exception("Producto invalido en la linea " . ($i + 1) . ".");
         if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la linea " . ($i + 1) . ".");
         if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la linea " . ($i + 1) . ".");
 
-        if ($esCanjeadoItem) {
-            // Buscar regla de canje: especifica por producto primero, luego por catalogo
-            if ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos][$idPresentacion])) {
-                $ptosCanje = $reglasCanje[$idCatMenuPos][$idPresentacion];
-            } elseif ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos]['*'])) {
-                $ptosCanje = $reglasCanje[$idCatMenuPos]['*'];
+        // Los ítems condición de promo quedan excluidos del cálculo de puntos
+        if (!$esCondicionPromo) {
+            if ($esCanjeadoItem) {
+                // Buscar regla de canje: especifica por producto primero, luego por catalogo
+                if ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos][$idPresentacion])) {
+                    $ptosCanje = $reglasCanje[$idCatMenuPos][$idPresentacion];
+                } elseif ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos]['*'])) {
+                    $ptosCanje = $reglasCanje[$idCatMenuPos]['*'];
+                } else {
+                    $ptosCanje = 0.0;
+                }
+                $totalPuntosCanjeados += $ptosCanje * $cantidad;
             } else {
-                $ptosCanje = 0.0;
+                // Buscar regla de acumulacion: especifica por producto primero, luego por catalogo
+                if ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos][$idPresentacion])) {
+                    $ptosGana = $reglasAcum[$idCatMenuPos][$idPresentacion];
+                } elseif ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos]['*'])) {
+                    $ptosGana = $reglasAcum[$idCatMenuPos]['*'];
+                } else {
+                    $ptosGana = 0.0; // Sin regla configurada = no acumula puntos
+                }
+                $totalPuntosGanados += $ptosGana * $cantidad;
             }
-            $totalPuntosCanjeados += $ptosCanje * $cantidad;
-        } else {
-            // Buscar regla de acumulacion: especifica por producto primero, luego por catalogo
-            if ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos][$idPresentacion])) {
-                $ptosGana = $reglasAcum[$idCatMenuPos][$idPresentacion];
-            } elseif ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos]['*'])) {
-                $ptosGana = $reglasAcum[$idCatMenuPos]['*'];
-            } else {
-                $ptosGana = 1.0; // fallback: 1 punto por unidad si no hay regla configurada
-            }
-            $totalPuntosGanados += $ptosGana * $cantidad;
         }
 
         $subtotal += ($esCanjeadoItem ? 0 : $costoTotalIva);

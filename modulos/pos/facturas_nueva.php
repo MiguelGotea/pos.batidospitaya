@@ -211,6 +211,8 @@ try {
                                                 <span class="pstat-val fw-bold" id="txtTotalPuntos">0</span>
                                             </div>
                                         </div>
+                                        <!-- Alerta de saldo insuficiente de puntos Club Pitaya -->
+                                        <div id="alertaPuntosSaldo"></div>
                                     </div>
                                 </form>
                             </div>

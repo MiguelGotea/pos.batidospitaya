@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ajax/evaluar_promociones.php
  * Motor de evaluación de promociones para el POS de ventas.
@@ -83,6 +83,8 @@ try {
     $promos_potenciales = [];
     $promos_descartadas = [];
     $total_descuento_global_extra = 0;
+    // IDs de presentación usados como condición en promos que califican/están aplicadas
+    $items_condicion = [];
 
     // Evaluar cada promoción
     foreach ($promociones as $p) {
@@ -274,6 +276,14 @@ try {
 
         // ¿Califica completamente?
         if ($conds_met === $total_conds && !empty($qualifying_indices)) {
+            // Acumular ítems del carrito que sirvieron como condición para esta promo
+            foreach ($qualifying_indices as $qi) {
+                $id_presentacion = (int)($cart[$qi]['id'] ?? 0);
+                if ($id_presentacion > 0) {
+                    $items_condicion[$id_presentacion] = $id_presentacion;
+                }
+            }
+
             $aplicado = false;
             $monto_descuento_promo = 0;
 
@@ -433,6 +443,9 @@ try {
         'promos_aplican' => $promos_aplican,
         'promos_potenciales' => $promos_potenciales,
         'promos_aplicadas' => $promos_aplicadas,
+        // IDs de presentación que actuaron como condición en alguna promo calificada o aplicada
+        // El frontend usa esto para excluirlos de acumulación/canje de puntos
+        'items_condicion' => array_values($items_condicion),
     ]);
 
 } catch (Exception $e) {
