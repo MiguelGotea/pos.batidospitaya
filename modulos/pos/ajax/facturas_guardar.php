@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // facturas_guardar.php — Guardado de ventas del POS Web
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -37,18 +37,80 @@ try {
     // ---- Validar montos de productos y calcular subtotales ----
     $subtotal = 0;
     $totalPuntosGanados = 0;
+    $totalPuntosCanjeados = 0;
+
+    // Pre-cargar reglas de puntos desde BD (evitar N+1 queries)
+    // Reglas de acumulacion vigentes: id_catalogo_menu_pos -> puntos por unidad
+    $stmtRegAcum = $conn->prepare(
+        "SELECT id_catalogo_menu_pos, id_producto, puntos
+         FROM pos_ventas_puntos_reglas
+         WHERE tipo_regla = 'acumulacion'
+           AND fecha_desde <= CURDATE()
+           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+         ORDER BY id_producto IS NOT NULL DESC"
+    );
+    $stmtRegAcum->execute();
+    $reglasAcumRaw = $stmtRegAcum->fetchAll(PDO::FETCH_ASSOC);
+
+    // Indexar: [id_catalogo_menu_pos][id_producto|'*'] = puntos
+    $reglasAcum = [];
+    foreach ($reglasAcumRaw as $r) {
+        $clave = $r['id_producto'] ?: '*';
+        $reglasAcum[$r['id_catalogo_menu_pos']][$clave] = (float)$r['puntos'];
+    }
+
+    // Reglas de canje vigentes: id_catalogo_menu_pos -> puntos requeridos
+    $stmtRegCanje = $conn->prepare(
+        "SELECT id_catalogo_menu_pos, id_producto, puntos
+         FROM pos_ventas_puntos_reglas
+         WHERE tipo_regla = 'canje'
+           AND fecha_desde <= CURDATE()
+           AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
+         ORDER BY id_producto IS NOT NULL DESC"
+    );
+    $stmtRegCanje->execute();
+    $reglasCanjeRaw = $stmtRegCanje->fetchAll(PDO::FETCH_ASSOC);
+
+    $reglasCanje = [];
+    foreach ($reglasCanjeRaw as $r) {
+        $clave = $r['id_producto'] ?: '*';
+        $reglasCanje[$r['id_catalogo_menu_pos']][$clave] = (float)$r['puntos'];
+    }
 
     foreach ($detalle as $i => $item) {
-        $cantidad       = isset($item['cantidad']) ? (float)$item['cantidad'] : 0;
-        $costoTotalIva  = isset($item['costo_total_iva']) ? (float)$item['costo_total_iva'] : 0;
-        $idPresentacion = isset($item['id_presentacion']) ? (int)$item['id_presentacion'] : 0;
+        $cantidad          = isset($item['cantidad']) ? (float)$item['cantidad'] : 0;
+        $costoTotalIva     = isset($item['costo_total_iva']) ? (float)$item['costo_total_iva'] : 0;
+        $idPresentacion    = isset($item['id_presentacion']) ? (int)$item['id_presentacion'] : 0;
+        $idCatMenuPos      = isset($item['id_catalogo_menu_pos']) ? (int)$item['id_catalogo_menu_pos'] : null;
+        $esCanjeadoItem    = ($tipoCliente === 'club' && !empty($item['es_canjeado']));
 
-        if ($idPresentacion <= 0) throw new Exception("Producto inválido en la línea " . ($i + 1) . ".");
-        if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la línea " . ($i + 1) . ".");
-        if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la línea " . ($i + 1) . ".");
+        if ($idPresentacion <= 0) throw new Exception("Producto invalido en la linea " . ($i + 1) . ".");
+        if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la linea " . ($i + 1) . ".");
+        if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la linea " . ($i + 1) . ".");
 
-        $subtotal += $costoTotalIva;
-        $totalPuntosGanados += $cantidad;
+        if ($esCanjeadoItem) {
+            // Buscar regla de canje: especifica por producto primero, luego por catalogo
+            if ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos][$idPresentacion])) {
+                $ptosCanje = $reglasCanje[$idCatMenuPos][$idPresentacion];
+            } elseif ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos]['*'])) {
+                $ptosCanje = $reglasCanje[$idCatMenuPos]['*'];
+            } else {
+                $ptosCanje = 0.0;
+            }
+            $totalPuntosCanjeados += $ptosCanje * $cantidad;
+        } else {
+            // Buscar regla de acumulacion: especifica por producto primero, luego por catalogo
+            if ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos][$idPresentacion])) {
+                $ptosGana = $reglasAcum[$idCatMenuPos][$idPresentacion];
+            } elseif ($idCatMenuPos && isset($reglasAcum[$idCatMenuPos]['*'])) {
+                $ptosGana = $reglasAcum[$idCatMenuPos]['*'];
+            } else {
+                $ptosGana = 1.0; // fallback: 1 punto por unidad si no hay regla configurada
+            }
+            $totalPuntosGanados += $ptosGana * $cantidad;
+        }
+
+        $subtotal += ($esCanjeadoItem ? 0 : $costoTotalIva);
     }
 
     $subtotalCalculado     = round($subtotal, 2);
@@ -234,15 +296,17 @@ try {
     }
 
     // ---- 4. Registrar puntos si es socio Club Pitaya ----
-    if ($tipoCliente === 'club' && $idClienteClub && $totalPuntosGanados > 0) {
+    // ---- 4. Registrar puntos si es socio Club Pitaya ----
+    if ($tipoCliente === 'club' && $idClienteClub && ($totalPuntosGanados > 0 || $totalPuntosCanjeados > 0)) {
         $sqlPuntos = "INSERT INTO pos_ventas_factura_puntos_club
                       (id_factura, id_cliente_club, puntos_ganados, puntos_canjeados, observaciones)
-                      VALUES (:id_fac, :id_cliente, :ganados, 0.00, 'Venta POS Web')";
+                      VALUES (:id_fac, :id_cliente, :ganados, :canjeados, 'Venta POS Web')";
         $stmtPuntos = $conn->prepare($sqlPuntos);
         $stmtPuntos->execute([
             ':id_fac'     => $idFactura,
             ':id_cliente' => $idClienteClub,
-            ':ganados'    => round($totalPuntosGanados, 2)
+            ':ganados'    => round($totalPuntosGanados, 2),
+            ':canjeados'  => round($totalPuntosCanjeados, 2)
         ]);
     }
 
