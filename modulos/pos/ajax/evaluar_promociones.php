@@ -100,6 +100,8 @@ try {
         $qualifying_indices = array_keys($cart);
         $has_product_cond = false;
         $motivo_descarte = '';
+        // Unidades de cada índice de carrito consumidas como condición en esta promo
+        $qty_cond_por_idx = [];
 
         // Evaluar condiciones
         foreach ($condiciones as $c) {
@@ -169,6 +171,11 @@ try {
                             $motivo_descarte = 'Falta producto: ' . ($valor['nombre_producto'] ?? 'ID ' . $valor['id_producto']);
                         } else {
                             $qualifying_indices = $new_qualifying;
+                            // Registrar qty consumida como condición (cantidad_min por cada ítem que califica)
+                            $cant_min_prod = (int)($valor['cantidad_min'] ?? 1);
+                            foreach ($new_qualifying as $qi) {
+                                $qty_cond_por_idx[$qi] = ($qty_cond_por_idx[$qi] ?? 0) + $cant_min_prod;
+                            }
                         }
                         break;
 
@@ -216,6 +223,14 @@ try {
                                 $motivo_descarte = 'Faltan ' . ($req_cantidad - $total_libre_grupo) . ' producto(s) del grupo: ' . $nombre_display;
                             } else {
                                 $qualifying_indices = $new_qualifying;
+                                // Distribuir req_cantidad entre los items calificados (greedy)
+                                $restante_req = $req_cantidad;
+                                foreach ($new_qualifying as $qi) {
+                                    if ($restante_req <= 0) break;
+                                    $consume = min((int)($cart[$qi]['cantidad_libre'] ?? $cart[$qi]['cantidad']), $restante_req);
+                                    $qty_cond_por_idx[$qi] = ($qty_cond_por_idx[$qi] ?? 0) + $consume;
+                                    $restante_req -= $consume;
+                                }
                             }
                         }
                         break;
@@ -367,11 +382,22 @@ try {
             if ($aplicado) {
                 $resumen_promo = 'Ahorro: C$' . number_format($monto_descuento_promo, 2);
                 if (in_array($promo_id, $approved_ids)) {
-                    // Promo aprobada: marcar sus ítems condición para excluirlos de puntos
+                    // Promo aprobada: registrar cuántas unidades de cada ítem son condición
                     foreach ($qualifying_indices as $qi) {
                         $id_cond = (int)($cart[$qi]['id'] ?? 0);
                         if ($id_cond > 0) {
-                            $items_condicion[$id_cond] = $id_cond;
+                            // Cantidad usada como condición; fallback = todas las unidades del ítem
+                            $qty_usada = isset($qty_cond_por_idx[$qi])
+                                ? min((int)$qty_cond_por_idx[$qi], (int)$cart[$qi]['cantidad'])
+                                : (int)$cart[$qi]['cantidad'];
+                            $qty_usada = max($qty_usada, 1);
+                            // Si el mismo producto aparece en múltiples promos, acumular
+                            $items_condicion[$id_cond] = ($items_condicion[$id_cond] ?? 0) + $qty_usada;
+                            // Pero nunca superar la cantidad real en el carrito
+                            $items_condicion[$id_cond] = min(
+                                $items_condicion[$id_cond],
+                                (int)$cart[$qi]['cantidad']
+                            );
                         }
                     }
                     // Ya aprobada → registrar como aplicada

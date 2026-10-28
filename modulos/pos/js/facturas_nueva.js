@@ -367,18 +367,19 @@ function actualizarPuntosFactura() {
     let puntosCanjeados = 0;
 
     detalleFactura.forEach(function (d) {
-        // Ítems condición de promo quedan completamente excluidos de puntos
-        if (d.es_condicion_promo) return;
-
         const cant = parseFloat(d.cantidad) || 0;
+
         if (d.es_canjeado) {
-            // Canje: resta los puntos configurados en BD (null → 0, no debería ocurrir si toggle oculto)
+            // Ítems canjeados no acumulan; solo restan puntos según regla
             const ptsCanje = (d.puntos_canje != null) ? parseFloat(d.puntos_canje) : 0;
             puntosCanjeados += ptsCanje * cant;
         } else {
-            // Acumulación: suma solo si hay regla configurada (null → 0, no acumula)
-            const ptsAcum = (d.puntos_acumulacion != null) ? parseFloat(d.puntos_acumulacion) : 0;
-            puntosGanados += ptsAcum * cant;
+            // Unidades libres (excluyendo las usadas como condición de promo)
+            const qtyCond  = parseFloat(d.qty_condicion || 0);
+            const cantAcum = Math.max(0, cant - qtyCond); // 0 si todas son condición
+            if (cantAcum > 0 && d.puntos_acumulacion != null) {
+                puntosGanados += parseFloat(d.puntos_acumulacion) * cantAcum;
+            }
         }
     });
 
@@ -568,7 +569,8 @@ function agregarProducto(id, nombre, unidad, precio = 0, esPersonalizable = 0) {
         es_canjeado:          false,
         descuento_promo:      0,   // Descuento monetario aplicado por promociones
         promos_en_item:       [],  // [{id, nombre}] de promos que afectan este item
-        es_condicion_promo:   false, // true si este ítem es condición de una promo calificada
+        es_condicion_promo:   false, // true si este ítem es condición de una promo aplicada
+        qty_condicion:        0,     // unidades de este ítem usadas como condición (0 = ninguna)
         // Reglas de puntos desde BD (null = sin regla configurada)
         puntos_acumulacion:   prodCatalogo.puntos_acumulacion != null ? parseFloat(prodCatalogo.puntos_acumulacion) : null,
         puntos_canje:         prodCatalogo.puntos_canje        != null ? parseFloat(prodCatalogo.puntos_canje)        : null,
@@ -631,18 +633,27 @@ function actualizarTablaDetalle() {
             resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
 
         // Badges de puntos Club Pitaya (solo visibles con cliente club activo)
+        // Cálculo de puntos efectivos considerando exclusión parcial por condición de promo
+        const qtyCond   = parseInt(item.qty_condicion || 0); // unidades que son condición
+        const cantLibre = Math.max(0, item.cantidad - qtyCond); // unidades que acumulan
+        const ptsEfectivos = cantLibre * (item.puntos_acumulacion || 0); // puntos reales
+
+        // Badge condición de promo: siempre que alguna unidad sea condición
         const badgeCondicion = esClubValido && item.es_condicion_promo
-            ? `<span class="badge-condicion-promo ms-1" title="Condición de promoción activa — no acumula puntos ni es canjeable"><i class="bi bi-tag-fill me-1"></i>COND.</span>`
+            ? `<span class="badge-condicion-promo ms-1" title="${qtyCond} unidad(es) son condición de promoción activa — no acumulan puntos ni son canjeables"><i class="bi bi-tag-fill me-1"></i>COND. ×${qtyCond}</span>`
             : '';
-        const badgeAcum = esClubValido && item.puntos_acumulacion != null && !item.es_canjeado && !item.es_condicion_promo
-            ? `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts por unidad">⭐ +${item.puntos_acumulacion} pts</span>`
+
+        // Badge acumulación: solo cuando hay unidades libres (no condición) con puntos configurados
+        const badgeAcum = esClubValido && item.puntos_acumulacion != null && ptsEfectivos > 0 && !item.es_canjeado
+            ? `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts × ${cantLibre} unidad(es) libre(s)">⭐ +${ptsEfectivos.toFixed(2)} pts</span>`
             : '';
+
         // Badge de costo de canje: visible SOLO cuando el toggle de canjeado está activo
-        // (muestra cuántos puntos se están descontando en esta operación)
         const badgePtsCanje = esClubValido && item.es_canjeado && item.puntos_canje != null && !item.es_condicion_promo
             ? `<small class="badge-puntos-canje d-block mt-1" title="Canjeando por ${item.puntos_canje} pts">🔴 -${item.puntos_canje} pts</small>`
             : '';
-        // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo
+
+        // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo (ni parcial)
         const esCanjeable = esClubValido && item.puntos_canje != null && !item.es_condicion_promo;
 
         html += `
@@ -2161,17 +2172,24 @@ function renderPromosEvaluadas(res) {
         d.descuento_promo    = 0;
         d.promos_en_item     = [];
         d.es_condicion_promo = false;
+        d.qty_condicion      = 0; // unidades usadas como condición de promo (0 = ninguna)
     });
 
-    // Marcar ítems que son condición de alguna promo calificada/aplicada
-    var idsCondicion = res.items_condicion || [];
-    if (idsCondicion.length > 0) {
-        detalleFactura.forEach(function (d) {
-            if (idsCondicion.indexOf(parseInt(d.id_presentacion)) !== -1) {
-                d.es_condicion_promo = true;
+    // Marcar ítems que son condición de alguna promo APLICADA (aprobada)
+    // items_condicion ahora es {id_presentacion: qty_usada_como_condicion}
+    var condicionMap = res.items_condicion || {};
+    Object.keys(condicionMap).forEach(function (idStr) {
+        var qtyCond = parseInt(condicionMap[idStr] || 0);
+        if (qtyCond <= 0) return;
+        for (var k = 0; k < detalleFactura.length; k++) {
+            if (String(detalleFactura[k].id_presentacion) === idStr) {
+                var d = detalleFactura[k];
+                d.qty_condicion      = qtyCond;
+                d.es_condicion_promo = true; // cualquier involucración = excluido de canje
+                break;
             }
-        });
-    }
+        }
+    });
     _promoDescuentoGlobal = 0;
 
     // 2. Aplicar descuentos por ítem (promos_aplicadas devuelve items con descuento_total)
