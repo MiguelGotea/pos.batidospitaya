@@ -68,23 +68,27 @@ function iniciarSesionSegura(): void
 
     global $conn;
     if (!isset($conn) || !($conn instanceof PDO)) {
-        require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
-        global $conn;
+        // Usar __DIR__ en vez de DOCUMENT_ROOT (más fiable en Hostinger con subdominios)
+        $conexionPath = dirname(__DIR__, 2) . '/core/database/conexion.php';
+        if (file_exists($conexionPath)) {
+            require_once $conexionPath;
+            global $conn;
+        }
     }
 
-    try {
-        $handler = new DbSessionHandler($conn, SESSION_DURATION_SECONDS * 2);
-        session_set_save_handler($handler, true);
-    } catch (PDOException $e) {
-        error_log('[SessionManager] ADVERTENCIA: No se pudo iniciar handler de BD. Usando archivos. ' . $e->getMessage());
-        $sessionSavePath = dirname(__DIR__, 2) . '/core/sessions';
-        if (!is_dir($sessionSavePath)) {
-            @mkdir($sessionSavePath, 0777, true);
+    // Usar handler de BD solo si la conexión está disponible
+    if ($conn instanceof PDO) {
+        try {
+            $handler = new DbSessionHandler($conn, SESSION_DURATION_SECONDS * 2);
+            session_set_save_handler($handler, true);
+        } catch (Throwable $e) {
+            // Captura PDOException, TypeError u otro error al instanciar el handler
+            error_log('[SessionManager] ADVERTENCIA: No se pudo iniciar handler de BD. Usando archivos. ' . $e->getMessage());
+            _sm_usarSesionesPorArchivo();
         }
-        @chmod($sessionSavePath, 0777);
-        if (is_dir($sessionSavePath) && is_writable($sessionSavePath)) {
-            session_save_path($sessionSavePath);
-        }
+    } else {
+        error_log('[SessionManager] ADVERTENCIA: $conn no disponible. Usando sesiones en archivos.');
+        _sm_usarSesionesPorArchivo();
     }
 
     ini_set('session.gc_maxlifetime',  SESSION_DURATION_SECONDS * 2);
@@ -277,6 +281,21 @@ function actualizarPingAuditoria(string $sessionId): void
 // ─────────────────────────────────────────────────────────────────────────────
 // Privadas / internas
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fallback: usa sesiones en archivos locales si el handler de BD no está disponible.
+ */
+function _sm_usarSesionesPorArchivo(): void
+{
+    $sessionSavePath = dirname(__DIR__, 2) . '/core/sessions';
+    if (!is_dir($sessionSavePath)) {
+        @mkdir($sessionSavePath, 0777, true);
+    }
+    @chmod($sessionSavePath, 0777);
+    if (is_dir($sessionSavePath) && is_writable($sessionSavePath)) {
+        session_save_path($sessionSavePath);
+    }
+}
 
 /**
  * Marca como cerrada una sesion en erp_sesiones_activas.
