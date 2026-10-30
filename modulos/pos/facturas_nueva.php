@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
@@ -91,8 +91,6 @@ try {
                                 </div>
                                 <div class="banner-club-text">
                                     <h6 class="banner-club-titulo mb-0">Vender Membresía Club Pitaya</h6>
-                                    <span class="banner-club-sub">¡Suma Puntos Ahora! Beneficios exclusivos para el
-                                        cliente.</span>
                                 </div>
                             </div>
                             <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia"
@@ -123,27 +121,18 @@ try {
                                 <span class="text-muted small">No hay promociones activas en este momento.</span>
                             </div>
 
-                            <!-- Bloque: Aplicados (carrito cumple condiciones) -->
+                            <!-- Bloque: Aplicables (carrito cumple condiciones) -->
                             <div class="promociones-bloque mb-3" id="bloquePromosAplican" style="display:none;">
-                                <div class="promociones-sub-label">APLICADOS</div>
+                                <div class="promociones-sub-label">APLICABLES</div>
                                 <div class="promociones-grid-aplicables" id="gridPromosAplican">
                                     <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>
 
-                            <!-- Bloque: Casi aplican (el carrito está cerca de calificar) -->
-                            <div class="promociones-bloque mb-3" id="bloquePromosPotenciales" style="display:none;">
-                                <div class="promociones-sub-label">CASI APLICAN</div>
-                                <div class="promociones-grid-recomendados" id="gridPromosPotenciales">
-                                    <!-- Generado dinámicamente por JS -->
-                                </div>
-                            </div>
-
-
-                            <!-- Bloque: Disponibles (todas las activas vigentes) -->
-                            <div class="promociones-bloque" id="bloquePromosTodas" style="display:none;">
-                                <div class="promociones-sub-label">DISPONIBLES</div>
-                                <div class="promociones-grid-recomendados" id="gridPromosTodas">
+                            <!-- Bloque: Activos (casi aplican + disponibles) -->
+                            <div class="promociones-bloque" id="bloquePromosActivos" style="display:none;">
+                                <div class="promociones-sub-label">ACTIVOS</div>
+                                <div class="promociones-grid-recomendados" id="gridPromosActivos">
                                     <!-- Generado dinámicamente por JS -->
                                 </div>
                             </div>

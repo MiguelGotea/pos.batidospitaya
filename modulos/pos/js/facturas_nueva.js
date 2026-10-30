@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -527,7 +527,7 @@ function cambiarGrupo(grupoId) {
         sg.catalogos.forEach(cat => {
             const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
             const idsJson = JSON.stringify(cat.ids);
-            html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)" onkeypress="if(event.key==='Enter')_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+            html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)" onkeypress="if(event.key==='Enter')_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}</div>`;
         });
         html += `</div>`;
     });
@@ -580,7 +580,7 @@ function filtrarProductos(q) {
     catMap.forEach(cat => {
         const tienePersonalizable = cat.productos.some(p => parseInt(p.es_personalizable) === 1);
         const idsJson = JSON.stringify(cat.ids);
-        html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}${tienePersonalizable ? '<i class="bi bi-sliders2 ms-1" style="font-size:.7rem;opacity:.6;" title="Personalizable"></i>' : ''}</div>`;
+        html += `<div class="producto-card-pos${tienePersonalizable ? ' producto-personalizable' : ''}" tabindex="0" role="button" data-ids="${escAttr(idsJson)}" data-nombre="${escAttr(cat.nombre)}" onclick="_abrirCatalogoDesdeCard(this)">${escHtml(cat.nombre)}</div>`;
     });
     html += '</div>';
     $('#catalogoPanel').html(html);
@@ -2304,7 +2304,7 @@ let _promoEvalTimer    = null; // Timer debounce para re-evaluar al cambiar carr
 /* ─── Carga inicial: todas las promos activas vigentes ──────── */
 function cargarPromosActivas() {
     $('#promosLoadingState').show();
-    $('#promosEmptyState, #bloquePromosTodas, #bloquePromosAplican, #bloquePromosPotenciales').hide();
+    $('#promosEmptyState, #bloquePromosAplican, #bloquePromosActivos').hide();
 
     $.get('ajax/get_promociones_activas.php', function (res) {
         $('#promosLoadingState').hide();
@@ -2313,7 +2313,7 @@ function cargarPromosActivas() {
             return;
         }
         _promosActivas = res.data;
-        renderPromosTodas(_promosActivas);
+        renderPromosActivos([], []);
         evaluarPromocionesConCarrito();
     }, 'json').fail(function () {
         $('#promosLoadingState').hide();
@@ -2321,26 +2321,63 @@ function cargarPromosActivas() {
     });
 }
 
-/* ─── Render: bloque "DISPONIBLES" (catálogo estático) ─────── */
-function renderPromosTodas(promos) {
-    if (!promos || promos.length === 0) {
-        $('#bloquePromosTodas').hide();
+/* ─── Render: bloque "ACTIVOS" (casi aplican + disponibles, ordenados) ─── */
+function renderPromosActivos(potenciales, idsAplicables) {
+    potenciales   = potenciales   || [];
+    idsAplicables = idsAplicables || [];
+
+    // 1. Promociones que casi aplican (con condiciones) que NO están en aplicables
+    const casiAplican = potenciales
+        .filter(function (p) { return !idsAplicables.includes(parseInt(p.id)); })
+        .map(function (p) {
+            const total = parseInt(p.total_condiciones) || 1;
+            const met   = parseInt(p.condiciones_met) || 0;
+            const pct   = Math.min(100, Math.max(0, Math.round((met / total) * 100)));
+            return Object.assign({}, p, { _pct: pct });
+        });
+
+    // Ordenar casi aplican: con mayor porcentaje primero
+    casiAplican.sort(function (a, b) { return b._pct - a._pct; });
+
+    const idsCasiAplican = casiAplican.map(function (p) { return parseInt(p.id); });
+
+    // 2. Promociones disponibles restantes (excluye las que están en aplicables o casi aplican)
+    const disponiblesRestantes = _promosActivas.filter(function (p) {
+        const id = parseInt(p.id);
+        return !idsAplicables.includes(id) && !idsCasiAplican.includes(id);
+    });
+
+    if (casiAplican.length === 0 && disponiblesRestantes.length === 0) {
+        $('#bloquePromosActivos').hide();
         return;
     }
+
     let html = '';
-    promos.forEach(function (p) {
-        const tipo = _labelResultado(p.resultado_tipo, p.resultado_valor);
-        const auto = parseInt(p.ejecucion_automatica) === 1;
+
+    // Renderizar primero los que eran "casi aplican" (con porcentaje y barra a la derecha)
+    casiAplican.forEach(function (p) {
         html += `
-        <div class="promo-card promo-card-teal" data-promo-id="${p.id}" role="button" tabindex="0"
-             title="${escHtml(p.nombre)} — ${escHtml(tipo)}">
-            ${auto ? '<div class="promo-badge promo-badge-teal">AUTO</div>' : '<div class="promo-badge promo-badge-neutral">MANUAL</div>'}
+        <div class="promo-card promo-card-neutral" data-promo-id="${p.id}" title="${escHtml(p.nombre)}">
             <div class="promo-title">${escHtml(p.nombre)}</div>
-            <div class="promo-sub">${escHtml(tipo)}${p.fecha_fin ? ' &middot; hasta ' + escHtml(p.fecha_fin) : ''}</div>
+            <div class="promo-progress-wrap">
+                <div class="promo-progress-bar-bg">
+                    <div class="promo-progress-bar-fill" style="width: ${p._pct}%;"></div>
+                </div>
+                <span class="promo-progress-pct">${p._pct}%</span>
+            </div>
         </div>`;
     });
-    $('#gridPromosTodas').html(html);
-    $('#bloquePromosTodas').show();
+
+    // Renderizar luego las disponibles restantes (sin tag, sin subtitulo, sin porcentaje)
+    disponiblesRestantes.forEach(function (p) {
+        html += `
+        <div class="promo-card promo-card-teal" data-promo-id="${p.id}" role="button" tabindex="0" title="${escHtml(p.nombre)}">
+            <div class="promo-title">${escHtml(p.nombre)}</div>
+        </div>`;
+    });
+
+    $('#gridPromosActivos').html(html);
+    $('#bloquePromosActivos').show();
 }
 
 /* ─── Evaluar con el carrito actual (debounce 600ms) ────────── */
@@ -2412,10 +2449,11 @@ function renderPromosEvaluadas(res) {
         // No necesitamos re-evaluar: el backend ya evaluó con approved_ids y devolvió la verdad
     }
 
-    // ── Bloque "APLICAN AHORA" (califican + ya aprobadas) ──
+    // ── Bloque "APLICABLES" (califican + ya aprobadas) ──
     const aplican   = res.promos_aplican   || [];
     const aplicadas = res.promos_aplicadas || [];
     const todas     = [...aplican, ...aplicadas];
+    const idsAplicables = todas.map(function (p) { return parseInt(p.id); });
 
     if (todas.length > 0) {
         let html = '';
@@ -2424,7 +2462,6 @@ function renderPromosEvaluadas(res) {
             html += `
             <div class="${yaAprobada ? 'promo-card-dark promo-card-aplicada-activa' : 'promo-card-dark'}" data-promo-id="${p.id}">
                 <div class="promo-dark-title">${escHtml(p.nombre)}</div>
-                <div class="promo-dark-sub text-muted small mb-1">${escHtml(p.resumen || '')}</div>
                 ${yaAprobada
                     ? `<button type="button" class="btn-quitar-promo-aplicada" onclick="quitarPromoAprobada(${p.id})">
                            <i class="bi bi-x-circle me-1"></i>QUITAR
@@ -2441,23 +2478,9 @@ function renderPromosEvaluadas(res) {
         $('#bloquePromosAplican').hide();
     }
 
-    // ── Bloque "CASI CALIFICAN" (potenciales) ──
+    // ── Bloque "ACTIVOS" (casi aplican + disponibles fusionados, sin duplicar aplicables) ──
     const potenciales = res.promos_potenciales || [];
-    if (potenciales.length > 0) {
-        let html = '';
-        potenciales.forEach(function (p) {
-            html += `
-            <div class="promo-card promo-card-neutral" data-promo-id="${p.id}">
-                <div class="promo-badge promo-badge-neutral">${p.condiciones_met}/${p.total_condiciones} cond.</div>
-                <div class="promo-title">${escHtml(p.nombre)}</div>
-                <div class="promo-sub">${escHtml(p.faltante)}</div>
-            </div>`;
-        });
-        $('#gridPromosPotenciales').html(html);
-        $('#bloquePromosPotenciales').show();
-    } else {
-        $('#bloquePromosPotenciales').hide();
-    }
+    renderPromosActivos(potenciales, idsAplicables);
 
     // ══ APLICAR DESCUENTOS AL CARRITO ════════════════════════════
     // 1. Reset todos los descuentos de promo y flags de condición en detalleFactura

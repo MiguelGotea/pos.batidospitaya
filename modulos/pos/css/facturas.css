@@ -3377,3 +3377,35 @@
 .mp-selector-unico-oculto {
     display: none !important;
 }
+
+/* -- Barra de porcentaje para promociones que casi aplican en bloque Activos -- */
+.promo-progress-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.promo-progress-bar-bg {
+    width: 60px;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.promo-progress-bar-fill {
+    height: 100%;
+    background: #0E544C;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.promo-progress-pct {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0E544C;
+    min-width: 30px;
+    text-align: right;
+}
