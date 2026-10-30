@@ -418,7 +418,7 @@ try {
     <!-- ====== MODAL: Selección de Producto y Personalización de Receta ====== -->
     <div class="modal fade" id="modalPersonalizacion" tabindex="-1" aria-labelledby="modalPersonalizacionLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-personalizacion-dialog">
             <div class="modal-content border-0 shadow-lg modal-pos-custom">
                 <div class="modal-header modal-header-pos">
                     <div class="d-flex align-items-center gap-3">
@@ -436,7 +436,7 @@ try {
                 </div>
 
                 <!-- Selector horizontal de producto de la clasificación (visible al venir del catálogo) -->
-                <div id="mpSelectorProductos" class="mp-selector-productos-wrap px-3 pt-3">
+                <div id="mpSelectorProductos" class="mp-selector-productos-wrap px-3 pt-2">
                     <!-- Generado dinámicamente por JS -->
                 </div>
 
@@ -448,7 +448,7 @@ try {
                     </div>
                 </div>
 
-                <div class="modal-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <div class="modal-footer bg-white border-0 py-2 px-3 d-flex justify-content-between align-items-center">
                     <!-- Indicador de ajuste de precio por extras -->
                     <span class="text-muted small" id="mpAjustePrecio" style="display:none;">
                         <i class="bi bi-plus-circle text-success me-1"></i>

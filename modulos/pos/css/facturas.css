@@ -2034,11 +2034,42 @@
     border-color: rgba(14, 84, 76, 0.5);
 }
 
+/* ---- Diálogo modal de personalización táctil (ancho para 2 columnas sin scroll) ---- */
+#modalPersonalizacion .modal-dialog {
+    max-width: 1060px;
+    width: 95%;
+}
+
 /* ---- Cuerpo interno del modal ---- */
 .mp-body-inner {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+}
+
+/* ---- Grid de 2 columnas: Izquierda (Endulzante + Extras) | Derecha (Receta) ---- */
+.mp-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.mp-layout-grid.mp-layout-single-col {
+    grid-template-columns: 1fr;
+}
+
+.mp-col-izq,
+.mp-col-der {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    .mp-layout-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ---- Sección genérica ---- */
@@ -2052,8 +2083,8 @@
 .mp-seccion-header {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
-    padding: .65rem 1rem;
-    font-size: .82rem;
+    padding: .45rem .85rem;
+    font-size: .8rem;
     font-weight: 600;
     color: #334155;
     display: flex;
@@ -2067,18 +2098,34 @@
 
 /* ---- Lista de ingredientes ---- */
 .mp-ingredientes-lista {
-    padding: .5rem .75rem;
+    padding: .45rem .65rem;
     display: flex;
     flex-direction: column;
-    gap: .45rem;
+    gap: .35rem;
+    max-height: 430px;
+    overflow-y: auto;
+}
+
+.mp-ingredientes-lista::-webkit-scrollbar,
+.mp-extras-acordeon::-webkit-scrollbar {
+    width: 5px;
+}
+.mp-ingredientes-lista::-webkit-scrollbar-thumb,
+.mp-extras-acordeon::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.mp-ingredientes-lista::-webkit-scrollbar-thumb:hover,
+.mp-extras-acordeon::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .mp-ingrediente-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: .75rem;
-    padding: .45rem .5rem;
+    gap: .6rem;
+    padding: .35rem .55rem;
     border-radius: 6px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -2255,18 +2302,18 @@
 .mp-endulzante-grupos {
     display: flex;
     flex-direction: column;
-    gap: .45rem;
-    padding: .75rem;
+    gap: .35rem;
+    padding: .55rem .65rem;
 }
 
 /* Fila de grupo: botón principal + opcional dropdown */
 .mp-endulzante-grupo-row {
     display: flex;
     align-items: center;
-    gap: .6rem;
-    padding: .55rem .75rem;
+    gap: .5rem;
+    padding: .4rem .65rem;
     border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
+    border-radius: 9px;
     background: #f8fafc;
     transition: border-color .15s, background .15s, box-shadow .15s;
 }
@@ -2287,7 +2334,7 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    font-size: .85rem;
+    font-size: .83rem;
     font-weight: 500;
     color: #475569;
     text-align: left;
@@ -2307,11 +2354,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: #e2e8f0;
-    font-size: .75rem;
+    font-size: .7rem;
     color: #64748b;
     flex-shrink: 0;
     transition: background .15s, color .15s;
@@ -2329,7 +2376,7 @@
 /* Dropdown de variante/cantidad (derecha de la fila) */
 .mp-endulzante-variante-wrap {
     flex-shrink: 0;
-    min-width: 140px;
+    min-width: 130px;
     transition: opacity .15s;
 }
 
@@ -2339,11 +2386,11 @@
 }
 
 .mp-endulzante-variante-select {
-    font-size: .8rem;
+    font-size: .78rem;
     border-radius: 7px;
     border-color: #cbd5e1;
     color: #334155;
-    padding: .28rem .65rem;
+    padding: .22rem .55rem;
 }
 
 .mp-endulzante-grupo-row.activo .mp-endulzante-variante-select {
@@ -2371,7 +2418,8 @@
 .mp-extras-acordeon {
     display: flex;
     flex-direction: column;
-    /* sin gap: los separadores los ponen los borders */
+    max-height: 240px;
+    overflow-y: auto;
 }
 
 /* Grupo acordeón */
@@ -2388,8 +2436,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: .6rem;
-    padding: .7rem 1rem;
+    gap: .5rem;
+    padding: .45rem .75rem;
     background: #f8fafc;
     border: none;
     cursor: pointer;
@@ -2412,12 +2460,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     background: #e2e8f0;
     color: #64748b;
-    font-size: .78rem;
+    font-size: .72rem;
     flex-shrink: 0;
     transition: background .15s, color .15s;
 }

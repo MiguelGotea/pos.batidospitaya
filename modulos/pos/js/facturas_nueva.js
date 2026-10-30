@@ -1728,10 +1728,11 @@ function _formatearCantidad(val) {
     return n.toFixed(2);
 }
 
-
 /* ---- Renderizar contenido del modal con los datos de receta ---- */
 function _mpRenderContenido(datos) {
-    let html = '<div class="mp-body-inner p-3">';
+    let htmlEndulzante = '';
+    let htmlReceta = '';
+    let htmlExtras = '';
 
     /* ---- SECCIÓN: Endulzante (primero, diseño agrupado por nombre) ---- */
     if (datos.endulzantes && datos.endulzantes.length > 0) {
@@ -1768,8 +1769,8 @@ function _mpRenderContenido(datos) {
             grupos.get(grupo).push(end);
         });
 
-        html += `
-        <div class="mp-seccion">
+        htmlEndulzante += `
+        <div class="mp-seccion mp-seccion-endulzante">
             <div class="mp-seccion-header"><i class="bi bi-droplet-half"></i> Endulzante
                 <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Selecciona uno</small>
             </div>
@@ -1784,7 +1785,7 @@ function _mpRenderContenido(datos) {
             // IDs del grupo para el select
             const grupoKey = nombreGrupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
 
-            html += `
+            htmlEndulzante += `
             <div class="mp-endulzante-grupo-row ${grupoActivo ? 'activo' : ''}" data-grupo="${escAttr(nombreGrupo)}">
                 <button type="button" class="mp-endulzante-grupo-btn ${grupoActivo ? 'activo' : ''}"
                         data-grupo="${escAttr(nombreGrupo)}"
@@ -1797,7 +1798,7 @@ function _mpRenderContenido(datos) {
 
             if (tieneMultiples) {
                 // Dropdown de cantidad/variante
-                html += `
+                htmlEndulzante += `
                 <div class="mp-endulzante-variante-wrap ${grupoActivo ? '' : 'mp-end-variante-oculto'}" id="varianteWrap_${grupoKey}">
                     <select class="mp-endulzante-variante-select form-select form-select-sm"
                             id="varianteSelect_${grupoKey}"
@@ -1807,30 +1808,30 @@ function _mpRenderContenido(datos) {
                 opciones.forEach(op => {
                     const opNombre = op.nombre_opcion || op.nombre;
                     const sel = op.id === _mpDraft.endulzante_id ? 'selected' : '';
-                    html += `<option value="${op.id}" data-nombre="${escAttr(opNombre)}" ${sel}>${escHtml(opNombre)}</option>`;
+                    htmlEndulzante += `<option value="${op.id}" data-nombre="${escAttr(opNombre)}" ${sel}>${escHtml(opNombre)}</option>`;
                 });
 
-                html += `
+                htmlEndulzante += `
                     </select>
                 </div>`;
             } else {
                 // Opción única: guardamos id directamente en el botón
-                html += `<input type="hidden" data-grupo="${escAttr(nombreGrupo)}" value="${opciones[0].id}">`;
+                htmlEndulzante += `<input type="hidden" data-grupo="${escAttr(nombreGrupo)}" value="${opciones[0].id}">`;
             }
 
-            html += `</div>`; // cierre mp-endulzante-grupo-row
+            htmlEndulzante += `</div>`; // cierre mp-endulzante-grupo-row
         });
 
-        html += '</div></div>'; // cierre mp-endulzante-grupos y mp-seccion
+        htmlEndulzante += '</div></div>'; // cierre mp-endulzante-grupos y mp-seccion
     }
 
     /* ---- SECCIÓN: Ingredientes de la Receta ---- */
     if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.length > 0) {
-        html += `
-        <div class="mp-seccion">
+        htmlReceta += `
+        <div class="mp-seccion mp-seccion-receta">
             <div class="mp-seccion-header">
                 <i class="bi bi-list-check"></i> Ingredientes de la Receta
-                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Puedes quitar o sustituir ingredientes (sin costo adicional)</small>
+                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Puedes quitar o sustituir ingredientes</small>
             </div>
             <div class="mp-ingredientes-lista">`;
 
@@ -1851,7 +1852,7 @@ function _mpRenderContenido(datos) {
                 </div>`;
             });
 
-            html += `
+            htmlReceta += `
             <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}">
                 <div class="mp-ing-nombre">
                     <div class="d-flex align-items-center gap-2">
@@ -1863,16 +1864,16 @@ function _mpRenderContenido(datos) {
                     <!-- Combo buscable de sustitución (fuente: tabla extras) -->
                     <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}">
                         <input type="text"
-                               class="mp-sustituir-input"
-                               data-comp="${idComp}"
-                               data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
-                               value="${escAttr(nombreActual)}"
-                               placeholder="Sin cambio"
-                               autocomplete="off"
-                               ${quitado ? 'disabled' : ''}
-                               oninput="_mpFiltrarSustitutos(this)"
-                               onfocus="_mpAbrirDropdownSust(this)"
-                               onblur="_mpBlurSustituto(this)">
+                                class="mp-sustituir-input"
+                                data-comp="${idComp}"
+                                data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
+                                value="${escAttr(nombreActual)}"
+                                placeholder="Sin cambio"
+                                autocomplete="off"
+                                ${quitado ? 'disabled' : ''}
+                                oninput="_mpFiltrarSustitutos(this)"
+                                onfocus="_mpAbrirDropdownSust(this)"
+                                onblur="_mpBlurSustituto(this)">
                         <input type="hidden" class="mp-sustituir-valor" data-comp="${idComp}" value="${valorActual || ''}">
                         <div class="mp-sustituir-dropdown">
                             ${dropdownHtml}
@@ -1888,9 +1889,9 @@ function _mpRenderContenido(datos) {
             </div>`;
         });
 
-        html += '</div></div>';
+        htmlReceta += '</div></div>';
     } else if (!datos.tiene_receta) {
-        html += '<div class="alert alert-light m-0 mb-3 border"><i class="bi bi-info-circle me-1 text-muted"></i> Este producto no tiene receta registrada. Solo puedes agregar extras o dejar una nota.</div>';
+        htmlReceta += '<div class="mp-seccion mp-seccion-receta"><div class="alert alert-light m-0 border"><i class="bi bi-info-circle me-1 text-muted"></i> Este producto no tiene receta registrada. Solo puedes agregar extras o dejar una nota.</div></div>';
     }
 
     /* ---- SECCIÓN: Extras (agrupados por grupo, ordenados por precio, acordeón) ---- */
@@ -1907,8 +1908,8 @@ function _mpRenderContenido(datos) {
         // 2) Ordenar cada grupo por precio ascendente
         extrasGrupos.forEach(lista => lista.sort((a, b) => parseFloat(a.precio) - parseFloat(b.precio)));
 
-        html += `
-        <div class="mp-seccion">
+        htmlExtras += `
+        <div class="mp-seccion mp-seccion-extras">
             <div class="mp-seccion-header">
                 <i class="bi bi-plus-square"></i> Extras
                 <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Los extras sí alteran el precio</small>
@@ -1922,7 +1923,7 @@ function _mpRenderContenido(datos) {
             const tieneActivo = lista.some(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id));
             const cantSelec   = lista.filter(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id)).length;
 
-            html += `
+            htmlExtras += `
             <div class="mp-extras-grupo ${tieneActivo ? 'abierto' : ''}">
                 <button type="button" class="mp-extras-grupo-header" onclick="_mpToggleGrupoExtras(this)" aria-expanded="${tieneActivo}">
                     <span class="mp-extras-grupo-icono"><i class="bi bi-bag-plus"></i></span>
@@ -1934,7 +1935,7 @@ function _mpRenderContenido(datos) {
 
             lista.forEach(ext => {
                 const agregado = _mpDraft.extras_agregados.some(e => e.id === ext.id);
-                html += `
+                htmlExtras += `
                 <button type="button" class="btn-mp-extra ${agregado ? 'activo' : ''}"
                         data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}"
                         onclick="_mpToggleExtra(this)">
@@ -1943,13 +1944,26 @@ function _mpRenderContenido(datos) {
                 </button>`;
             });
 
-            html += `</div></div>`; // cierre mp-extras-grupo-body y mp-extras-grupo
+            htmlExtras += `</div></div>`; // cierre mp-extras-grupo-body y mp-extras-grupo
         });
 
-        html += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
+        htmlExtras += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
     }
 
-    html += '</div>'; // cierre mp-body-inner
+    /* ---- Ensamblado en 2 columnas: Izquierda (Endulzante + Extras en 2 filas) | Derecha (Ingredientes Receta) ---- */
+    let html = '<div class="mp-body-inner p-3">';
+    if (!htmlReceta && (htmlEndulzante || htmlExtras)) {
+        html += '<div class="mp-layout-grid mp-layout-single-col"><div class="mp-col-izq">' + htmlEndulzante + htmlExtras + '</div></div>';
+    } else if (htmlReceta && !htmlEndulzante && !htmlExtras) {
+        html += '<div class="mp-layout-grid mp-layout-single-col"><div class="mp-col-der">' + htmlReceta + '</div></div>';
+    } else {
+        html += '<div class="mp-layout-grid">';
+        html += '<div class="mp-col-izq">' + htmlEndulzante + htmlExtras + '</div>';
+        html += '<div class="mp-col-der">' + htmlReceta + '</div>';
+        html += '</div>';
+    }
+    html += '</div>';
+
     $('#mpCuerpo').html(html);
     _mpActualizarResumenExtras();
 }
