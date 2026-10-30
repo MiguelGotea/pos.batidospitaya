@@ -234,8 +234,7 @@ try {
                                                 <th>PRODUCTO</th>
                                                 <th style="width:105px;" class="text-center">CANT.</th>
                                                 <th style="width:100px;" class="text-end">PRECIO</th>
-                                                <th style="width:70px;" class="text-center">CANJEADO</th>
-                                                <th style="width:40px;" class="text-center"></th>
+                                                <th id="thCanjeado" style="width:70px; display:none;" class="text-center">CANJEADO</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaDetalleBody">

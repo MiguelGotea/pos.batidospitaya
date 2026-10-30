@@ -2023,6 +2023,26 @@
     border-color: #0E544C;
 }
 
+/* ---- Botón eliminar (tacho de basura) al costado del lápiz ---- */
+.btn-eliminar-fila-mini {
+    background: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #94a3b8;
+    padding: 3px 6px;
+    font-size: .8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s, color .15s, border-color .15s;
+    line-height: 1;
+}
+
+.btn-eliminar-fila-mini:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
 /* ---- Badges de personalización en la fila ---- */
 .badge-pers-item {
     display: inline-flex;

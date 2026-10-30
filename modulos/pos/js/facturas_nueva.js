@@ -817,10 +817,19 @@ function actualizarTablaDetalle() {
     const idClienteClub = $('#idClienteClub').val();
     const esClubValido = isClub && Boolean(idClienteClub) && Boolean(clienteActual);
 
+    // Encabezado de CANJEADO: solo visible si membresía Club Pitaya está activa
+    if (esClubValido) {
+        $('#thCanjeado').show();
+    } else {
+        $('#thCanjeado').hide();
+    }
+
+    const numCols = esClubValido ? 4 : 3;
+
     if (detalleFactura.length === 0) {
         $('#tablaDetalleBody').html(`
             <tr id="filaVacia">
-                <td colspan="5" class="empty-detalle">
+                <td colspan="${numCols}" class="empty-detalle">
                     <i class="bi bi-box-seam me-2"></i>
                     Selecciona productos desde el catálogo
                 </td>
@@ -885,7 +894,7 @@ function actualizarTablaDetalle() {
 
         const canjeCls = item.es_canjeado ? 'fila-canjeada' : '';
 
-        // FILA 1: Nombre | Puntos acumulado o reducidos | tag amarillo condición | Cantidad con las flechas
+        // FILA 1: Nombre | Lápiz | Tacho de basura | Puntos | Tag amarillo condición | Cantidad | Precio | (Canjeado si club activo)
         html += `
         <tr id="fila-${item._rowKey}" class="fila-producto-principal ${canjeCls}" data-idx="${idx}">
             <td>
@@ -894,6 +903,9 @@ function actualizarTablaDetalle() {
                     ${item.es_personalizable ? `<button type="button" class="btn-personalizar-fila" onclick="abrirModalPersonalizacion(${idx})" title="Personalizar receta">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
+                    <button type="button" class="btn-eliminar-fila-mini" onclick="eliminarItem(${idx})" title="Eliminar producto">
+                        <i class="bi bi-trash"></i>
+                    </button>
                     ${badgePts}
                     ${badgeCondicion}
                 </div>
@@ -931,31 +943,22 @@ function actualizarTablaDetalle() {
                     `}
                 `}
             </td>
+            ${esClubValido ? `
             <td class="text-center" style="width:70px;">
                 ${esCanjeable || item.es_canjeado ? `
                 <label class="switch-canje-pos"
                        title="${item.es_canjeado ? 'Desmarcar canje' : `Canjear por ${item.puntos_canje} pts`}">
                     <input type="checkbox" ${item.es_canjeado ? 'checked' : ''} onchange="toggleCanjeadoItem(${idx}, this.checked)">
                     <span class="slider-canje-pos"></span>
-                </label>` : (esClubValido ? '' : `
-                <label class="switch-canje-pos switch-canje-deshabilitado"
-                       title="Canje disponible únicamente para miembros verificados del Club Pitaya">
-                    <input type="checkbox" disabled>
-                    <span class="slider-canje-pos"></span>
-                </label>`)}
-            </td>
-            <td class="text-center" style="width:40px;">
-                <button class="btn-eliminar-fila" onclick="eliminarItem(${idx})" title="Quitar">
-                    <i class="bi bi-x-circle-fill"></i>
-                </button>
-            </td>
+                </label>` : ''}
+            </td>` : ''}
         </tr>`;
 
         // FILA 2: Tags de cambios de ingrediente, quitar ingredientes y extras
         if (tagsList.length > 0) {
             html += `
             <tr class="fila-producto-tags ${canjeCls}" data-idx="${idx}">
-                <td colspan="5">
+                <td colspan="${numCols}">
                     <div class="fila-tags-container">
                         ${tagsList.join('')}
                     </div>
@@ -967,7 +970,7 @@ function actualizarTablaDetalle() {
         if (_promoNom || _dto > 0) {
             html += `
             <tr class="fila-producto-promo ${canjeCls}" data-idx="${idx}">
-                <td colspan="5">
+                <td colspan="${numCols}">
                     <div class="fila-promo-container">
                         <span class="badge-promo-linea-full">
                             <i class="bi bi-tag-fill me-1"></i>${_promoNom || 'Promoción aplicada'}${_dto > 0 ? ` <span class="ms-1 fw-bold">(-C$ ${_dto.toFixed(2)})</span>` : ''}
@@ -980,7 +983,7 @@ function actualizarTablaDetalle() {
         // FILA 4: Notas
         html += `
         <tr class="fila-producto-nota ${canjeCls}" data-idx="${idx}">
-            <td colspan="5">
+            <td colspan="${numCols}">
                 <div class="item-nota-row">
                     <span class="item-nota-lbl">Notas:</span>
                     <input type="text" class="item-nota-input"
