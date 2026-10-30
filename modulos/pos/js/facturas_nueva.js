@@ -633,11 +633,11 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
     $('#mpAjustePrecio').hide();
 
     // Mostrar spinner mientras carga los productos de la clasificación
-    $('#mpSelectorProductos').html(
+    $('#mpSelectorProductos').show().html(
         '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
     );
     $('#mpCuerpo').html(
-        '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Elige un producto arriba para ver sus opciones…</span></div>'
+        '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando opciones…</span></div>'
     );
 
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
@@ -655,16 +655,21 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
                 return;
             }
             _mspProductos = res.data;
-            _renderSelectorProductos();
 
-            // Seleccionar auto si solo hay una presentacion; subtitulo se oculta solo entonces
-            if (_mspProductos.length === 1) {
-                $('#mpSubtitulo').hide();
-                _mspSeleccionarProducto(0);
-            } else {
-                $('#mpSubtitulo').text('Elige tamaño / presentación');
-                $('#mpSubtitulo').show();
-            }
+            // Elegir por defecto el producto más caro
+            let maxIdx = 0;
+            let maxPrecio = -1;
+            _mspProductos.forEach((p, i) => {
+                const precio = parseFloat(p.precio_venta || 0);
+                if (precio > maxPrecio) {
+                    maxPrecio = precio;
+                    maxIdx = i;
+                }
+            });
+            _mspIdxSelec = maxIdx;
+
+            _renderSelectorProductos();
+            _mspSeleccionarProducto(maxIdx);
         },
         error: function () {
             $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-cloud-slash me-1"></i>Error al cargar los productos.</span>');
@@ -703,6 +708,11 @@ function _mspSeleccionarProducto(idx) {
 
     // Subtítulo con nombre del producto seleccionado
     $('#mpSubtitulo').text(`${escHtml(p.Nombre)} — Ajusta opciones`);
+    if (_mspProductos.length === 1) {
+        $('#mpSubtitulo').hide();
+    } else {
+        $('#mpSubtitulo').show();
+    }
     $('#mpAjustePrecio').hide();
 
     // Resetear draft de personalización al cambiar producto
@@ -1725,12 +1735,27 @@ function _mpRenderContenido(datos) {
 
     /* ---- SECCIÓN: Endulzante (primero, diseño agrupado por nombre) ---- */
     if (datos.endulzantes && datos.endulzantes.length > 0) {
-        // Preseleccionar endulzante sugerido si no hay selección previa
-        if (!_mpDraft.endulzante_id && datos.endulzante_default_id) {
-            const sugerido = datos.endulzantes.find(e => e.id === datos.endulzante_default_id);
+        // Preseleccionar endulzante sugerido si no hay selección previa (exclusivamente por prioridad > 0)
+        if (!_mpDraft.endulzante_id) {
+            let sugerido = null;
+            // 1. Por ID default retornado del backend (calculado por mayor prioridad)
+            if (datos.endulzante_default_id) {
+                sugerido = datos.endulzantes.find(e => parseInt(e.id) === parseInt(datos.endulzante_default_id));
+            }
+            // 2. Si no vino default_id, buscar la opción con mayor prioridad > 0
+            if (!sugerido) {
+                let maxPrio = 0;
+                datos.endulzantes.forEach(e => {
+                    const p = parseInt(e.prioridad || 0);
+                    if (p > maxPrio) {
+                        maxPrio = p;
+                        sugerido = e;
+                    }
+                });
+            }
             if (sugerido) {
-                _mpDraft.endulzante_id = sugerido.id;
-                _mpDraft.endulzante_nombre = sugerido.nombre_opcion || sugerido.nombre;
+                _mpDraft.endulzante_id = parseInt(sugerido.id);
+                _mpDraft.endulzante_nombre = sugerido.nombre ? (sugerido.nombre + (sugerido.nombre_opcion ? (' — ' + sugerido.nombre_opcion) : '')) : (sugerido.nombre_opcion || sugerido.nombre);
                 _mpDraft.endulzante_nombre_grupo = sugerido.nombre;
             }
         }

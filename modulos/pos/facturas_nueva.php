@@ -444,7 +444,7 @@ try {
                     <!-- Contenido generado por JS -->
                     <div class="d-flex align-items-center justify-content-center py-5">
                         <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
-                        <span class="text-muted">Elige un producto arriba para ver sus opciones…</span>
+                        <span class="text-muted">Cargando opciones…</span>
                     </div>
                 </div>
 

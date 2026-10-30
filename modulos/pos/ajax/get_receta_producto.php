@@ -93,7 +93,7 @@ try {
     $endulzantes = [];
     if ($llevaEndulzante === 1) {
         $stmtEndulzantes = $conn->prepare("
-            SELECT id, nombre, nombre_opcion, unidad_medida
+            SELECT id, nombre, nombre_opcion, unidad_medida, COALESCE(prioridad, 0) AS prioridad
             FROM endulzantes
             WHERE activo = 1
             ORDER BY orden ASC, nombre ASC, id ASC
@@ -102,7 +102,18 @@ try {
         $endulzantes = $stmtEndulzantes->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    $endulzanteDefault = null;
+    $endulzanteDefaultId = null;
+    $maxPrioridad = 0;
+    if (!empty($endulzantes)) {
+        // Prioridad definida en base de datos (prioridad > 0)
+        foreach ($endulzantes as $end) {
+            $prio = (int)($end['prioridad'] ?? 0);
+            if ($prio > $maxPrioridad) {
+                $maxPrioridad = $prio;
+                $endulzanteDefaultId = (int)$end['id'];
+            }
+        }
+    }
 
     // =================================================================
     // 4. Extras activos (precio propio — SÍ alteran el total de la orden)
@@ -142,7 +153,7 @@ try {
         'receta'                    => $receta,
         'ingredientes'              => $ingredientes,
         'endulzantes'               => $endulzantes,
-        'endulzante_default_id'     => null,
+        'endulzante_default_id'     => $endulzanteDefaultId,
         'extras'                    => $extras,
         'ingredientes_alternativos' => $ingredientesAlternativos,
     ]);
