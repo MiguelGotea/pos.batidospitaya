@@ -40,8 +40,9 @@ class DbSessionHandler implements SessionHandlerInterface
         return true;
     }
 
-    // Retorna string (datos serializados) o '' si no existe. PHP 7.4 compatible (sin union type).
-    public function read(string $id)
+    // PHP 8.x: se declara el tipo de retorno con atributo para evitar Deprecated notice.
+    #[\ReturnTypeWillChange]
+    public function read(string $id): string|false
     {
         $stmt = $this->pdo->prepare(
             'SELECT `data` FROM `php_sessions` WHERE `session_id` = ? LIMIT 1'
@@ -70,8 +71,9 @@ class DbSessionHandler implements SessionHandlerInterface
         return $stmt->execute([$id]);
     }
 
-    // Retorna int (filas eliminadas) o false en error. PHP 7.4 compatible (sin union type).
-    public function gc(int $max_lifetime)
+    // PHP 8.x: se declara el tipo de retorno con atributo para evitar Deprecated notice.
+    #[\ReturnTypeWillChange]
+    public function gc(int $max_lifetime): int|false
     {
         $limite = time() - $this->maxLifetime;
         $stmt   = $this->pdo->prepare('DELETE FROM `php_sessions` WHERE `last_activity` < ?');
