@@ -1855,10 +1855,7 @@ function _mpRenderContenido(datos) {
             htmlReceta += `
             <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}">
                 <div class="mp-ing-nombre">
-                    <div class="d-flex align-items-center gap-2">
-                        <strong>${escHtml(ing.nombre_ingrediente)}</strong>
-                        <small class="text-muted ms-auto">${_formatearCantidad(ing.cantidad)}</small>
-                    </div>
+                    <strong>${escHtml(ing.nombre_ingrediente)}</strong>
                 </div>
                 <div class="mp-ing-controles">
                     <!-- Combo buscable de sustitución (fuente: tabla extras) -->
@@ -1950,19 +1947,19 @@ function _mpRenderContenido(datos) {
         htmlExtras += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
     }
 
-    /* ---- Ensamblado en 2 columnas: Izquierda (Endulzante + Extras en 2 filas) | Derecha (Ingredientes Receta) ---- */
+    /* ---- Ensamblado en 3 columnas horizontales: Endulzante (izq) | Ingredientes (centro) | Extras (der) ---- */
     let html = '<div class="mp-body-inner p-3">';
-    if (!htmlReceta && (htmlEndulzante || htmlExtras)) {
-        html += '<div class="mp-layout-grid mp-layout-single-col"><div class="mp-col-izq">' + htmlEndulzante + htmlExtras + '</div></div>';
-    } else if (htmlReceta && !htmlEndulzante && !htmlExtras) {
-        html += '<div class="mp-layout-grid mp-layout-single-col"><div class="mp-col-der">' + htmlReceta + '</div></div>';
-    } else {
-        html += '<div class="mp-layout-grid">';
-        html += '<div class="mp-col-izq">' + htmlEndulzante + htmlExtras + '</div>';
-        html += '<div class="mp-col-der">' + htmlReceta + '</div>';
-        html += '</div>';
+    html += '<div class="mp-layout-3cols">';
+    if (htmlEndulzante) {
+        html += '<div class="mp-col-seccion mp-col-endulzante">' + htmlEndulzante + '</div>';
     }
-    html += '</div>';
+    if (htmlReceta) {
+        html += '<div class="mp-col-seccion mp-col-receta">' + htmlReceta + '</div>';
+    }
+    if (htmlExtras) {
+        html += '<div class="mp-col-seccion mp-col-extras">' + htmlExtras + '</div>';
+    }
+    html += '</div></div>';
 
     $('#mpCuerpo').html(html);
     _mpActualizarResumenExtras();

@@ -2034,10 +2034,10 @@
     border-color: rgba(14, 84, 76, 0.5);
 }
 
-/* ---- Diálogo modal de personalización táctil (ancho para 2 columnas sin scroll) ---- */
+/* ---- Diálogo modal de personalización táctil (3 columnas horizontales) ---- */
 #modalPersonalizacion .modal-dialog {
-    max-width: 1060px;
-    width: 95%;
+    max-width: 1240px;
+    width: 96%;
 }
 
 /* ---- Cuerpo interno del modal ---- */
@@ -2046,30 +2046,24 @@
     flex-direction: column;
 }
 
-/* ---- Grid de 2 columnas: Izquierda (Endulzante + Extras) | Derecha (Receta) ---- */
-.mp-layout-grid {
+/* ---- Layout en 3 columnas horizontales: Endulzante (izq) | Receta (centro) | Extras (der) ---- */
+.mp-layout-3cols {
     display: grid;
-    grid-template-columns: 1fr 1.05fr;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 0.85rem;
     align-items: start;
 }
 
-.mp-layout-grid.mp-layout-single-col {
-    grid-template-columns: 1fr;
+@media (min-width: 992px) {
+    .mp-layout-3cols {
+        grid-template-columns: 1fr 1.15fr 1fr;
+    }
 }
 
-.mp-col-izq,
-.mp-col-der {
+.mp-col-seccion {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
     min-width: 0;
-}
-
-@media (max-width: 768px) {
-    .mp-layout-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* ---- Sección genérica ---- */
@@ -2096,28 +2090,12 @@
     color: #0E544C;
 }
 
-/* ---- Lista de ingredientes ---- */
+/* ---- Lista de ingredientes (se expande naturalmente, sin scroll interno separado) ---- */
 .mp-ingredientes-lista {
     padding: .45rem .65rem;
     display: flex;
     flex-direction: column;
     gap: .35rem;
-    max-height: 430px;
-    overflow-y: auto;
-}
-
-.mp-ingredientes-lista::-webkit-scrollbar,
-.mp-extras-acordeon::-webkit-scrollbar {
-    width: 5px;
-}
-.mp-ingredientes-lista::-webkit-scrollbar-thumb,
-.mp-extras-acordeon::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-}
-.mp-ingredientes-lista::-webkit-scrollbar-thumb:hover,
-.mp-extras-acordeon::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
 }
 
 .mp-ingrediente-row {
@@ -2414,12 +2392,10 @@
     color: #fff;
 }
 
-/* ---- Acordeón de grupos de Extras ---- */
+/* ---- Acordeón de grupos de Extras (se expande naturalmente en altura) ---- */
 .mp-extras-acordeon {
     display: flex;
     flex-direction: column;
-    max-height: 240px;
-    overflow-y: auto;
 }
 
 /* Grupo acordeón */
@@ -2527,7 +2503,7 @@
 }
 
 .mp-extras-grupo.abierto .mp-extras-grupo-body {
-    max-height: 600px;
+    max-height: 2000px;
     padding: .5rem .85rem;
 }
 
