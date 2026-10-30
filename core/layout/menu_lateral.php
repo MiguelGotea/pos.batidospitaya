@@ -616,6 +616,18 @@ $menuGlobal = [
         ]
     ],
     [
+        'nombre' => 'Sitio Web',
+        'icon' => 'fas fa-desktop',
+        'cargos_permitidos' => [16, 49, 15],
+        'items' => [
+            [
+                'nombre' => 'CMS batidospitaya.com',
+                'url' => 'marketing/cms_web.php',
+                'cargos_permitidos' => [16, 49, 15]
+            ],
+        ]
+    ],
+    [
         'nombre' => 'Cerrar Sesion',
         'icon' => 'fas fa-sign-out-alt',
         'cargos_permitidos' => [],
