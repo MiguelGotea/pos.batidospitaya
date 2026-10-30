@@ -76,20 +76,34 @@ function iniciarSesionSegura(): void
         }
     }
 
-    // Usar handler de BD solo si la conexión está disponible
+    // Usar handler de BD solo si la conexión está disponible Y el usuario tiene permisos.
+    // Verificación silenciosa ANTES de registrar el handler: en Hostinger, si php_sessions
+    // fue creada por root, el usuario de la app no tiene acceso y session_start() fallaría.
     if ($conn instanceof PDO) {
+        $tienePermisoBD = false;
         try {
-            $handler = new DbSessionHandler($conn, SESSION_DURATION_SECONDS * 2);
-            session_set_save_handler($handler, true);
+            $conn->query('SELECT 1 FROM `php_sessions` LIMIT 1');
+            $tienePermisoBD = true;
         } catch (Throwable $e) {
-            // Captura PDOException, TypeError u otro error al instanciar el handler
-            error_log('[SessionManager] ADVERTENCIA: No se pudo iniciar handler de BD. Usando archivos. ' . $e->getMessage());
+            error_log('[SessionManager] Sin permisos en php_sessions (' . $e->getMessage() . '). Usando sesiones en archivos.');
+        }
+
+        if ($tienePermisoBD) {
+            try {
+                $handler = new DbSessionHandler($conn, SESSION_DURATION_SECONDS * 2);
+                session_set_save_handler($handler, true);
+            } catch (Throwable $e) {
+                error_log('[SessionManager] No se pudo iniciar handler de BD. Usando archivos. ' . $e->getMessage());
+                _sm_usarSesionesPorArchivo();
+            }
+        } else {
             _sm_usarSesionesPorArchivo();
         }
     } else {
-        error_log('[SessionManager] ADVERTENCIA: $conn no disponible. Usando sesiones en archivos.');
+        error_log('[SessionManager] $conn no disponible. Usando sesiones en archivos.');
         _sm_usarSesionesPorArchivo();
     }
+
 
     ini_set('session.gc_maxlifetime',  SESSION_DURATION_SECONDS * 2);
     ini_set('session.cookie_lifetime', SESSION_DURATION_SECONDS);
