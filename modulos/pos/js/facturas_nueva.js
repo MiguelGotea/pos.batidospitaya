@@ -624,7 +624,8 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
         endulzante_id:            null,
         endulzante_nombre:        '',
         extras_agregados:         [],
-        monto_extras:             0
+        monto_extras:             0,
+        notas:                    ''
     };
 
     // Configurar encabezado del modal
@@ -722,12 +723,16 @@ function _mspSeleccionarProducto(idx) {
         endulzante_id:            null,
         endulzante_nombre:        '',
         extras_agregados:         [],
-        monto_extras:             0
+        monto_extras:             0,
+        notas:                    ''
     };
 
     // Solo si estamos en modo edición de un ítem del ticket, precargar su personalización
-    if (_mspModoEdicion && _mspIdxTicket >= 0 && detalleFactura[_mspIdxTicket] && detalleFactura[_mspIdxTicket].personalizacion) {
-        _mpDraft = JSON.parse(JSON.stringify(detalleFactura[_mspIdxTicket].personalizacion));
+    if (_mspModoEdicion && _mspIdxTicket >= 0 && detalleFactura[_mspIdxTicket]) {
+        if (detalleFactura[_mspIdxTicket].personalizacion) {
+            _mpDraft = JSON.parse(JSON.stringify(detalleFactura[_mspIdxTicket].personalizacion));
+        }
+        _mpDraft.notas = detalleFactura[_mspIdxTicket].notas || _mpDraft.notas || '';
     }
 
     // Mostrar spinner mientras carga receta
@@ -766,7 +771,7 @@ function _mspSeleccionarProducto(idx) {
  * Para identificar filas en el DOM se usa _rowKey (contador único),
  * ya que el mismo id_presentacion puede aparecer varias veces.
  */
-function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoObj, personalizacion) {
+function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoObj, personalizacion, notas) {
     const precioNum    = parseFloat(precio) || 0;
     const prodCatalogo = productoObj || todosProductos.find(p => parseInt(p.id) === parseInt(id)) || {};
 
@@ -777,6 +782,8 @@ function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoO
     // Clave de fila única para el DOM (independiente de id_presentacion)
     const rowKey = ++_rowKeyCounter;
 
+    const notasTexto = (typeof notas === 'string') ? notas : ((personalizacion && personalizacion.notas) ? personalizacion.notas : '');
+
     const nuevoItem = {
         _rowKey:              rowKey,                // identificador único de esta fila
         id_presentacion:      parseInt(id),
@@ -786,7 +793,7 @@ function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoO
         precio_unitario:      precioFinal,
         cantidad:             1,
         costo_total_iva:      precioFinal,
-        notas:                '',
+        notas:                notasTexto,
         es_personalizable:    parseInt(esPersonalizable) === 1,
         es_canjeado:          false,
         descuento_promo:      0,
@@ -802,7 +809,8 @@ function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoO
             endulzante_id:            null,
             endulzante_nombre:        '',
             extras_agregados:         [],
-            monto_extras:             0
+            monto_extras:             0,
+            notas:                    notasTexto
         }
     };
 
@@ -848,16 +856,17 @@ function actualizarTablaDetalle() {
         const pers = item.personalizacion || {};
         let tagsList = [];
         if (pers.endulzante_nombre) {
-            tagsList.push(`<span class="badge-pers-item"><i class="bi bi-water"></i> ${escHtml(pers.endulzante_nombre)}</span>`);
+            const endulzanteLimpio = escHtml(pers.endulzante_nombre.replace(/\s*[-—–]\s*/g, ' ').trim());
+            tagsList.push(`<span class="badge-pers-item"><i class="bi bi-water"></i> ${endulzanteLimpio}</span>`);
         }
         if (pers.ingredientes_quitados && pers.ingredientes_quitados.length) {
-            tagsList.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> Sin: ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`);
+            tagsList.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`);
         }
         if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length) {
             tagsList.push(`<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`);
         }
         if (pers.extras_agregados && pers.extras_agregados.length) {
-            tagsList.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`);
+            tagsList.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`);
         }
 
         // Badges de puntos Club Pitaya
@@ -980,20 +989,19 @@ function actualizarTablaDetalle() {
             </tr>`;
         }
 
-        // FILA 4: Notas
-        html += `
-        <tr class="fila-producto-nota ${canjeCls}" data-idx="${idx}">
-            <td colspan="${numCols}">
-                <div class="item-nota-row">
-                    <span class="item-nota-lbl">Notas:</span>
-                    <input type="text" class="item-nota-input"
-                           placeholder="Escribir nota del producto (ej. sin pajilla, poco hielo, mensaje en vaso)..."
-                           value="${escAttr(item.notas || '')}"
-                           data-idx="${idx}"
-                           oninput="actualizarNotaItem(${idx}, this.value)">
-                </div>
-            </td>
-        </tr>`;
+        // FILA 4: Notas (solo si se registraron notas; la edición es únicamente en el modal de personalización)
+        const tieneNota = Boolean(item.notas && item.notas.trim());
+        if (tieneNota) {
+            html += `
+            <tr class="fila-producto-nota ${canjeCls}" data-idx="${idx}">
+                <td colspan="${numCols}">
+                    <div class="item-nota-row item-nota-readonly">
+                        <span class="item-nota-lbl">Notas:</span>
+                        <span class="item-nota-texto">${escHtml(item.notas.trim())}</span>
+                    </div>
+                </td>
+            </tr>`;
+        }
     });
 
     $('#tablaDetalleBody').html(html);
@@ -1713,8 +1721,10 @@ function abrirModalPersonalizacion(idx) {
         endulzante_id:            null,
         endulzante_nombre:        '',
         extras_agregados:         [],
-        monto_extras:             0
+        monto_extras:             0,
+        notas:                    ''
     }));
+    _mpDraft.notas = (typeof item.notas === 'string') ? item.notas : (_mpDraft.notas || '');
 
     // Actualizar título del modal — sin selector de productos (ya está elegido)
     $('#modalPersonalizacionLabel').text('Personalizar: ' + item.nombre);
@@ -1791,7 +1801,7 @@ function _mpRenderContenido(datos) {
             }
             if (sugerido) {
                 _mpDraft.endulzante_id = parseInt(sugerido.id);
-                _mpDraft.endulzante_nombre = sugerido.nombre ? (sugerido.nombre + (sugerido.nombre_opcion ? (' — ' + sugerido.nombre_opcion) : '')) : (sugerido.nombre_opcion || sugerido.nombre);
+                _mpDraft.endulzante_nombre = sugerido.nombre ? (sugerido.nombre + (sugerido.nombre_opcion ? (' ' + sugerido.nombre_opcion) : '')) : (sugerido.nombre_opcion || sugerido.nombre);
                 _mpDraft.endulzante_nombre_grupo = sugerido.nombre;
             }
         }
@@ -1982,12 +1992,28 @@ function _mpRenderContenido(datos) {
         htmlExtras += '</div></div>'; // cierre mp-extras-acordeon y mp-seccion
     }
 
-    /* ---- Ensamblado en 3 columnas horizontales: Endulzante (izq) | Ingredientes (centro) | Extras (der) ---- */
+    /* ---- SECCIÓN: Notas (debajo del campo endulzante) ---- */
+    let htmlNotas = `
+    <div class="mp-seccion mp-seccion-notas ${htmlEndulzante ? 'mt-2' : ''}">
+        <div class="mp-seccion-header">
+            <i class="bi bi-chat-left-text"></i> Notas
+            <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Indicaciones especiales</small>
+        </div>
+        <div class="p-2">
+            <div class="item-nota-row">
+                <span class="item-nota-lbl">Notas:</span>
+                <input type="text" id="mpInputNotas" class="item-nota-input"
+                       placeholder="Escribir nota del producto (ej. sin pajilla, poco hielo, mensaje en vaso)..."
+                       value="${escAttr(_mpDraft.notas || '')}"
+                       oninput="_mpDraft.notas = this.value">
+            </div>
+        </div>
+    </div>`;
+
+    /* ---- Ensamblado en 3 columnas horizontales: Endulzante + Notas (izq) | Ingredientes (centro) | Extras (der) ---- */
     let html = '<div class="mp-body-inner p-3">';
     html += '<div class="mp-layout-3cols">';
-    if (htmlEndulzante) {
-        html += '<div class="mp-col-seccion mp-col-endulzante">' + htmlEndulzante + '</div>';
-    }
+    html += '<div class="mp-col-seccion mp-col-endulzante">' + (htmlEndulzante || '') + htmlNotas + '</div>';
     if (htmlReceta) {
         html += '<div class="mp-col-seccion mp-col-receta">' + htmlReceta + '</div>';
     }
@@ -2139,7 +2165,7 @@ function _mpSeleccionarGrupoEndulzante(btn) {
         const selOpt = select.options[select.selectedIndex];
         const varNombre = selOpt.dataset.nombre || selOpt.text;
         _mpDraft.endulzante_id = parseInt(selOpt.value);
-        _mpDraft.endulzante_nombre = grupo + ' — ' + varNombre;
+        _mpDraft.endulzante_nombre = grupo ? (grupo + ' ' + varNombre) : varNombre;
     } else {
         // Opción única: solo el nombre del grupo
         _mpDraft.endulzante_id = parseInt(btn.dataset.primeraId);
@@ -2154,7 +2180,7 @@ function _mpSeleccionarVarianteEndulzante(select) {
     const varNombre = selOpt.dataset.nombre || selOpt.text;
     const grupo = select.dataset.grupo || '';
     _mpDraft.endulzante_id = parseInt(selOpt.value);
-    _mpDraft.endulzante_nombre = grupo ? (grupo + ' — ' + varNombre) : varNombre;
+    _mpDraft.endulzante_nombre = grupo ? (grupo + ' ' + varNombre) : varNombre;
 }
 
 /* ---- Toggle extra (agregar/quitar) ---- */
@@ -2221,11 +2247,14 @@ function _mpActualizarResumenExtras() {
  *    - Se actualiza su personalización y precio sin crear un nuevo ítem
  */
 $('#mpBtnGuardar').on('click', function () {
+    const notaIngresada = $('#mpInputNotas').length ? $('#mpInputNotas').val().trim() : (_mpDraft.notas || '').trim();
+    _mpDraft.notas = notaIngresada;
 
     /* ── MODO EDICIÓN (ítem ya existente en el ticket) ── */
     if (_mspModoEdicion && _mpIdx >= 0 && detalleFactura[_mpIdx]) {
         const item = detalleFactura[_mpIdx];
         item.personalizacion = JSON.parse(JSON.stringify(_mpDraft));
+        item.notas = notaIngresada;
 
         // Ajustar precio_unitario: precio base + monto de extras
         item.precio_unitario = Math.round(((item.precio_unitario_base || 0) + (_mpDraft.monto_extras || 0)) * 100) / 100;
@@ -2262,7 +2291,8 @@ $('#mpBtnGuardar').on('click', function () {
         precio,
         p.es_personalizable,
         p,
-        draft
+        draft,
+        notaIngresada
     );
 
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion')).hide();
