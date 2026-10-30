@@ -114,7 +114,19 @@ function iniciarSesionSegura(): void
         session_set_cookie_params(SESSION_DURATION_SECONDS, '/; samesite=Lax', '', $isSecure, true);
     }
 
-    session_start();
+    // Iniciar sesión: si el handler de BD falla durante session_start()
+    // (ej: permisos MySQL incorrectos en php_sessions), caer a archivos.
+    try {
+        session_start();
+    } catch (Throwable $e) {
+        error_log('[SessionManager] session_start() falló con handler BD: ' . $e->getMessage() . ' — reintentando con archivos.');
+        // Desregistrar el handler de BD y cambiar a archivos
+        session_set_save_handler(new SessionHandler(), true);
+        _sm_usarSesionesPorArchivo();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+    }
 }
 
 /**
