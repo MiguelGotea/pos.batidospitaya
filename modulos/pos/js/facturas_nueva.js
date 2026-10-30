@@ -835,60 +835,70 @@ function actualizarTablaDetalle() {
         const precioNormalTotal = Math.round(item.cantidad * precioUnit * 100) / 100;
         const precioTotalLinea = item.es_canjeado ? 0 : (item.costo_total_iva || 0);
 
-        /* Resumen de personalización visible en la fila */
+        /* Resumen de personalización visible en Fila 2 */
         const pers = item.personalizacion || {};
-        let resumenPers = '';
-        if (pers.endulzante_nombre) resumenPers += `<span class="badge-pers-item"><i class="bi bi-water"></i> ${escHtml(pers.endulzante_nombre)}</span>`;
-        if (pers.ingredientes_quitados && pers.ingredientes_quitados.length)
-            resumenPers += `<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> Sin: ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`;
-        if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length)
-            resumenPers += `<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`;
-        if (pers.extras_agregados && pers.extras_agregados.length)
-            resumenPers += `<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`;
+        let tagsList = [];
+        if (pers.endulzante_nombre) {
+            tagsList.push(`<span class="badge-pers-item"><i class="bi bi-water"></i> ${escHtml(pers.endulzante_nombre)}</span>`);
+        }
+        if (pers.ingredientes_quitados && pers.ingredientes_quitados.length) {
+            tagsList.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> Sin: ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`);
+        }
+        if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length) {
+            tagsList.push(`<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`);
+        }
+        if (pers.extras_agregados && pers.extras_agregados.length) {
+            tagsList.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> Extra: ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`);
+        }
 
-        // Badges de puntos Club Pitaya (solo visibles con cliente club activo)
-        // Cálculo de puntos efectivos considerando exclusión parcial por condición de promo
-        const qtyCond   = parseInt(item.qty_condicion || 0); // unidades que son condición
-        const cantLibre = Math.max(0, item.cantidad - qtyCond); // unidades que acumulan
-        const ptsEfectivos = cantLibre * (item.puntos_acumulacion || 0); // puntos reales
+        // Badges de puntos Club Pitaya
+        const qtyCond   = parseInt(item.qty_condicion || 0);
+        const cantLibre = Math.max(0, item.cantidad - qtyCond);
+        const ptsEfectivos = cantLibre * (item.puntos_acumulacion || 0);
 
-        // Badge condición de promo: siempre que alguna unidad sea condición
-        const badgeCondicion = esClubValido && item.es_condicion_promo
-            ? `<span class="badge-condicion-promo ms-1" title="${qtyCond} unidad(es) son condición de promoción activa — no acumulan puntos ni son canjeables"><i class="bi bi-tag-fill me-1"></i>COND. ×${qtyCond}</span>`
+        // Tag amarillo de condición de promoción: sin texto, solo el icono de tag
+        const badgeCondicion = item.es_condicion_promo
+            ? `<span class="badge-condicion-tag-mini ms-1" title="${qtyCond > 0 ? qtyCond + ' unidad(es) son condición de promoción activa' : 'Condición de promoción activa'}"><i class="bi bi-tag-fill"></i></span>`
             : '';
 
-        // Badge acumulación: solo cuando hay unidades libres (no condición) con puntos configurados
-        const badgeAcum = esClubValido && item.puntos_acumulacion != null && ptsEfectivos > 0 && !item.es_canjeado
-            ? `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts × ${cantLibre} unidad(es) libre(s)">⭐ +${ptsEfectivos.toFixed(2)} pts</span>`
-            : '';
+        // Puntos acumulados o reducidos
+        let badgePts = '';
+        if (esClubValido) {
+            if (item.es_canjeado && item.puntos_canje != null) {
+                badgePts = `<span class="badge-puntos-canje ms-1" title="Canjeando por ${item.puntos_canje} pts">🔴 -${item.puntos_canje} pts</span>`;
+            } else if (item.puntos_acumulacion != null && ptsEfectivos > 0) {
+                badgePts = `<span class="badge-puntos-acum ms-1" title="Acumula ${item.puntos_acumulacion} pts × ${cantLibre} unidad(es) libre(s)">⭐ +${ptsEfectivos.toFixed(2)} pts</span>`;
+            }
+        }
 
-        // Badge de costo de canje: visible SOLO cuando el toggle de canjeado está activo
-        const badgePtsCanje = esClubValido && item.es_canjeado && item.puntos_canje != null && !item.es_condicion_promo
-            ? `<small class="badge-puntos-canje d-block mt-1" title="Canjeando por ${item.puntos_canje} pts">🔴 -${item.puntos_canje} pts</small>`
-            : '';
-
-        // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo (ni parcial)
+        // El toggle es canjeable si: cliente club válido + tiene regla de canje + NO es condición de promo
         const esCanjeable = esClubValido && item.puntos_canje != null && !item.es_condicion_promo;
 
-        html += `
-        <tr id="fila-${item._rowKey}" class="fila-producto-principal ${item.es_canjeado ? 'fila-canjeada' : ''}" data-idx="${idx}">
-            <td>
-                <div class="d-flex align-items-start gap-1">
-                    <div class="flex-grow-1">
-                        <div class="d-flex align-items-center flex-wrap gap-1">
-                            <strong style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
-                            ${badgeCondicion}${badgeAcum}
-                        </div>
+        // Descuentos y Promoción aplicada
+        const _dto = parseFloat(item.descuento_promo) || 0;
+        const _promoNom = (item.promos_en_item && item.promos_en_item.length > 0)
+            ? item.promos_en_item.map(function(pp){ return escHtml(pp.nombre); }).join(', ')
+            : '';
+        const _pFin = Math.max(0, Math.round((precioTotalLinea - _dto) * 100) / 100);
+        const _pFmtOrig = precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const _pFmtFin  = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-                        ${badgePtsCanje}
-                        ${resumenPers ? `<div class="mt-1 d-flex flex-wrap gap-1">${resumenPers}</div>` : ''}
-                    </div>
+        const canjeCls = item.es_canjeado ? 'fila-canjeada' : '';
+
+        // FILA 1: Nombre | Puntos acumulado o reducidos | tag amarillo condición | Cantidad con las flechas
+        html += `
+        <tr id="fila-${item._rowKey}" class="fila-producto-principal ${canjeCls}" data-idx="${idx}">
+            <td>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                    <strong class="item-nombre" style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
                     ${item.es_personalizable ? `<button type="button" class="btn-personalizar-fila" onclick="abrirModalPersonalizacion(${idx})" title="Personalizar receta">
-                        <i class="bi bi-sliders2"></i>
+                        <i class="bi bi-pencil"></i>
                     </button>` : ''}
+                    ${badgePts}
+                    ${badgeCondicion}
                 </div>
             </td>
-            <td class="text-center" style="width:115px;">
+            <td class="text-center" style="width:105px;">
                 <div class="qty-control">
                     <button type="button" class="qty-btn" onclick="modificarCantidad(${idx}, -1)" title="Disminuir">
                         <i class="bi bi-dash-lg"></i>
@@ -902,7 +912,7 @@ function actualizarTablaDetalle() {
                     </button>
                 </div>
             </td>
-            <td class="text-end" style="white-space: nowrap;">
+            <td class="text-end" style="width:100px; white-space:nowrap;">
                 ${item.es_canjeado ? `
                     <del class="d-block precio-tachado-canje" style="font-variant-numeric: tabular-nums;">
                         C$ ${precioNormalTotal.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -911,24 +921,17 @@ function actualizarTablaDetalle() {
                         C$ 0.00
                     </strong>
                 ` : `
-                    ${(() => {
-                        var _dto   = parseFloat(item.descuento_promo) || 0;
-                        var _pFin  = Math.max(0, Math.round((precioTotalLinea - _dto) * 100) / 100);
-                        var _pFmtOrig = precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        var _pFmtFin  = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        var _promoNom = (item.promos_en_item && item.promos_en_item.length > 0) ? item.promos_en_item.map(function(pp){ return escHtml(pp.nombre); }).join(', ') : '';
-                        if (_dto > 0) {
-                            return `<del class="precio-con-promo-tachado">C$ ${_pFmtOrig}</del>`
-                                 + `<strong class="precio-con-promo-final d-block">C$ ${_pFmtFin}</strong>`
-                                 + (_promoNom ? `<small class="badge-promo-linea d-block mt-1">${_promoNom}</small>` : '');
-                        }
-                        return `<strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">C$ ${_pFmtOrig}</strong>`
-                             + (item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : '')
-                             + ((pers.monto_extras || 0) > 0 ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : '');
-                    })()}
+                    ${_dto > 0 ? `
+                        <del class="precio-con-promo-tachado">C$ ${_pFmtOrig}</del>
+                        <strong class="precio-con-promo-final d-block">C$ ${_pFmtFin}</strong>
+                    ` : `
+                        <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">C$ ${_pFmtOrig}</strong>
+                        ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
+                        ${((pers.monto_extras || 0) > 0) ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
+                    `}
                 `}
             </td>
-            <td class="text-center" style="width:65px;">
+            <td class="text-center" style="width:70px;">
                 ${esCanjeable || item.es_canjeado ? `
                 <label class="switch-canje-pos"
                        title="${item.es_canjeado ? 'Desmarcar canje' : `Canjear por ${item.puntos_canje} pts`}">
@@ -946,8 +949,37 @@ function actualizarTablaDetalle() {
                     <i class="bi bi-x-circle-fill"></i>
                 </button>
             </td>
-        </tr>
-        <tr class="fila-producto-nota" data-idx="${idx}">
+        </tr>`;
+
+        // FILA 2: Tags de cambios de ingrediente, quitar ingredientes y extras
+        if (tagsList.length > 0) {
+            html += `
+            <tr class="fila-producto-tags ${canjeCls}" data-idx="${idx}">
+                <td colspan="5">
+                    <div class="fila-tags-container">
+                        ${tagsList.join('')}
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        // FILA 3: Promoción aplicada
+        if (_promoNom || _dto > 0) {
+            html += `
+            <tr class="fila-producto-promo ${canjeCls}" data-idx="${idx}">
+                <td colspan="5">
+                    <div class="fila-promo-container">
+                        <span class="badge-promo-linea-full">
+                            <i class="bi bi-tag-fill me-1"></i>${_promoNom || 'Promoción aplicada'}${_dto > 0 ? ` <span class="ms-1 fw-bold">(-C$ ${_dto.toFixed(2)})</span>` : ''}
+                        </span>
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        // FILA 4: Notas
+        html += `
+        <tr class="fila-producto-nota ${canjeCls}" data-idx="${idx}">
             <td colspan="5">
                 <div class="item-nota-row">
                     <span class="item-nota-lbl">Notas:</span>

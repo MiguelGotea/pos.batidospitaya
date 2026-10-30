@@ -14,25 +14,25 @@
     margin: 0 !important;
 }
 
-/* ---- Layout Split ---- */
+/* ---- Layout Split (50% / 50%) ---- */
 .facturas-layout {
     display: grid;
-    grid-template-columns: 1fr 520px;
-    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.25rem;
     align-items: start;
 }
 
 @media (min-width: 1600px) {
     .facturas-layout {
-        grid-template-columns: 1fr 560px;
-        gap: 1.75rem;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.5rem;
     }
 }
 
 @media (max-width: 1280px) {
     .facturas-layout {
-        grid-template-columns: 1fr 480px;
-        gap: 1.25rem;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1rem;
     }
 }
 
@@ -1001,26 +1001,55 @@
     margin-left: 0.35rem;
 }
 
-/* ---- Notas por producto en factura (ancho completo) ---- */
+/* ---- 4 Filas por producto en factura ---- */
 .tabla-detalle-factura tbody tr.fila-producto-principal {
     border-bottom: none;
 }
 
 .tabla-detalle-factura tbody tr.fila-producto-principal td {
     border-bottom: none;
+    padding-top: 0.55rem;
     padding-bottom: 0.2rem;
 }
 
+.tabla-detalle-factura tbody tr.fila-producto-tags td {
+    border-bottom: none;
+    padding-top: 0;
+    padding-bottom: 0.2rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+}
+
+.tabla-detalle-factura tbody tr.fila-producto-promo td {
+    border-bottom: none;
+    padding-top: 0;
+    padding-bottom: 0.2rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+}
+
 .tabla-detalle-factura tbody tr.fila-producto-nota {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1.5px solid #e2e8f0;
 }
 
 .tabla-detalle-factura tbody tr.fila-producto-nota td {
     border-bottom: none;
-    padding-top: 0;
-    padding-bottom: 0.35rem;
+    padding-top: 0.1rem;
+    padding-bottom: 0.45rem;
     padding-left: 0.65rem;
     padding-right: 0.65rem;
+}
+
+.fila-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    padding: 2px 0 2px 0;
+}
+
+.fila-promo-container {
+    padding: 2px 0 2px 0;
 }
 
 .item-nota-row {
@@ -1397,21 +1426,26 @@
     max-height: calc(100vh - 210px);
 }
 
-/* ---- Columnas de subgrupos ---- */
+/* ---- Columnas de subgrupos (2 columnas) ---- */
 .subgrupos-columnas {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
     align-items: flex-start;
+}
+
+@media (max-width: 576px) {
+    .subgrupos-columnas {
+        grid-template-columns: 1fr;
+    }
 }
 
 .subgrupo-col {
     display: flex;
     flex-direction: column;
     gap: .5rem;
-    min-width: 150px;
-    max-width: 210px;
-    flex: 1 1 160px;
+    min-width: 0;
+    width: 100%;
 }
 
 .subgrupo-header {
@@ -3079,6 +3113,37 @@
             white-space: nowrap;
         }
 
+        /* Tag amarillo de condición de promoción: sin texto, solo el tag */
+        .badge-condicion-tag-mini {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: #f59e0b;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 0.74rem;
+            box-shadow: 0 1px 2px rgba(245, 158, 11, 0.35);
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        /* Promoción aplicada (Fila 3) */
+        .badge-promo-linea-full {
+            display: inline-flex;
+            align-items: center;
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
         /* Badge: puntos de acumulación (verde) */
         .badge-puntos-acum {
             display: inline-flex;
@@ -3210,18 +3275,16 @@
 
         /* La columna de PRODUCTO ocupa el espacio sobrante; las otras son fijas */
         .tabla-detalle-factura thead th:first-child,
-        .tabla-detalle-factura tbody td:first-child {
+        .tabla-detalle-factura tbody tr.fila-producto-principal td:first-child {
             min-width: 0;
-            overflow: hidden;
         }
 
-        /* Badges de personalización: no fuerzan ancho horizontal */
+        /* Badges de personalización en Fila 2 */
         .badge-pers-item {
-            white-space: normal !important;
-            word-break: break-word;
-            max-width: 140px;
+            white-space: nowrap !important;
+            max-width: none !important;
             display: inline-flex !important;
-            flex-wrap: wrap;
+            font-size: 0.72rem;
         }
 
         /* ---- Qty buttons más grandes para touch ---- */

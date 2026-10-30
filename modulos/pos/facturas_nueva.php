@@ -231,11 +231,11 @@ try {
                                     <table class="tabla-detalle-factura">
                                         <thead>
                                             <tr>
-                                                <th style="width:42%;">PRODUCTO</th>
-                                                <th style="width:20%;" class="text-center">CANT.</th>
-                                                <th style="width:20%;" class="text-end">PRECIO</th>
-                                                <th style="width:12%;" class="text-center">CANJEADO</th>
-                                                <th style="width:6%;" class="text-center"></th>
+                                                <th>PRODUCTO</th>
+                                                <th style="width:105px;" class="text-center">CANT.</th>
+                                                <th style="width:100px;" class="text-end">PRECIO</th>
+                                                <th style="width:70px;" class="text-center">CANJEADO</th>
+                                                <th style="width:40px;" class="text-center"></th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaDetalleBody">
@@ -423,7 +423,7 @@ try {
                 <div class="modal-header modal-header-pos">
                     <div class="d-flex align-items-center gap-3">
                         <div class="modal-icon-badge">
-                            <i class="bi bi-sliders2"></i>
+                            <i class="bi bi-pencil"></i>
                         </div>
                         <div>
                             <h5 class="modal-title mb-0" id="modalPersonalizacionLabel">Seleccionar Producto</h5>
