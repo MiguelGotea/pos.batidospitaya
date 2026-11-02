@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -1632,7 +1632,7 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         const idFactura = res.id_factura;
         $btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Preparando impresión…');
 
-        $.get('/modulos/pos/ajax/facturas_get_imprimibles.php', {
+        $.post('/modulos/pos/ajax/facturas_get_imprimibles.php', {
             id_factura: idFactura,
             cart_data:  detalleStr,
         }, function (impData) {

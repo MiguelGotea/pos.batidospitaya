@@ -10,7 +10,7 @@ require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $idFactura = isset($_GET['id_factura']) ? (int)$_GET['id_factura'] : 0;
+    $idFactura = isset($_REQUEST['id_factura']) ? (int)$_REQUEST['id_factura'] : 0;
     if ($idFactura <= 0) {
         throw new Exception('ID de factura inválido.');
     }
@@ -137,8 +137,8 @@ try {
     // Si tenemos id_endulzante_producto, buscar en producto_presentacion y luego mapear
     // Alternativamente, aceptar datos adicionales via POST (carrito original)
     $cartData = [];
-    if (!empty($_GET['cart_data'])) {
-        $cartData = json_decode($_GET['cart_data'], true) ?: [];
+    if (!empty($_REQUEST['cart_data'])) {
+        $cartData = json_decode($_REQUEST['cart_data'], true) ?: [];
     }
     // Indexar cartData por id_presentacion para lookup rápido
     $cartIndex = [];

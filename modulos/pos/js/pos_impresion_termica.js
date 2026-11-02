@@ -40,46 +40,69 @@ function lanzarImpresionCompleta(payload) {
     imprimirSecuencial(documentos, 0);
 }
 
-/* ── Impresión secuencial vía iframes ───────────────────────────────────────── */
+/* ── Impresión secuencial vía window.open ───────────────────────────────────────
+   Funciona en DOS modos:
+   - Kiosk (--kiosk-printing): print() va directo sin diálogo, ventana se cierra sola
+   - Normal: print() muestra el diálogo estándar del navegador (Ctrl+P normal)
+   En ambos casos, window.print() es SINCRÓNICO: bloquea hasta que el usuario
+   cierra el diálogo o la impresión termina. Esto garantiza orden correcto.
+   ──────────────────────────────────────────────────────────────────────────────── */
 function imprimirSecuencial(documentos, indice) {
     if (indice >= documentos.length) return;
 
     const doc = documentos[indice];
-    const iframe = document.createElement('iframe');
 
-    iframe.style.position = 'fixed';
-    iframe.style.top      = '-9999px';
-    iframe.style.left     = '-9999px';
-    iframe.style.width    = '80mm';
-    iframe.style.height   = '1px';
-    iframe.style.border   = 'none';
-    iframe.style.opacity  = '0';
+    // Abrir ventana pequeña (en kiosk apenas es visible, en normal es la ventana de contenido)
+    const win = window.open(
+        '',
+        '_blank',
+        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=420,height=600'
+    );
 
-    document.body.appendChild(iframe);
+    if (!win) {
+        // El navegador bloqueó el popup (no debería ocurrir porque viene de gesto del usuario)
+        console.warn('[POS] Popup bloqueado para documento ' + indice + ' (' + doc.tipo + ')');
+        // Intentar el siguiente
+        setTimeout(() => imprimirSecuencial(documentos, indice + 1), 300);
+        return;
+    }
 
-    // Escribir HTML del documento en el iframe
-    const iDoc = iframe.contentWindow.document;
-    iDoc.open();
-    iDoc.write(doc.html);
-    iDoc.close();
+    // Escribir HTML en la ventana nueva
+    win.document.open();
+    win.document.write(doc.html);
+    win.document.close();
 
-    // Esperar a que cargue el CSS/imágenes antes de imprimir
-    iframe.contentWindow.addEventListener('load', function () {
+    let yaImprimio = false;
+
+    const ejecutarImpresion = () => {
+        if (yaImprimio) return;
+        yaImprimio = true;
+
+        try {
+            win.focus();
+            win.print();  // SINCRÓNICO: bloquea hasta cerrar diálogo o fin de kiosk print
+        } catch (e) {
+            console.warn('[POS] Error al imprimir documento ' + indice, e);
+        }
+
+        // Cerrar la ventana del ticket y pasar al siguiente
         setTimeout(() => {
-            try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            } catch (e) {
-                console.warn('Error al imprimir documento ' + indice, e);
-            }
+            try { win.close(); } catch (e2) { /* ignorar */ }
+            imprimirSecuencial(documentos, indice + 1);
+        }, IMPRESION_DELAY_MS);
+    };
 
-            // Siguiente documento después del retardo
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-                imprimirSecuencial(documentos, indice + 1);
-            }, IMPRESION_DELAY_MS);
-        }, 300); // pequeño delay para que el CSS renderice
-    });
+    // onload ANTES de document.write para capturar el evento correctamente
+    win.onload = () => setTimeout(ejecutarImpresion, 350);
+
+    // Escribir HTML en la ventana nueva (dispara el proceso de carga)
+    win.document.open();
+    win.document.write(doc.html);
+    win.document.close();
+
+    // Fallback: si onload no se dispara (Chrome a veces no lo hace en document.write)
+    // usamos un timeout que activa la impresión directamente
+    setTimeout(ejecutarImpresion, 1000);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -88,18 +111,82 @@ function imprimirSecuencial(documentos, indice) {
 
 /* ── Plantilla base HTML para cada ticket ───────────────────────────────────── */
 function plantillaBase(contenido) {
+    // Los estilos se incluyen INLINE para evitar dependencia de carga externa.
+    // La hoja CSS externa también se enlaza como respaldo para modo screen (preview).
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ticket</title>
 <link rel="stylesheet" href="${IMPRESION_CSS_URL}">
 <style>
-  @media print {
-    @page { size: 80mm auto; margin: 2mm; }
-    body  { margin: 0; padding: 0; }
-  }
+/* ── Reset ── */
+* { box-sizing: border-box; }
+@media print {
+  @page { size: 80mm auto; margin: 2mm 2mm; }
+  html, body { width: 76mm; margin: 0; padding: 0; background: #fff; }
+}
+/* ── Base del ticket ── */
+body { font-family: 'Courier New', Courier, monospace; font-size: 9pt; line-height: 1.35; color: #000; background: #fff; margin: 0; padding: 0; }
+.ticket-wrapper { width: 76mm; margin: 0 auto; padding: 0; }
+/* ── Cabecera ── */
+.ticket-logo { display: block; max-width: 55mm; height: auto; margin: 0 auto 2mm auto; }
+.ticket-header { text-align: center; }
+.ticket-bienvenida { font-size: 10pt; font-weight: bold; text-align: center; margin: 1mm 0; }
+.ticket-meta { font-size: 7.5pt; text-align: center; margin: 1mm 0; line-height: 1.4; }
+.ticket-sep { border: none; border-top: 1px dashed #000; margin: 2mm 0; }
+.ticket-sep-solid { border: none; border-top: 1.5px solid #000; margin: 2mm 0; }
+/* ── Tabla factura ── */
+.ticket-tabla { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+.ticket-tabla th { font-weight: bold; font-size: 8pt; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 1mm; text-align: left; }
+.ticket-tabla td { padding: 0.5mm 0; vertical-align: top; }
+.ticket-tabla th.col-num, .ticket-tabla td.col-num { text-align: center; width: 8mm; }
+.ticket-tabla th.col-pu, .ticket-tabla td.col-pu,
+.ticket-tabla th.col-pt, .ticket-tabla td.col-pt { text-align: right; width: 16mm; }
+.ticket-prod-nombre { font-weight: bold; font-size: 8.5pt; }
+.ticket-pers-lista { list-style: none; margin: 0.5mm 0 0 2mm; padding: 0; font-size: 7.5pt; color: #333; }
+.ticket-pers-lista li::before { content: '- '; }
+.ticket-canje-badge { font-size: 7pt; font-weight: bold; border: 1px solid #000; padding: 0 1mm; display: inline-block; margin-top: 0.5mm; }
+/* ── Totales ── */
+.ticket-totales { margin-top: 2mm; font-size: 8.5pt; }
+.ticket-totales-fila { display: flex; justify-content: space-between; padding: 0.3mm 0; }
+.ticket-totales-fila.total-grande { font-size: 10pt; font-weight: bold; border-top: 1.5px solid #000; margin-top: 1mm; padding-top: 1mm; }
+/* ── Pie ── */
+.ticket-footer { text-align: center; font-size: 7.5pt; margin-top: 3mm; line-height: 1.5; }
+.ticket-wifi { font-weight: bold; font-size: 8pt; }
+/* ── Comanda: cabecera estación ── */
+.comanda-estacion-titulo { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 0.5mm; border: 2px solid #000; padding: 1.5mm 2mm; margin-bottom: 2mm; line-height: 1.2; }
+.comanda-meta { font-size: 8pt; margin-bottom: 2mm; line-height: 1.4; }
+.comanda-meta-fila { display: flex; justify-content: space-between; }
+/* ── Comanda: bloque de producto ── */
+.comanda-producto-bloque { margin-bottom: 3mm; border-bottom: 1px dashed #555; padding-bottom: 2mm; }
+.comanda-prod-encabezado { display: flex; align-items: center; gap: 2mm; margin-bottom: 1.5mm; }
+.comanda-prod-cantidad { font-size: 14pt; font-weight: bold; border: 1.5px solid #000; min-width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 1mm; }
+.comanda-prod-nombre { font-size: 10pt; font-weight: bold; line-height: 1.2; }
+/* ── Comanda: notas ── */
+.comanda-notas { background: #eee; border: 1px solid #bbb; padding: 1mm 2mm; font-size: 8pt; font-style: italic; margin-bottom: 1.5mm; word-break: break-word; }
+.comanda-notas-label { font-weight: bold; font-style: normal; font-size: 7.5pt; text-transform: uppercase; }
+/* ── Comanda: tabla ingredientes ── */
+.comanda-ingredientes { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.comanda-ingredientes th { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; text-align: left; padding-bottom: 0.5mm; }
+.comanda-ingredientes td { padding: 0.4mm 0; vertical-align: middle; }
+.comanda-ingredientes th.col-tipo, .comanda-ingredientes td.col-tipo { width: 5mm; font-weight: bold; text-align: center; }
+.comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 9mm; text-align: right; }
+/* ── Tachado grueso ── */
+.comanda-tachado, .comanda-fila-tachada td {
+  text-decoration: line-through;
+  text-decoration-thickness: 3px;
+  text-decoration-color: #000;
+  font-weight: bold;
+  opacity: 0.65;
+}
+.comanda-fila-nuevo td { font-weight: bold; }
+.comanda-tipo-e, .comanda-tipo-x { font-weight: bold; }
+/* ── Completar pedido ── */
+.comanda-completar-titulo { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border-top: 2px solid #000; padding-top: 1.5mm; margin-top: 2mm; margin-bottom: 1mm; }
+.comanda-completar-tabla { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.comanda-completar-tabla td { padding: 0.4mm 0; }
+.comanda-completar-tabla td.col-cant { text-align: right; width: 8mm; font-weight: bold; }
 </style>
 </head>
 <body>
