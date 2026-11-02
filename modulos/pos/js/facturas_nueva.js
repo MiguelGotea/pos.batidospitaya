@@ -1872,7 +1872,7 @@ function _mpRenderContenido(datos) {
     }
 
     /* ---- SECCIÓN: Ingredientes de la Receta ---- */
-    if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.filter(ing => ing.orden !== null && ing.orden !== undefined && ing.orden !== "").length > 0) {
+    if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.filter(ing => ing.orden_comanda !== null && ing.orden_comanda !== undefined).length > 0) {
         htmlReceta += `
         <div class="mp-seccion mp-seccion-receta">
             <div class="mp-seccion-header">
@@ -1881,7 +1881,7 @@ function _mpRenderContenido(datos) {
             </div>
             <div class="mp-ingredientes-lista">`;
 
-        datos.ingredientes.filter(ing => ing.orden !== null && ing.orden !== undefined && ing.orden !== "").forEach(ing => {
+        datos.ingredientes.filter(ing => ing.orden_comanda !== null && ing.orden_comanda !== undefined).forEach(ing => {
             const idComp     = ing.id_componente;
             const quitado    = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
             const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);

@@ -59,6 +59,8 @@ try {
                 crp.id_presentacion_producto  AS id_ingrediente,
                 crp.cantidad,
                 crp.orden,
+                crp.orden_comanda,
+                crp.tipo_comanda,
                 crp.notas                     AS nota_ingrediente,
                 pp.Nombre                     AS nombre_ingrediente,
                 pp.SKU                        AS sku_ingrediente,
@@ -69,9 +71,8 @@ try {
             LEFT JOIN unidad_producto up
                 ON up.id = pp.id_unidad_producto
             WHERE crp.id_receta_producto_global = :id_receta
-              AND crp.orden IS NOT NULL
-              AND crp.orden != ''
-            ORDER BY crp.orden ASC, crp.id ASC
+              AND crp.orden_comanda IS NOT NULL
+            ORDER BY crp.orden_comanda ASC, crp.id ASC
         ");
         $stmtComp->execute([':id_receta' => $receta['id_receta']]);
         $ingredientes = $stmtComp->fetchAll(PDO::FETCH_ASSOC);
