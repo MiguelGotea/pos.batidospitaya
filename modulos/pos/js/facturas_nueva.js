@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -1412,7 +1412,7 @@ function renderizarFilasPago() {
            FILAS DE PAGO: EFECTIVO / EFECTIVO DOLAR / POS / TRANSFERENCIA
            ============================================================ */
         let icono = 'bi-cash-stack';
-        let nombre = 'EFECTIVO';
+        let nombre = 'EFECTIVO C$';
         let prefijo = 'C$';
         if (p.metodo === 'efectivo_dolar') {
             icono = 'bi-cash-coin';
