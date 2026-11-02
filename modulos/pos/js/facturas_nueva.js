@@ -1638,16 +1638,17 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         }, function (impData) {
             if (impData.success) {
                 lanzarImpresionCompleta(impData);
+                _resetFormulario($btn);
             } else {
                 Swal.fire({
                     title: '¡Venta guardada!',
-                    text:  'La venta fue registrada pero no se pudieron preparar los tickets.',
+                    html:  '<p>La venta fue registrada pero no se pudieron preparar los tickets.</p>'
+                         + '<small class="text-muted">Error: ' + (impData.message || 'desconocido') + '</small>',
                     icon:  'warning',
                     confirmButtonText: 'Continuar',
                     confirmButtonColor: '#0E544C',
-                });
+                }).then(() => _resetFormulario($btn));
             }
-            _resetFormulario($btn);
         }, 'json').fail(function () {
             Swal.fire({
                 title: '¡Venta guardada!',
