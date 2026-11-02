@@ -1,0 +1,370 @@
+/* ================================================================
+   ticket_termico_80mm.css
+   Estilos para impresión térmica 80mm — POS Batidos Pitaya
+   Ancho imprimible: ~72mm (80mm - márgenes)
+   ================================================================ */
+
+/* ── Reset de impresión ─────────────────────────────────────────── */
+@media print {
+    @page {
+        size: 80mm auto;
+        margin: 2mm 2mm;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    html, body {
+        width: 76mm;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+    }
+
+    /* Ocultar todo lo que no sea el ticket */
+    body > *:not(.ticket-wrapper) {
+        display: none !important;
+    }
+}
+
+/* ── Contenedor principal del ticket ───────────────────────────── */
+.ticket-wrapper {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #000;
+    width: 76mm;
+    margin: 0 auto;
+    background: #fff;
+    padding: 0;
+}
+
+/* ── Cabecera ───────────────────────────────────────────────────── */
+.ticket-logo {
+    display: block;
+    max-width: 55mm;
+    height: auto;
+    margin: 0 auto 2mm auto;
+}
+
+.ticket-header {
+    text-align: center;
+    margin-bottom: 2mm;
+}
+
+.ticket-bienvenida {
+    font-size: 10pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1mm;
+}
+
+.ticket-meta {
+    font-size: 7.5pt;
+    text-align: center;
+    color: #222;
+    margin-bottom: 1mm;
+    line-height: 1.4;
+}
+
+/* Separador */
+.ticket-sep {
+    border: none;
+    border-top: 1px dashed #000;
+    margin: 2mm 0;
+}
+.ticket-sep-solid {
+    border: none;
+    border-top: 1.5px solid #000;
+    margin: 2mm 0;
+}
+
+/* ── Tabla de detalle (Factura cliente) ─────────────────────────── */
+.ticket-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+}
+
+.ticket-tabla th {
+    font-weight: bold;
+    font-size: 8pt;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+    padding-bottom: 1mm;
+    text-align: left;
+}
+
+.ticket-tabla th.col-num,
+.ticket-tabla td.col-num {
+    text-align: center;
+    width: 8mm;
+}
+.ticket-tabla th.col-pu,
+.ticket-tabla td.col-pu,
+.ticket-tabla th.col-pt,
+.ticket-tabla td.col-pt {
+    text-align: right;
+    width: 16mm;
+}
+
+.ticket-tabla td {
+    padding: 0.5mm 0;
+    vertical-align: top;
+}
+
+/* Nombre del producto en tabla */
+.ticket-prod-nombre {
+    font-weight: bold;
+    font-size: 8.5pt;
+}
+
+/* Personalizaciones bajo el producto (en factura cliente) */
+.ticket-pers-lista {
+    list-style: none;
+    margin: 0.5mm 0 0 2mm;
+    padding: 0;
+    font-size: 7.5pt;
+    color: #333;
+}
+.ticket-pers-lista li::before {
+    content: '- ';
+}
+
+/* Canje de puntos */
+.ticket-canje-badge {
+    font-size: 7pt;
+    font-weight: bold;
+    border: 1px solid #000;
+    padding: 0 1mm;
+    display: inline-block;
+    margin-top: 0.5mm;
+}
+
+/* ── Totales ────────────────────────────────────────────────────── */
+.ticket-totales {
+    margin-top: 2mm;
+    font-size: 8.5pt;
+}
+
+.ticket-totales-fila {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3mm 0;
+}
+
+.ticket-totales-fila.total-grande {
+    font-size: 10pt;
+    font-weight: bold;
+    border-top: 1.5px solid #000;
+    margin-top: 1mm;
+    padding-top: 1mm;
+}
+
+/* ── Pie de factura ─────────────────────────────────────────────── */
+.ticket-footer {
+    text-align: center;
+    font-size: 7.5pt;
+    margin-top: 3mm;
+    line-height: 1.5;
+}
+
+.ticket-wifi {
+    font-weight: bold;
+    font-size: 8pt;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   COMANDA DE COCINA
+   ──────────────────────────────────────────────────────────────── */
+
+/* Título de estación */
+.comanda-estacion-titulo {
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5mm;
+    border: 2px solid #000;
+    padding: 1.5mm 2mm;
+    margin-bottom: 2mm;
+    line-height: 1.2;
+}
+
+/* Meta del pedido */
+.comanda-meta {
+    font-size: 8pt;
+    margin-bottom: 2mm;
+    line-height: 1.4;
+}
+
+.comanda-meta-fila {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Bloque de cada producto en la comanda */
+.comanda-producto-bloque {
+    margin-bottom: 3mm;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 2mm;
+}
+
+/* Cantidad + nombre del producto */
+.comanda-prod-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    margin-bottom: 1.5mm;
+}
+
+.comanda-prod-cantidad {
+    font-size: 14pt;
+    font-weight: bold;
+    border: 1.5px solid #000;
+    width: 8mm;
+    height: 8mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.comanda-prod-nombre {
+    font-size: 10pt;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+/* Recuadro de notas del cajero */
+.comanda-notas {
+    background: #eee;
+    border: 1px solid #bbb;
+    border-radius: 1mm;
+    padding: 1mm 2mm;
+    font-size: 8pt;
+    font-style: italic;
+    margin-bottom: 1.5mm;
+    word-break: break-word;
+}
+
+.comanda-notas-label {
+    font-weight: bold;
+    font-style: normal;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+}
+
+/* Tabla de ingredientes de la comanda */
+.comanda-ingredientes {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+
+.comanda-ingredientes th {
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+    text-align: left;
+    padding-bottom: 0.5mm;
+}
+
+.comanda-ingredientes th.col-tipo,
+.comanda-ingredientes td.col-tipo {
+    width: 5mm;
+    font-weight: bold;
+    text-align: center;
+}
+
+.comanda-ingredientes th.col-cant,
+.comanda-ingredientes td.col-cant {
+    width: 9mm;
+    text-align: right;
+}
+
+.comanda-ingredientes td {
+    padding: 0.4mm 0;
+    vertical-align: middle;
+}
+
+/* ── Tachado grueso para ingredientes quitados/sustituidos ──────── */
+.comanda-tachado {
+    text-decoration: line-through;
+    text-decoration-thickness: 2.5px;
+    text-decoration-color: #000;
+    font-weight: bold;
+    opacity: 0.7;
+}
+
+/* Fila entera tachada */
+.comanda-fila-tachada td {
+    text-decoration: line-through;
+    text-decoration-thickness: 2.5px;
+    text-decoration-color: #000;
+    font-weight: bold;
+    opacity: 0.7;
+}
+
+/* Nuevo ingrediente sustituto (resaltar) */
+.comanda-fila-nuevo td {
+    font-weight: bold;
+}
+
+/* Tipo E (endulzante) */
+.comanda-tipo-e {
+    color: #000;
+    font-weight: bold;
+}
+
+/* Tipo X (extra) */
+.comanda-tipo-x {
+    color: #000;
+    font-weight: bold;
+}
+
+/* ── Sección "Completar Pedido con..." ──────────────────────────── */
+.comanda-completar-titulo {
+    font-size: 8.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-top: 2px solid #000;
+    padding-top: 1.5mm;
+    margin-top: 2mm;
+    margin-bottom: 1mm;
+}
+
+.comanda-completar-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+
+.comanda-completar-tabla td {
+    padding: 0.4mm 0;
+}
+
+.comanda-completar-tabla td.col-cant {
+    text-align: right;
+    width: 8mm;
+    font-weight: bold;
+}
+
+/* ── Corte de página entre documentos (para iframes secuenciales) ─ */
+.ticket-page-break {
+    page-break-after: always;
+}
+
+/* ── Modo pantalla (preview) ────────────────────────────────────── */
+@media screen {
+    .ticket-wrapper {
+        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        padding: 4mm;
+        border: 1px solid #ddd;
+        margin: 10px auto;
+    }
+}
+

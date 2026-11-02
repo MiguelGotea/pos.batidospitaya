@@ -37,6 +37,7 @@ try {
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/promociones.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/ticket_termico_80mm.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
@@ -319,7 +320,7 @@ try {
                                         <i class="bi bi-x-circle"></i> Cancelar
                                     </a>
                                     <button type="button" class="btn-guardar-factura" id="btnGuardar">
-                                        <i class="bi bi-save2-fill"></i> Guardar Factura
+                                        <i class="bi bi-printer-fill"></i> Guardar e Imprimir
                                     </button>
                                 </div>
                             </div>
@@ -474,6 +475,7 @@ try {
         // ID de sucursal del POS -- para evaluar condiciones de promociones
         const POS_SUCURSAL_ID = <?php echo json_encode($_SESSION['pos_store_sucursal'] ?? $_SESSION['pos_device_sucursal'] ?? ''); ?>;
     </script>
+    <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
 </body>
 

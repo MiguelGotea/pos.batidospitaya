@@ -1558,7 +1558,6 @@ function guardarFactura() {
         return;
     }
 
-    // Validar montos de productos
     for (let i = 0; i < detalleFactura.length; i++) {
         const d = detalleFactura[i];
         if (d.cantidad <= 0) {
@@ -1566,13 +1565,11 @@ function guardarFactura() {
         }
     }
 
-    // Validar métodos de pago
     if (pagos.length === 0) {
         alertError('Debe seleccionar al menos un método de pago.');
         return;
     }
 
-    // Validar que cualquier cupón agregado esté verificado con éxito
     const cuponSinValidar = pagos.find(p => p.metodo === 'cupon' && !p.validado);
     if (cuponSinValidar) {
         alertError('Tiene un cupón pendiente de validar. Ingrese el código y presione VALIDAR o elimínelo.');
@@ -1580,8 +1577,8 @@ function guardarFactura() {
     }
 
     const totalFactura = calcularTotalAPagar();
-    const totalPagos = sumarTotalPagos();
-    const diff = Math.round((totalPagos - totalFactura) * 100) / 100;
+    const totalPagos   = sumarTotalPagos();
+    const diff         = Math.round((totalPagos - totalFactura) * 100) / 100;
 
     if (diff < 0) {
         alertError(`Los pagos no cubren el total de la factura. Falta cubrir C$ ${Math.abs(diff).toFixed(2)}.`);
@@ -1592,7 +1589,25 @@ function guardarFactura() {
         return;
     }
 
-    const $btn = $('#btnGuardar');
+    // Modal de confirmacion con advertencia de bloqueo
+    Swal.fire({
+        title:              '¿Guardar e Imprimir?',
+        html:               '<p style="font-size:0.95rem;margin:0">La factura quedará <strong>BLOQUEADA</strong> automáticamente después de imprimir y <strong>no podrá ser editada</strong>.<br><br>¿Desea continuar?</p>',
+        icon:               'warning',
+        showCancelButton:   true,
+        confirmButtonText:  'Sí, Guardar e Imprimir',
+        cancelButtonText:   'Cancelar',
+        confirmButtonColor: '#0E544C',
+        cancelButtonColor:  '#6c757d',
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+        _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura);
+    });
+}
+
+function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura) {
+    const $btn       = $('#btnGuardar');
+    const detalleStr = JSON.stringify(detalleFactura);
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Guardando…');
 
     $.post('/modulos/pos/ajax/facturas_guardar.php', {
@@ -1601,51 +1616,76 @@ function guardarFactura() {
         nombre_cliente:  isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
         numero_factura:  numero,
         fecha:           fecha,
-        detalle:         JSON.stringify(detalleFactura),
+        detalle:         detalleStr,
         pagos:           JSON.stringify(pagos),
         subtotal:        calcularSubtotalFactura(),
         propina:         calcularMontoPropina(calcularSubtotalFactura()),
         con_propina:     conPropina ? 1 : 0,
         total:           totalFactura
     }, function (res) {
-        if (res.success) {
-            Swal.fire({
-                title:             '¡Venta guardada!',
-                text:              res.message || 'La venta ha sido registrada con éxito.',
-                icon:              'success',
-                confirmButtonText: 'Nueva Venta',
-                confirmButtonColor:'#51B8AC'
-            }).then(() => {
-                // Reset completo para la siguiente venta
-                detalleFactura = [];
-                _rowKeyCounter        = 0;
-                _promoIdsAprobados    = [];
-                _promoDescuentoGlobal = 0;
-                $("#filaDescuentoPromo").remove();
-                actualizarTablaDetalle();
-                pagos = [];
-                renderizarFilasPago();
-                conPropina = false;
-                $('#switchPropina').prop('checked', false);
-                $('#tipoClienteGeneral').prop('checked', true);
-                cambiarTipoCliente('general');
-                $('#buscarProducto').val('');
-                $('#btnLimpiarBusqueda').hide();
-                if (grupoActivo !== null && _grupos) {
-                    cambiarGrupo(grupoActivo);
-                } else if (todosProductos.length > 0) {
-                    renderizarCatalogoPorGrupos(todosProductos);
-                }
-                $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
-            });
-        } else {
-            alertError(res.message);
-            $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
+        if (!res.success) {
+            alertError(res.message || 'Error al guardar la factura.');
+            $btn.prop('disabled', false).html('<i class="bi bi-printer-fill"></i> Guardar e Imprimir');
+            return;
         }
+
+        const idFactura = res.id_factura;
+        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Preparando impresión…');
+
+        $.get('/modulos/pos/ajax/facturas_get_imprimibles.php', {
+            id_factura: idFactura,
+            cart_data:  detalleStr,
+        }, function (impData) {
+            if (impData.success) {
+                lanzarImpresionCompleta(impData);
+            } else {
+                Swal.fire({
+                    title: '¡Venta guardada!',
+                    text:  'La venta fue registrada pero no se pudieron preparar los tickets.',
+                    icon:  'warning',
+                    confirmButtonText: 'Continuar',
+                    confirmButtonColor: '#0E544C',
+                });
+            }
+            _resetFormulario($btn);
+        }, 'json').fail(function () {
+            Swal.fire({
+                title: '¡Venta guardada!',
+                text:  'Venta registrada. Error de conexión al obtener datos de impresión.',
+                icon:  'warning',
+                confirmButtonText: 'Continuar',
+                confirmButtonColor: '#0E544C',
+            });
+            _resetFormulario($btn);
+        });
+
     }, 'json').fail(function () {
         alertError('Error de conexión al guardar la factura.');
-        $btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Factura');
+        $btn.prop('disabled', false).html('<i class="bi bi-printer-fill"></i> Guardar e Imprimir');
     });
+}
+
+function _resetFormulario($btn) {
+    detalleFactura        = [];
+    _rowKeyCounter        = 0;
+    _promoIdsAprobados    = [];
+    _promoDescuentoGlobal = 0;
+    $("#filaDescuentoPromo").remove();
+    actualizarTablaDetalle();
+    pagos = [];
+    renderizarFilasPago();
+    conPropina = false;
+    $('#switchPropina').prop('checked', false);
+    $('#tipoClienteGeneral').prop('checked', true);
+    cambiarTipoCliente('general');
+    $('#buscarProducto').val('');
+    $('#btnLimpiarBusqueda').hide();
+    if (grupoActivo !== null && _grupos) {
+        cambiarGrupo(grupoActivo);
+    } else if (todosProductos.length > 0) {
+        renderizarCatalogoPorGrupos(todosProductos);
+    }
+    $btn.prop('disabled', false).html('<i class="bi bi-printer-fill"></i> Guardar e Imprimir');
 }
 
 /* ---- Helpers ---- */
