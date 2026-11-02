@@ -1,4 +1,4 @@
-/* ===================================================
+﻿/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -1872,16 +1872,16 @@ function _mpRenderContenido(datos) {
     }
 
     /* ---- SECCIÓN: Ingredientes de la Receta ---- */
-    if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.length > 0) {
+    if (datos.tiene_receta && datos.ingredientes && datos.ingredientes.filter(ing => ing.orden !== null && ing.orden !== undefined && ing.orden !== "").length > 0) {
         htmlReceta += `
         <div class="mp-seccion mp-seccion-receta">
             <div class="mp-seccion-header">
-                <i class="bi bi-list-check"></i> Ingredientes de la Receta
-                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Puedes quitar o sustituir ingredientes</small>
+                <i class="bi bi-list-check"></i> Ingredientes
+                <small class="text-muted ms-2" style="font-weight:400; font-size:.8rem;">Puedes quitar o cambiar</small>
             </div>
             <div class="mp-ingredientes-lista">`;
 
-        datos.ingredientes.forEach(ing => {
+        datos.ingredientes.filter(ing => ing.orden !== null && ing.orden !== undefined && ing.orden !== "").forEach(ing => {
             const idComp     = ing.id_componente;
             const quitado    = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
             const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);
