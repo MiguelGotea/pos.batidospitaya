@@ -30,7 +30,7 @@ try {
             f.total,
             f.fecha_hora,
             f.estado,
-            COALESCE(c.nombre_completo, f.nombre_cliente_general) AS nombre_cliente,
+            COALESCE(CONCAT(c.nombre, ' ', c.apellido), f.nombre_cliente_general) AS nombre_cliente,
             s.nombre AS nombre_sucursal
         FROM pos_ventas_facturas f
         LEFT JOIN clientesclub c ON c.id_clienteclub = f.id_cliente_club
