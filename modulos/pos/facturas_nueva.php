@@ -259,6 +259,12 @@ try {
                                             <i class="bi bi-cash-stack"></i>
                                             <span>EFECTIVO C$</span>
                                         </button>
+                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar"
+                                            onclick="agregarMetodoPago('efectivo_dolar')"
+                                            title="Pago en efectivo dólares USD">
+                                            <i class="bi bi-cash-coin"></i>
+                                            <span>EFECTIVO USD</span>
+                                        </button>
                                         <button type="button" class="btn-metodo-pago" id="btnPagoPOS"
                                             onclick="agregarMetodoPago('pos')">
                                             <i class="bi bi-credit-card-2-front"></i>
@@ -274,12 +280,6 @@ try {
                                             title="Agregar pago con cupón de descuento">
                                             <i class="bi bi-ticket-perforated"></i>
                                             <span>CUPÓN</span>
-                                        </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar"
-                                            onclick="agregarMetodoPago('efectivo_dolar')"
-                                            title="Pago en efectivo dólares USD">
-                                            <i class="bi bi-cash-coin"></i>
-                                            <span>EFECTIVO USD</span>
                                         </button>
                                     </div>
 
