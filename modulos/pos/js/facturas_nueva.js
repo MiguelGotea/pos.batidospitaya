@@ -1,4 +1,4 @@
-/* ===================================================
+﻿/* ===================================================
    facturas_nueva.js — Nueva Factura POS
    =================================================== */
 
@@ -1151,14 +1151,14 @@ function agregarMetodoPago(metodo) {
         return;
     }
 
-    const existeIdx = pagos.findIndex(p => p.metodo === metodo);
-    if (existeIdx !== -1) {
-        if (metodo === 'cupon') {
+    // CUPON: solo se permite una linea por factura; si ya existe, hace foco en ella.
+    // Otros metodos (efectivo, pos, transferencia, efectivo_dolar): se permiten multiples lineas.
+    if (metodo === 'cupon') {
+        const existeIdx = pagos.findIndex(p => p.metodo === 'cupon');
+        if (existeIdx !== -1) {
             $(`#inputCodigoCupon-${existeIdx}`).focus().select();
-        } else {
-            $(`#inputMontoPago-${existeIdx}`).focus().select();
+            return;
         }
-        return;
     }
 
     const totalFactura = calcularTotalAPagar();
@@ -1358,7 +1358,8 @@ function renderizarFilasPago() {
     $('#btnPagoEfectivo').toggleClass('activo', pagos.some(p => p.metodo === 'efectivo'));
     $('#btnPagoPOS').toggleClass('activo', pagos.some(p => p.metodo === 'pos'));
     $('#btnPagoTransferencia').toggleClass('activo', pagos.some(p => p.metodo === 'transferencia'));
-    $('#btnPagoCupon').toggleClass('activo', pagos.some(p => p.metodo === 'cupon'));
+    const cuponYaAgregado = pagos.some(p => p.metodo === 'cupon');
+    $('#btnPagoCupon').toggleClass('activo', cuponYaAgregado).prop('disabled', cuponYaAgregado).attr('title', cuponYaAgregado ? 'Solo se permite un cup\u00f3n por factura' : 'Agregar pago con cup\u00f3n de descuento');
     $('#btnPagoEfectivoDolar').toggleClass('activo', pagos.some(p => p.metodo === 'efectivo_dolar'));
 
     if (pagos.length === 0) {
