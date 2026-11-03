@@ -1219,7 +1219,9 @@
    ============================================================ */
 .modal-pos-custom {
     border-radius: 16px;
-    overflow: hidden;
+    /* overflow: hidden removido para no recortar dropdowns absolutos internos.
+       Las esquinas se mantienen con border-radius en header y footer. */
+    overflow: visible;
 }
 
 .modal-header-pos {
@@ -1227,6 +1229,8 @@
     color: #ffffff;
     padding: 1.1rem 1.5rem;
     border-bottom: none;
+    /* Mantener esquinas superiores redondeadas al quitar overflow:hidden del modal */
+    border-radius: 16px 16px 0 0;
 }
 
 .modal-icon-badge {
@@ -2201,7 +2205,9 @@
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    overflow: hidden;
+    /* overflow: hidden eliminado para que el dropdown de sustitución
+       de ingredientes (position:absolute) no quede recortado */
+    overflow: visible;
 }
 
 .mp-seccion-header {
@@ -2214,6 +2220,8 @@
     display: flex;
     align-items: center;
     gap: .5rem;
+    /* Mantener esquinas superiores redondeadas al quitar overflow:hidden del padre */
+    border-radius: 9px 9px 0 0;
 }
 
 .mp-seccion-header i {
@@ -3637,4 +3645,20 @@
     color: #0E544C;
     min-width: 30px;
     text-align: right;
+}
+
+
+/* ============================================================
+   Fix: dropdown de sustitución de ingredientes no se recorta
+   El modal-body con modal-dialog-scrollable tiene overflow:auto
+   por Bootstrap, lo que crea un stacking context que corta el
+   dropdown absoluto. Se sobreescribe SOLO para el modal de
+   personalización, delegando el scroll al contenedor raíz del modal.
+   ============================================================ */
+#modalPersonalizacion .modal-body {
+    overflow: visible;
+}
+#modalPersonalizacion .modal-dialog {
+    overflow-y: auto;
+    max-height: calc(100vh - 3.5rem);
 }
