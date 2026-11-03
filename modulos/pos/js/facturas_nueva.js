@@ -1873,15 +1873,18 @@ function _mpRenderContenido(datos) {
             const grupoKey = nombreGrupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
 
             htmlEndulzante += `
-            <div class="mp-endulzante-grupo-row ${grupoActivo ? 'activo' : ''}" data-grupo="${escAttr(nombreGrupo)}">
-                <button type="button" class="mp-endulzante-grupo-btn ${grupoActivo ? 'activo' : ''}"
-                        data-grupo="${escAttr(nombreGrupo)}"
-                        data-primera-id="${opciones[0].id}"
-                        data-primera-nombre="${escAttr(opciones[0].nombre_opcion || opciones[0].nombre)}"
-                        onclick="_mpSeleccionarGrupoEndulzante(this)">
+            <div class="mp-endulzante-grupo-row ${grupoActivo ? 'activo' : ''}" 
+                 data-grupo="${escAttr(nombreGrupo)}"
+                 data-primera-id="${opciones[0].id}"
+                 data-primera-nombre="${escAttr(opciones[0].nombre_opcion || opciones[0].nombre)}"
+                 onclick="_mpClickFilaEndulzante(event, this)">
+                <div class="mp-endulzante-grupo-btn ${grupoActivo ? 'activo' : ''}"
+                     data-grupo="${escAttr(nombreGrupo)}"
+                     data-primera-id="${opciones[0].id}"
+                     data-primera-nombre="${escAttr(opciones[0].nombre_opcion || opciones[0].nombre)}">
                     <span class="mp-end-grupo-icono"><i class="bi bi-record-circle"></i></span>
                     <span class="mp-end-grupo-nombre">${escHtml(nombreGrupo)}</span>
-                </button>`;
+                </div>`;
 
             if (tieneMultiples) {
                 // Dropdown de cantidad/variante
@@ -1890,6 +1893,8 @@ function _mpRenderContenido(datos) {
                     <select class="mp-endulzante-variante-select form-select form-select-sm"
                             id="varianteSelect_${grupoKey}"
                             data-grupo="${escAttr(nombreGrupo)}"
+                            onpointerdown="_mpSelectEndulzantePointerDown(event, this)"
+                            onmousedown="_mpSelectEndulzantePointerDown(event, this)"
                             onchange="_mpSeleccionarVarianteEndulzante(this)">`;
 
                 opciones.forEach(op => {
@@ -1935,7 +1940,6 @@ function _mpRenderContenido(datos) {
             (datos.extras || []).forEach(ext => {
                 dropdownHtml += `<div class="mp-sust-item" data-id="${ext.id}" data-nombre="${escAttr(ext.nombre)}" data-precio="${ext.precio}" onclick="_mpSeleccionarSustituto(this, ${idComp})">
                     <span class="mp-sust-item-nombre">${escHtml(ext.nombre)}</span>
-                    <span class="mp-sust-item-precio">+C$ ${parseFloat(ext.precio).toFixed(2)}</span>
                 </div>`;
             });
 
@@ -2171,58 +2175,109 @@ function _mpSeleccionarSustituto(itemDiv, idComp) {
     }
 }
 
-/* ---- Seleccionar grupo de endulzante (clic en la fila/botón principal) ---- */
-function _mpSeleccionarGrupoEndulzante(btn) {
-    const grupo = btn.dataset.grupo;
+/* ---- Activar fila / grupo de endulzante ---- */
+function _mpActivarFilaEndulzante(row) {
+    if (!row) return;
+    const grupo = row.dataset.grupo || '';
     const grupoKey = grupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    const row = btn.closest('.mp-endulzante-grupo-row');
 
-    // Si ya está activo este grupo → deseleccionar (toggle off)
-    if (row && row.classList.contains('activo')) {
-        row.classList.remove('activo');
-        btn.classList.remove('activo');
-        _mpDraft.endulzante_id = null;
-        _mpDraft.endulzante_nombre = '';
-        _mpDraft.endulzante_nombre_grupo = '';
-        const wrap = document.getElementById('varianteWrap_' + grupoKey);
-        if (wrap) wrap.classList.add('mp-end-variante-oculto');
-        return;
-    }
-
-    // Desactivar todos los grupos
+    // Desactivar todos los demás grupos
     document.querySelectorAll('.mp-endulzante-grupo-row').forEach(r => r.classList.remove('activo'));
     document.querySelectorAll('.mp-endulzante-grupo-btn').forEach(b => b.classList.remove('activo'));
     document.querySelectorAll('[id^="varianteWrap_"]').forEach(w => w.classList.add('mp-end-variante-oculto'));
 
     // Activar este grupo
-    if (row) row.classList.add('activo');
-    btn.classList.add('activo');
+    row.classList.add('activo');
+    const btn = row.querySelector('.mp-endulzante-grupo-btn');
+    if (btn) btn.classList.add('activo');
 
     const wrap = document.getElementById('varianteWrap_' + grupoKey);
     const select = document.getElementById('varianteSelect_' + grupoKey);
 
     if (wrap && select) {
-        // Tiene dropdown: mostrar y usar opción seleccionada en el select
         wrap.classList.remove('mp-end-variante-oculto');
-        const selOpt = select.options[select.selectedIndex];
-        const varNombre = selOpt.dataset.nombre || selOpt.text;
-        _mpDraft.endulzante_id = parseInt(selOpt.value);
+        const selOpt = select.options[select.selectedIndex] || select.options[0];
+        const varNombre = selOpt ? (selOpt.dataset.nombre || selOpt.text) : '';
+        const optVal = selOpt ? parseInt(selOpt.value) : parseInt(row.dataset.primeraId);
+        _mpDraft.endulzante_id = optVal;
         _mpDraft.endulzante_nombre = grupo ? (grupo + ' ' + varNombre) : varNombre;
     } else {
-        // Opción única: solo el nombre del grupo
-        _mpDraft.endulzante_id = parseInt(btn.dataset.primeraId);
+        _mpDraft.endulzante_id = parseInt(row.dataset.primeraId);
         _mpDraft.endulzante_nombre = grupo;
     }
     _mpDraft.endulzante_nombre_grupo = grupo;
 }
 
+/* ---- Desactivar fila / grupo de endulzante ---- */
+function _mpDesactivarFilaEndulzante(row) {
+    if (!row) return;
+    const grupo = row.dataset.grupo || '';
+    const grupoKey = grupo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+
+    row.classList.remove('activo');
+    const btn = row.querySelector('.mp-endulzante-grupo-btn');
+    if (btn) btn.classList.remove('activo');
+
+    _mpDraft.endulzante_id = null;
+    _mpDraft.endulzante_nombre = '';
+    _mpDraft.endulzante_nombre_grupo = '';
+
+    const wrap = document.getElementById('varianteWrap_' + grupoKey);
+    if (wrap) wrap.classList.add('mp-end-variante-oculto');
+}
+
+/* ---- Clic en cualquier parte de la fila de endulzante (todo el cuadro) ---- */
+function _mpClickFilaEndulzante(event, row) {
+    const isSelect = event.target.closest('.mp-endulzante-variante-select') || event.target.closest('.mp-endulzante-variante-wrap');
+
+    if (isSelect) {
+        // Clic en la lista desplegable o su contenedor
+        if (!row.classList.contains('activo')) {
+            _mpActivarFilaEndulzante(row);
+        }
+        // Si ya está activo, no deseleccionar para permitir interactuar con el desplegable con normalidad
+        return;
+    }
+
+    // Clic en cualquier otra parte del cuadro: icono, texto o fondo
+    if (row.classList.contains('activo')) {
+        _mpDesactivarFilaEndulzante(row);
+    } else {
+        _mpActivarFilaEndulzante(row);
+    }
+}
+
+/* ---- Interacción inmediata (pointerdown / mousedown) sobre el select ---- */
+function _mpSelectEndulzantePointerDown(event, select) {
+    const row = select.closest('.mp-endulzante-grupo-row');
+    if (row && !row.classList.contains('activo')) {
+        _mpActivarFilaEndulzante(row);
+    }
+}
+
+/* ---- Seleccionar grupo de endulzante (compatibilidad con llamadas externas o botones) ---- */
+function _mpSeleccionarGrupoEndulzante(btn) {
+    const row = btn ? btn.closest('.mp-endulzante-grupo-row') : null;
+    if (!row) return;
+    if (row.classList.contains('activo')) {
+        _mpDesactivarFilaEndulzante(row);
+    } else {
+        _mpActivarFilaEndulzante(row);
+    }
+}
+
 /* ---- Cambiar variante dentro de un grupo (dropdown de cantidad/tipo) ---- */
 function _mpSeleccionarVarianteEndulzante(select) {
+    const row = select.closest('.mp-endulzante-grupo-row');
+    if (row && !row.classList.contains('activo')) {
+        _mpActivarFilaEndulzante(row);
+    }
+    const grupo = select.dataset.grupo || (row ? row.dataset.grupo : '') || '';
     const selOpt = select.options[select.selectedIndex];
-    const varNombre = selOpt.dataset.nombre || selOpt.text;
-    const grupo = select.dataset.grupo || '';
-    _mpDraft.endulzante_id = parseInt(selOpt.value);
+    const varNombre = selOpt ? (selOpt.dataset.nombre || selOpt.text) : '';
+    _mpDraft.endulzante_id = selOpt ? parseInt(selOpt.value) : null;
     _mpDraft.endulzante_nombre = grupo ? (grupo + ' ' + varNombre) : varNombre;
+    _mpDraft.endulzante_nombre_grupo = grupo;
 }
 
 /* ---- Toggle extra (agregar/quitar) ---- */

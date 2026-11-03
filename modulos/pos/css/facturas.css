@@ -2377,13 +2377,25 @@
     border: 1.5px solid #e2e8f0;
     border-radius: 9px;
     background: #f8fafc;
+    cursor: pointer;
+    user-select: none;
     transition: border-color .15s, background .15s, box-shadow .15s;
+}
+
+.mp-endulzante-grupo-row:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
 }
 
 .mp-endulzante-grupo-row.activo {
     border-color: #0E544C;
     background: #f0fdf9;
     box-shadow: 0 0 0 3px rgba(14, 84, 76, .08);
+}
+
+.mp-endulzante-grupo-row.activo:hover {
+    border-color: #0E544C;
+    background: #e6f7f2;
 }
 
 /* Botón principal del grupo (icono + nombre) */
@@ -2443,8 +2455,7 @@
 }
 
 .mp-endulzante-variante-wrap.mp-end-variante-oculto {
-    opacity: .35;
-    pointer-events: none;
+    opacity: .45;
 }
 
 .mp-endulzante-variante-select {
@@ -2453,6 +2464,7 @@
     border-color: #cbd5e1;
     color: #334155;
     padding: .22rem .55rem;
+    cursor: pointer;
 }
 
 .mp-endulzante-grupo-row.activo .mp-endulzante-variante-select {
