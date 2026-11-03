@@ -164,7 +164,7 @@ body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9
 .comanda-estacion-titulo { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 0.5mm; border: 2px solid #000; padding: 1.5mm 2mm; margin-bottom: 2mm; line-height: 1.2; }
 /* Puntos 2: cliente y pedido en líneas separadas, pedido grande y destacado */
 .comanda-meta { font-size: 8.5pt; margin-bottom: 0; line-height: 1.5; }
-.comanda-meta-cliente { font-size: 9pt; margin-bottom: 0.5mm; }
+.comanda-meta-cliente { font-size: 13pt; font-weight: bold; letter-spacing: 0.3mm; margin-bottom: 0.5mm; }
 .comanda-meta-pedido  { font-size: 13pt; font-weight: bold; letter-spacing: 0.3mm; margin-bottom: 0.5mm; }
 .comanda-meta-fechahora { font-size: 8pt; color: #333; }
 /* Punto 4: espacio después del bloque de cabecera logeable */
