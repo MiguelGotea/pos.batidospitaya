@@ -31,8 +31,8 @@ function renderPOSSidebar($activeModule = 'inicio')
             'icon'  => 'fas fa-shopping-basket',
             'url'   => '#',
             'sub'   => [
-                ['titulo' => 'Nueva Factura de Compra', 'url' => '/modulos/pos/facturas_nueva_compra.php'],
-                ['titulo' => 'Historial de Compras',    'url' => '/modulos/pos/facturas_historial.php'],
+                ['titulo' => 'Nueva Factura de Compra', 'url' => '/modulos/compras/facturas_nueva_compra.php'],
+                ['titulo' => 'Historial de Compras',    'url' => '/modulos/compras/facturas_historial.php'],
             ]
         ],
         [

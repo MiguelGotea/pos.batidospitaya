@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
@@ -19,7 +19,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <?= renderPOSSidebar('ventas') ?>
+    <?= renderPOSSidebar('compras') ?>
 
     <div class="pos-main-container">
         <?= renderPOSHeader('Historial de Compras') ?>
