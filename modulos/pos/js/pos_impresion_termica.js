@@ -183,12 +183,12 @@ body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9
 .comanda-ingredientes { width: 100%; border-collapse: collapse; font-size: 9pt; }
 .comanda-ingredientes th { font-size: 8pt; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; text-align: left; padding-bottom: 0.8mm; }
 /* Punto 5: espacio entre filas de ingredientes */
-.comanda-ingredientes td { padding: 1mm 0; vertical-align: middle; }
+.comanda-ingredientes td { padding: 0.4mm 0; vertical-align: middle; }
 .comanda-ingredientes th.col-tipo, .comanda-ingredientes td.col-tipo { width: 6mm; font-weight: bold; text-align: center; }
 .comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 11mm; text-align: right; }
-/* Punto 6: separador de grupo de tipo — media línea tenue */
-.comanda-grupo-sep td { padding-top: 0; padding-bottom: 0; height: 2mm; }
-.comanda-grupo-sep-linea { border-bottom: 0.5px dashed #aaa; margin: 0; }
+/* Punto 6: separador de grupo de tipo — fila vacía con altura visible para marcar cambio de tipo */
+.comanda-grupo-sep td { padding: 0; height: 0; border: none; }
+.comanda-grupo-sep-linea { border-top: 0.5px dashed #bbb; margin: 1.5mm 0 0.5mm 0; }
 /* ── Tachado grueso ── */
 .comanda-tachado, .comanda-fila-tachada td {
   text-decoration: line-through;
@@ -427,8 +427,8 @@ function renderizarComandaEstacion(comanda, factura) {
 <div class="comanda-meta-wrapper">
   <div class="comanda-meta">
     <div class="comanda-meta-cliente"><strong>Cliente:</strong> ${esc(nombreCliente)}</div>
-    <div class="comanda-meta-pedido">#${esc(factura.id)}</div>
-    <div class="comanda-meta-fechahora">${esc(fecha)} &nbsp; ${esc(hora)}</div>
+    <div class="comanda-meta-pedido"><strong>Pedido:</strong> ${esc(factura.id)}</div>
+    <div class="comanda-meta-fechahora"><strong>Fecha:</strong> ${esc(fecha)} &nbsp; <strong>Hora:</strong> ${esc(hora)}</div>
   </div>
 </div>
 <hr class="ticket-sep-solid">`;
@@ -494,8 +494,8 @@ function renderizarComandaEstacion(comanda, factura) {
             const nombreComponente = ing.nombre_componente || ing.nombre_ingrediente;
             const tipo             = ing.tipo_comanda || '-';
             const cantidadNum      = parseFloat(ing.cantidad) || 0;
-            // Punto 9: usar fracciones en lugar de decimales
-            const cantStr          = decimalAFraccion(cantidadNum) + (ing.unidad ? ' ' + ing.unidad : '');
+            // Punto 9: cantidad solo como número/fracción, SIN unidad (la unidad va en el nombre del ingrediente si aplica)
+            const cantStr          = decimalAFraccion(cantidadNum);
 
             // Punto 6: insertar separador de media línea cuando cambia el tipo
             // (excepto antes del primer ingrediente si ya hubo endulzante del mismo tipo)
