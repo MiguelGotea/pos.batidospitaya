@@ -866,7 +866,16 @@ function actualizarTablaDetalle() {
             tagsList.push(`<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`);
         }
         if (pers.extras_agregados && pers.extras_agregados.length) {
-            tagsList.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> ${pers.extras_agregados.map(e=>escHtml(e.nombre)).join(', ')}</span>`);
+            const extrasTexto = pers.extras_agregados.map(e => {
+                const precio = parseFloat(e.precio) || 0;
+                let precioStr = '';
+                if (precio > 0) {
+                    const fmt = precio.toLocaleString('es-NI', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    precioStr = ` (+C$ ${fmt})`;
+                }
+                return `${escHtml(e.nombre)}${precioStr}`;
+            }).join(', ');
+            tagsList.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> ${extrasTexto}</span>`);
         }
 
         // Badges de puntos Club Pitaya
@@ -948,7 +957,6 @@ function actualizarTablaDetalle() {
                     ` : `
                         <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">C$ ${_pFmtOrig}</strong>
                         ${item.cantidad > 1 ? `<small class="d-block text-muted" style="font-size:.72rem;">(C$ ${precioUnit.toFixed(2)} c/u)</small>` : ''}
-                        ${((pers.monto_extras || 0) > 0) ? `<small class="d-block text-success" style="font-size:.72rem;"><i class="bi bi-plus-circle"></i> +C$ ${(pers.monto_extras||0).toFixed(2)} extras</small>` : ''}
                     `}
                 `}
             </td>
