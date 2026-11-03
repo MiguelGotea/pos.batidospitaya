@@ -364,7 +364,7 @@ function actualizarPuntosFactura() {
     }
 
     // Calcular puntos ganados y canjeados con las reglas reales de BD
-    let puntosGanados   = 0;
+    let puntosGanados = 0;
     let puntosCanjeados = 0;
 
     detalleFactura.forEach(function (d) {
@@ -376,7 +376,7 @@ function actualizarPuntosFactura() {
             puntosCanjeados += ptsCanje * cant;
         } else {
             // Unidades libres (excluyendo las usadas como condición de promo)
-            const qtyCond  = parseFloat(d.qty_condicion || 0);
+            const qtyCond = parseFloat(d.qty_condicion || 0);
             const cantAcum = Math.max(0, cant - qtyCond); // 0 si todas son condición
             if (cantAcum > 0 && d.puntos_acumulacion != null) {
                 puntosGanados += parseFloat(d.puntos_acumulacion) * cantAcum;
@@ -385,8 +385,8 @@ function actualizarPuntosFactura() {
     });
 
     const puntosEstaFactura = Math.round((puntosGanados - puntosCanjeados) * 100) / 100;
-    const puntosAnteriores  = parseFloat(clienteActual.puntos_anteriores) || 0;
-    const totalPuntos       = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
+    const puntosAnteriores = parseFloat(clienteActual.puntos_anteriores) || 0;
+    const totalPuntos = Math.round((puntosAnteriores + puntosEstaFactura) * 100) / 100;
 
     // Formato: +3.00 ó -7.00
     const signo = puntosEstaFactura >= 0 ? '+' : '';
@@ -453,18 +453,18 @@ function cargarProductosElegibles() {
 /* ---- Helper: abrir modal desde data attributes del card (evita conflictos de comillas) ---- */
 function _abrirCatalogoDesdeCard(el) {
     try {
-        const ids    = JSON.parse(el.getAttribute('data-ids'));
+        const ids = JSON.parse(el.getAttribute('data-ids'));
         const nombre = el.getAttribute('data-nombre');
         abrirModalSeleccionProducto(ids, nombre);
-    } catch(e) { console.error('_abrirCatalogoDesdeCard error', e); }
+    } catch (e) { console.error('_abrirCatalogoDesdeCard error', e); }
 }
 
 function renderizarCatalogoPorGrupos(lista) {
     _grupos = new Map();
 
     lista.forEach(p => {
-        const gId     = parseInt(p.id_grupo)    || 0;
-        const gNombre = p.grupo    || 'Otros';
+        const gId = parseInt(p.id_grupo) || 0;
+        const gNombre = p.grupo || 'Otros';
 
         // Exclusión puntual: no mostrar la pestaña de Membresías en el catálogo (tiene acceso directo Quick Add abajo)
         const esMembresia = gId === 7 || gNombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('membresia');
@@ -475,8 +475,8 @@ function renderizarCatalogoPorGrupos(lista) {
         if (!_grupos.has(gId)) {
             _grupos.set(gId, { id: gId, nombre: gNombre, subgrupos: new Map() });
         }
-        const grupo   = _grupos.get(gId);
-        const sId     = parseInt(p.id_subgrupo) || 0;
+        const grupo = _grupos.get(gId);
+        const sId = parseInt(p.id_subgrupo) || 0;
         const sNombre = p.subgrupo || 'General';
         if (!grupo.subgrupos.has(sId)) {
             grupo.subgrupos.set(sId, { id: sId, nombre: sNombre, catalogos: new Map() });
@@ -484,7 +484,7 @@ function renderizarCatalogoPorGrupos(lista) {
         const subgrupo = grupo.subgrupos.get(sId);
 
         // Agrupar por nombre de catalogo (un boton por nombre; puede haber varios id con el mismo nombre)
-        const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
+        const cId = parseInt(p.id_catalogo_menu_pos) || 0;
         const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '-';
         if (!subgrupo.catalogos.has(cNombre)) {
             subgrupo.catalogos.set(cNombre, { ids: [], nombre: cNombre, productos: [] });
@@ -551,12 +551,12 @@ function filtrarProductos(q) {
 
     const ql = q.toLowerCase();
     const filtrados = todosProductos.filter(p =>
-        (p.Nombre         || '').toLowerCase().includes(ql) ||
+        (p.Nombre || '').toLowerCase().includes(ql) ||
         (p.nombre_maestro || '').toLowerCase().includes(ql) ||
-        (p.SKU            || '').toLowerCase().includes(ql) ||
-        (p.grupo          || '').toLowerCase().includes(ql) ||
-        (p.subgrupo       || '').toLowerCase().includes(ql) ||
-        (p.nombre_catalogo|| '').toLowerCase().includes(ql)
+        (p.SKU || '').toLowerCase().includes(ql) ||
+        (p.grupo || '').toLowerCase().includes(ql) ||
+        (p.subgrupo || '').toLowerCase().includes(ql) ||
+        (p.nombre_catalogo || '').toLowerCase().includes(ql)
     );
 
     if (!filtrados.length) {
@@ -567,7 +567,7 @@ function filtrarProductos(q) {
     // Agrupar resultados por nombre de catalogo (evitar duplicados por tamano)
     const catMap = new Map();
     filtrados.forEach(p => {
-        const cId     = parseInt(p.id_catalogo_menu_pos) || 0;
+        const cId = parseInt(p.id_catalogo_menu_pos) || 0;
         const cNombre = p.nombre_catalogo || p.nombre_maestro || p.Nombre || '-';
         if (!catMap.has(cNombre)) {
             catMap.set(cNombre, { ids: [], nombre: cNombre, productos: [] });
@@ -598,34 +598,34 @@ function filtrarProductos(q) {
    ============================================================ */
 
 // Estado del modal de selección
-let _mspIdCatalogo   = null;   // id del catalogo_menu_pos abierto
-let _mspNombreCat    = '';     // nombre de la clasificación
-let _mspProductos    = [];     // lista de productos de esa clasificación
-let _mspIdxSelec     = -1;     // índice dentro de _mspProductos del producto seleccionado
-let _mspModoEdicion  = false;  // true si estamos editando un ítem ya existente en el ticket
-let _mspIdxTicket    = -1;     // índice en detalleFactura (si es edición)
+let _mspIdCatalogo = null;   // id del catalogo_menu_pos abierto
+let _mspNombreCat = '';     // nombre de la clasificación
+let _mspProductos = [];     // lista de productos de esa clasificación
+let _mspIdxSelec = -1;     // índice dentro de _mspProductos del producto seleccionado
+let _mspModoEdicion = false;  // true si estamos editando un ítem ya existente en el ticket
+let _mspIdxTicket = -1;     // índice en detalleFactura (si es edición)
 
 /* ---- Abrir el modal de selección de producto de una clasificación ---- */
 function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
     // idsCatalogo puede ser un array [1,2,3] o un entero legado
     const _idsArray = Array.isArray(idsCatalogo) ? idsCatalogo : [idsCatalogo];
-    _mspIdCatalogo  = _idsArray[0];   // conservar primer ID como referencia
-    _mspNombreCat   = nombreCatalogo;
-    _mspProductos   = [];
-    _mspIdxSelec    = -1;
+    _mspIdCatalogo = _idsArray[0];   // conservar primer ID como referencia
+    _mspNombreCat = nombreCatalogo;
+    _mspProductos = [];
+    _mspIdxSelec = -1;
     _mspModoEdicion = false;
-    _mspIdxTicket   = -1;
+    _mspIdxTicket = -1;
 
     // Resetear draft de personalización
-    _mpIdx   = -1;
+    _mpIdx = -1;
     _mpDraft = {
-        ingredientes_quitados:    [],
+        ingredientes_quitados: [],
         ingredientes_sustituidos: [],
-        endulzante_id:            null,
-        endulzante_nombre:        '',
-        extras_agregados:         [],
-        monto_extras:             0,
-        notas:                    ''
+        endulzante_id: null,
+        endulzante_nombre: '',
+        extras_agregados: [],
+        monto_extras: 0,
+        notas: ''
     };
 
     // Configurar encabezado del modal
@@ -718,13 +718,13 @@ function _mspSeleccionarProducto(idx) {
 
     // Resetear draft de personalización al cambiar producto
     _mpDraft = {
-        ingredientes_quitados:    [],
+        ingredientes_quitados: [],
         ingredientes_sustituidos: [],
-        endulzante_id:            null,
-        endulzante_nombre:        '',
-        extras_agregados:         [],
-        monto_extras:             0,
-        notas:                    ''
+        endulzante_id: null,
+        endulzante_nombre: '',
+        extras_agregados: [],
+        monto_extras: 0,
+        notas: ''
     };
 
     // Solo si estamos en modo edición de un ítem del ticket, precargar su personalización
@@ -772,7 +772,7 @@ function _mspSeleccionarProducto(idx) {
  * ya que el mismo id_presentacion puede aparecer varias veces.
  */
 function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoObj, personalizacion, notas) {
-    const precioNum    = parseFloat(precio) || 0;
+    const precioNum = parseFloat(precio) || 0;
     const prodCatalogo = productoObj || todosProductos.find(p => parseInt(p.id) === parseInt(id)) || {};
 
     // Calcular precio final con extras del borrador
@@ -785,32 +785,32 @@ function agregarProducto(id, nombre, unidad, precio, esPersonalizable, productoO
     const notasTexto = (typeof notas === 'string') ? notas : ((personalizacion && personalizacion.notas) ? personalizacion.notas : '');
 
     const nuevoItem = {
-        _rowKey:              rowKey,                // identificador único de esta fila
-        id_presentacion:      parseInt(id),
-        nombre:               nombre,
-        unidad:               unidad,
+        _rowKey: rowKey,                // identificador único de esta fila
+        id_presentacion: parseInt(id),
+        nombre: nombre,
+        unidad: unidad,
         precio_unitario_base: precioNum,
-        precio_unitario:      precioFinal,
-        cantidad:             1,
-        costo_total_iva:      precioFinal,
-        notas:                notasTexto,
-        es_personalizable:    parseInt(esPersonalizable) === 1,
-        es_canjeado:          false,
-        descuento_promo:      0,
-        promos_en_item:       [],
-        es_condicion_promo:   false,
-        qty_condicion:        0,
-        puntos_acumulacion:   prodCatalogo.puntos_acumulacion != null ? parseFloat(prodCatalogo.puntos_acumulacion) : null,
-        puntos_canje:         prodCatalogo.puntos_canje        != null ? parseFloat(prodCatalogo.puntos_canje)        : null,
+        precio_unitario: precioFinal,
+        cantidad: 1,
+        costo_total_iva: precioFinal,
+        notas: notasTexto,
+        es_personalizable: parseInt(esPersonalizable) === 1,
+        es_canjeado: false,
+        descuento_promo: 0,
+        promos_en_item: [],
+        es_condicion_promo: false,
+        qty_condicion: 0,
+        puntos_acumulacion: prodCatalogo.puntos_acumulacion != null ? parseFloat(prodCatalogo.puntos_acumulacion) : null,
+        puntos_canje: prodCatalogo.puntos_canje != null ? parseFloat(prodCatalogo.puntos_canje) : null,
         id_catalogo_menu_pos: prodCatalogo.id_catalogo_menu_pos ? parseInt(prodCatalogo.id_catalogo_menu_pos) : null,
-        personalizacion:      personalizacion ? JSON.parse(JSON.stringify(personalizacion)) : {
-            ingredientes_quitados:    [],
+        personalizacion: personalizacion ? JSON.parse(JSON.stringify(personalizacion)) : {
+            ingredientes_quitados: [],
             ingredientes_sustituidos: [],
-            endulzante_id:            null,
-            endulzante_nombre:        '',
-            extras_agregados:         [],
-            monto_extras:             0,
-            notas:                    notasTexto
+            endulzante_id: null,
+            endulzante_nombre: '',
+            extras_agregados: [],
+            monto_extras: 0,
+            notas: notasTexto
         }
     };
 
@@ -839,7 +839,7 @@ function actualizarTablaDetalle() {
             <tr id="filaVacia">
                 <td colspan="${numCols}" class="empty-detalle">
                     <i class="bi bi-box-seam me-2"></i>
-                    Selecciona productos desde el catálogo
+                    Selecciona productos desde el menu
                 </td>
             </tr>`);
         actualizarTotal();
@@ -860,10 +860,10 @@ function actualizarTablaDetalle() {
             tagsList.push(`<span class="badge-pers-item"><i class="bi bi-water"></i> ${endulzanteLimpio}</span>`);
         }
         if (pers.ingredientes_quitados && pers.ingredientes_quitados.length) {
-            tagsList.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> ${pers.ingredientes_quitados.map(i=>escHtml(i.nombre_componente)).join(', ')}</span>`);
+            tagsList.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> ${pers.ingredientes_quitados.map(i => escHtml(i.nombre_componente)).join(', ')}</span>`);
         }
         if (pers.ingredientes_sustituidos && pers.ingredientes_sustituidos.length) {
-            tagsList.push(`<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i=>`${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`);
+            tagsList.push(`<span class="badge-pers-item badge-pers-sustituir"><i class="bi bi-arrow-left-right"></i> ${pers.ingredientes_sustituidos.map(i => `${escHtml(i.nombre_original)} → ${escHtml(i.nombre_nuevo)}`).join(', ')}</span>`);
         }
         if (pers.extras_agregados && pers.extras_agregados.length) {
             const extrasTexto = pers.extras_agregados.map(e => {
@@ -879,7 +879,7 @@ function actualizarTablaDetalle() {
         }
 
         // Badges de puntos Club Pitaya
-        const qtyCond   = parseInt(item.qty_condicion || 0);
+        const qtyCond = parseInt(item.qty_condicion || 0);
         const cantLibre = Math.max(0, item.cantidad - qtyCond);
         const ptsEfectivos = cantLibre * (item.puntos_acumulacion || 0);
 
@@ -904,11 +904,11 @@ function actualizarTablaDetalle() {
         // Descuentos y Promoción aplicada
         const _dto = parseFloat(item.descuento_promo) || 0;
         const _promoNom = (item.promos_en_item && item.promos_en_item.length > 0)
-            ? item.promos_en_item.map(function(pp){ return escHtml(pp.nombre); }).join(', ')
+            ? item.promos_en_item.map(function (pp) { return escHtml(pp.nombre); }).join(', ')
             : '';
         const _pFin = Math.max(0, Math.round((precioTotalLinea - _dto) * 100) / 100);
         const _pFmtOrig = precioTotalLinea.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const _pFmtFin  = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const _pFmtFin = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const canjeCls = item.es_canjeado ? 'fila-canjeada' : '';
 
@@ -1125,7 +1125,7 @@ function calcularSubtotalFactura() {
     return detalleFactura.reduce(function (s, d) {
         if (d.es_canjeado) return s; // ya vale 0, el costo_total_iva es 0
         var base = parseFloat(d.costo_total_iva) || 0;
-        var dto  = parseFloat(d.descuento_promo)  || 0;
+        var dto = parseFloat(d.descuento_promo) || 0;
         return s + Math.max(0, Math.round((base - dto) * 100) / 100);
     }, 0);
 }
@@ -1136,8 +1136,8 @@ function calcularMontoPropina(subtotal) {
 
 function calcularTotalAPagar() {
     var subtotal = calcularSubtotalFactura();
-    var propina  = calcularMontoPropina(subtotal);
-    var total    = Math.round((subtotal + propina) * 100) / 100;
+    var propina = calcularMontoPropina(subtotal);
+    var total = Math.round((subtotal + propina) * 100) / 100;
     // _promoDescuentoGlobal: descuento a nivel de factura (pct_factura / monto_factura)
     return Math.max(0, Math.round((total - (_promoDescuentoGlobal || 0)) * 100) / 100);
 }
@@ -1183,22 +1183,22 @@ function agregarMetodoPago(metodo) {
        ============================================================ */
     if (metodo === 'cupon') {
         pagos.push({
-            metodo:        'cupon',
-            monto:         0,
-            recibido:      0,
-            cambio:        0,
-            referencia:    '',    // Almacena el número/código del cupón
-            id_cupon:      null,  // ID de la tabla cupones_sucursales
-            validado:      false, // Bandera de validación en tiempo real
-            monto_cupon:   0,     // Monto nominal de descuento del cupón
+            metodo: 'cupon',
+            monto: 0,
+            recibido: 0,
+            cambio: 0,
+            referencia: '',    // Almacena el número/código del cupón
+            id_cupon: null,  // ID de la tabla cupones_sucursales
+            validado: false, // Bandera de validación en tiempo real
+            monto_cupon: 0,     // Monto nominal de descuento del cupón
             observaciones: ''
         });
     } else {
         const nuevoPago = {
-            metodo:     metodo,
-            monto:      0,
-            recibido:   0,
-            cambio:     0,
+            metodo: metodo,
+            monto: 0,
+            recibido: 0,
+            cambio: 0,
             referencia: ''
         };
         pagos.push(nuevoPago);
@@ -1495,8 +1495,8 @@ function actualizarTotal(reajustarPagosAuto = true) {
     $('#totalFacturaMonto').text('C$ ' + total.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
     // Mostrar/ocultar fila de descuento de promociones
-    var _sumItemDtos = detalleFactura.reduce(function(s,d){ return s + (parseFloat(d.descuento_promo)||0); }, 0);
-    var _totalDescPromo = Math.round((_sumItemDtos + (_promoDescuentoGlobal||0)) * 100) / 100;
+    var _sumItemDtos = detalleFactura.reduce(function (s, d) { return s + (parseFloat(d.descuento_promo) || 0); }, 0);
+    var _totalDescPromo = Math.round((_sumItemDtos + (_promoDescuentoGlobal || 0)) * 100) / 100;
     if (_totalDescPromo > 0) {
         var $filaDesc = $("#filaDescuentoPromo");
         if ($filaDesc.length === 0) {
@@ -1521,7 +1521,7 @@ function actualizarTotal(reajustarPagosAuto = true) {
 
     if (pagos.length === 0) {
         $alerta.removeClass('cobertura-completa cobertura-exceso').addClass('cobertura-pendiente').show()
-               .html('<i class="bi bi-info-circle me-1"></i> Seleccione un método de pago.');
+            .html('<i class="bi bi-info-circle me-1"></i> Seleccione un método de pago.');
         actualizarPuntosFactura();
         return;
     }
@@ -1531,13 +1531,13 @@ function actualizarTotal(reajustarPagosAuto = true) {
 
     if (diff === 0) {
         $alerta.removeClass('cobertura-pendiente cobertura-exceso').addClass('cobertura-completa').show()
-               .html(`<i class="bi bi-check-circle-fill me-1"></i> Pagos completos (C$ ${total.toFixed(2)})`);
+            .html(`<i class="bi bi-check-circle-fill me-1"></i> Pagos completos (C$ ${total.toFixed(2)})`);
     } else if (diff < 0) {
         $alerta.removeClass('cobertura-completa cobertura-exceso').addClass('cobertura-pendiente').show()
-               .html(`<i class="bi bi-exclamation-triangle-fill me-1"></i> Falta por cubrir: C$ ${Math.abs(diff).toFixed(2)}`);
+            .html(`<i class="bi bi-exclamation-triangle-fill me-1"></i> Falta por cubrir: C$ ${Math.abs(diff).toFixed(2)}`);
     } else {
         $alerta.removeClass('cobertura-pendiente cobertura-exceso').addClass('cobertura-completa').show()
-               .html(`<i class="bi bi-arrow-left-right me-1"></i> <strong>Cambio a devolver: C$ ${diff.toFixed(2)}</strong>`);
+            .html(`<i class="bi bi-arrow-left-right me-1"></i> <strong>Cambio a devolver: C$ ${diff.toFixed(2)}</strong>`);
     }
 
     actualizarPuntosFactura();
@@ -1545,11 +1545,11 @@ function actualizarTotal(reajustarPagosAuto = true) {
 
 /* ---- Guardar factura / orden ---- */
 function guardarFactura() {
-    const isClub        = $('input[name="tipo_cliente"]:checked').val() === 'club';
+    const isClub = $('input[name="tipo_cliente"]:checked').val() === 'club';
     const idClienteClub = $('#idClienteClub').val();
     const nombreCliente = $('#nombreCliente').val().trim();
-    const numero        = $('#numeroFactura').val().trim();
-    const fecha         = $('#fechaFactura').val();
+    const numero = $('#numeroFactura').val().trim();
+    const fecha = $('#fechaFactura').val();
 
     if (isClub && !idClienteClub) {
         alertError('Debe ingresar un miembro válido del Club Pitaya, o cambiar a Cliente General.');
@@ -1585,8 +1585,8 @@ function guardarFactura() {
     }
 
     const totalFactura = calcularTotalAPagar();
-    const totalPagos   = sumarTotalPagos();
-    const diff         = Math.round((totalPagos - totalFactura) * 100) / 100;
+    const totalPagos = sumarTotalPagos();
+    const diff = Math.round((totalPagos - totalFactura) * 100) / 100;
 
     if (diff < 0) {
         alertError(`Los pagos no cubren el total de la factura. Falta cubrir C$ ${Math.abs(diff).toFixed(2)}.`);
@@ -1605,14 +1605,14 @@ function guardarFactura() {
     }
 
     Swal.fire({
-        title:              '¿Guardar e Imprimir?',
-        html:               htmlConfirmacion,
-        icon:               'warning',
-        showCancelButton:   true,
-        confirmButtonText:  'Sí, Guardar e Imprimir',
-        cancelButtonText:   'Cancelar',
+        title: '¿Guardar e Imprimir?',
+        html: htmlConfirmacion,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, Guardar e Imprimir',
+        cancelButtonText: 'Cancelar',
         confirmButtonColor: '#0E544C',
-        cancelButtonColor:  '#6c757d',
+        cancelButtonColor: '#6c757d',
     }).then((result) => {
         if (!result.isConfirmed) return;
         _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura, cambioTotal);
@@ -1620,23 +1620,23 @@ function guardarFactura() {
 }
 
 function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura, cambioTotal) {
-    const $btn       = $('#btnGuardar');
+    const $btn = $('#btnGuardar');
     const detalleStr = JSON.stringify(detalleFactura);
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Guardando…');
 
     $.post('/modulos/pos/ajax/facturas_guardar.php', {
-        tipo_cliente:    isClub ? 'club' : 'general',
+        tipo_cliente: isClub ? 'club' : 'general',
         id_cliente_club: isClub ? idClienteClub : null,
-        nombre_cliente:  isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
-        numero_factura:  numero,
-        fecha:           fecha,
-        detalle:         detalleStr,
-        pagos:           JSON.stringify(pagos),
-        subtotal:        calcularSubtotalFactura(),
-        propina:         calcularMontoPropina(calcularSubtotalFactura()),
-        con_propina:     conPropina ? 1 : 0,
-        total:           totalFactura,
-        cambio_total:    cambioTotal || 0
+        nombre_cliente: isClub ? (clienteActual ? clienteActual.nombre_completo : '') : nombreCliente,
+        numero_factura: numero,
+        fecha: fecha,
+        detalle: detalleStr,
+        pagos: JSON.stringify(pagos),
+        subtotal: calcularSubtotalFactura(),
+        propina: calcularMontoPropina(calcularSubtotalFactura()),
+        con_propina: conPropina ? 1 : 0,
+        total: totalFactura,
+        cambio_total: cambioTotal || 0
     }, function (res) {
         if (!res.success) {
             alertError(res.message || 'Error al guardar la factura.');
@@ -1649,7 +1649,7 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
 
         $.post('/modulos/pos/ajax/facturas_get_imprimibles.php', {
             id_factura: idFactura,
-            cart_data:  detalleStr,
+            cart_data: detalleStr,
         }, function (impData) {
             if (impData.success) {
                 lanzarImpresionCompleta(impData);
@@ -1657,9 +1657,9 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
             } else {
                 Swal.fire({
                     title: '¡Venta guardada!',
-                    html:  '<p>La venta fue registrada pero no se pudieron preparar los tickets.</p>'
-                         + '<small class="text-muted">Error: ' + (impData.message || 'desconocido') + '</small>',
-                    icon:  'warning',
+                    html: '<p>La venta fue registrada pero no se pudieron preparar los tickets.</p>'
+                        + '<small class="text-muted">Error: ' + (impData.message || 'desconocido') + '</small>',
+                    icon: 'warning',
                     confirmButtonText: 'Continuar',
                     confirmButtonColor: '#0E544C',
                 }).then(() => _resetFormulario($btn));
@@ -1667,8 +1667,8 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         }, 'json').fail(function () {
             Swal.fire({
                 title: '¡Venta guardada!',
-                text:  'Venta registrada. Error de conexión al obtener datos de impresión.',
-                icon:  'warning',
+                text: 'Venta registrada. Error de conexión al obtener datos de impresión.',
+                icon: 'warning',
                 confirmButtonText: 'Continuar',
                 confirmButtonColor: '#0E544C',
             });
@@ -1682,9 +1682,9 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
 }
 
 function _resetFormulario($btn) {
-    detalleFactura        = [];
-    _rowKeyCounter        = 0;
-    _promoIdsAprobados    = [];
+    detalleFactura = [];
+    _rowKeyCounter = 0;
+    _promoIdsAprobados = [];
     _promoDescuentoGlobal = 0;
     $("#filaDescuentoPromo").remove();
     actualizarTablaDetalle();
@@ -1765,21 +1765,21 @@ function abrirModalPersonalizacion(idx) {
     const item = detalleFactura[idx];
     if (!item) return;
 
-    _mpIdx          = idx;
+    _mpIdx = idx;
     _mspModoEdicion = true;
-    _mspIdxTicket   = idx;
-    _mspProductos   = [];
-    _mspIdxSelec    = -1;
+    _mspIdxTicket = idx;
+    _mspProductos = [];
+    _mspIdxSelec = -1;
 
     // Clonar personalización actual como borrador de trabajo
     _mpDraft = JSON.parse(JSON.stringify(item.personalizacion || {
-        ingredientes_quitados:    [],
+        ingredientes_quitados: [],
         ingredientes_sustituidos: [],
-        endulzante_id:            null,
-        endulzante_nombre:        '',
-        extras_agregados:         [],
-        monto_extras:             0,
-        notas:                    ''
+        endulzante_id: null,
+        endulzante_nombre: '',
+        extras_agregados: [],
+        monto_extras: 0,
+        notas: ''
     }));
     _mpDraft.notas = (typeof item.notas === 'string') ? item.notas : (_mpDraft.notas || '');
 
@@ -1824,9 +1824,9 @@ function _formatearCantidad(val) {
     const n = parseFloat(val);
     if (isNaN(n)) return val;
     if (Math.abs(n - Math.round(n)) < 0.01) return Math.round(n).toString();
-    if (Math.abs(n - 0.5)   < 0.02)  return '1/2';
-    if (Math.abs(n - 0.25)  < 0.02)  return '1/4';
-    if (Math.abs(n - 1/6)   < 0.015) return '1/6';
+    if (Math.abs(n - 0.5) < 0.02) return '1/2';
+    if (Math.abs(n - 0.25) < 0.02) return '1/4';
+    if (Math.abs(n - 1 / 6) < 0.015) return '1/6';
     return n.toFixed(2);
 }
 
@@ -1943,12 +1943,12 @@ function _mpRenderContenido(datos) {
             <div class="mp-ingredientes-lista">`;
 
         datos.ingredientes.filter(ing => ing.orden_comanda !== null && ing.orden_comanda !== undefined).forEach(ing => {
-            const idComp     = ing.id_componente;
-            const quitado    = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
+            const idComp = ing.id_componente;
+            const quitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
             const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);
 
             const nombreActual = sustituido ? sustituido.nombre_nuevo : '';
-            const valorActual  = sustituido ? sustituido.id_nuevo     : '';
+            const valorActual = sustituido ? sustituido.id_nuevo : '';
 
             // Construir items del combo buscable usando datos.extras
             let dropdownHtml = `<div class="mp-sust-item mp-sust-sin-cambio" data-id="" data-nombre="" onclick="_mpSeleccionarSustituto(this, ${idComp})"><i class="bi bi-dash me-1"></i>Sin cambio</div>`;
@@ -2024,7 +2024,7 @@ function _mpRenderContenido(datos) {
             const grupoKey = 'mpeg_' + grupoIdx++;
             // ¿Hay algún extra de este grupo ya seleccionado? → abrir por defecto
             const tieneActivo = lista.some(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id));
-            const cantSelec   = lista.filter(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id)).length;
+            const cantSelec = lista.filter(ext => _mpDraft.extras_agregados.some(e => e.id === ext.id)).length;
 
             htmlExtras += `
             <div class="mp-extras-grupo ${tieneActivo ? 'abierto' : ''}">
@@ -2089,12 +2089,12 @@ function _mpRenderContenido(datos) {
 
 /* ---- Toggle: quitar / restaurar ingrediente ---- */
 function _mpToggleQuitarIngrediente(btn, nombreComponente) {
-    const idComp   = parseInt(btn.dataset.comp);
-    const row      = btn.closest('.mp-ingrediente-row');
-    const combo    = row ? row.querySelector('.mp-sustituir-combo') : null;
-    const inputSust  = combo ? combo.querySelector('.mp-sustituir-input')   : null;
-    const hiddenSust = combo ? combo.querySelector('.mp-sustituir-valor')   : null;
-    const dropdown   = combo ? combo.querySelector('.mp-sustituir-dropdown') : null;
+    const idComp = parseInt(btn.dataset.comp);
+    const row = btn.closest('.mp-ingrediente-row');
+    const combo = row ? row.querySelector('.mp-sustituir-combo') : null;
+    const inputSust = combo ? combo.querySelector('.mp-sustituir-input') : null;
+    const hiddenSust = combo ? combo.querySelector('.mp-sustituir-valor') : null;
+    const dropdown = combo ? combo.querySelector('.mp-sustituir-dropdown') : null;
 
     const yaQuitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
 
@@ -2106,16 +2106,16 @@ function _mpToggleQuitarIngrediente(btn, nombreComponente) {
         btn.innerHTML = '<i class="bi bi-x-circle"></i>';
         btn.title = 'Quitar este ingrediente';
         if (inputSust) { inputSust.disabled = false; }
-        if (combo)     { combo.classList.remove('mp-combo-disabled'); }
+        if (combo) { combo.classList.remove('mp-combo-disabled'); }
     } else {
         // Quitar
         _mpDraft.ingredientes_quitados.push({ id_componente: idComp, nombre_componente: nombreComponente });
         // Cancelar sustitución previa si la había
         _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
-        if (inputSust)  { inputSust.value = ''; inputSust.disabled = true; }
+        if (inputSust) { inputSust.value = ''; inputSust.disabled = true; }
         if (hiddenSust) { hiddenSust.value = ''; }
-        if (dropdown)   { dropdown.classList.remove('mp-sust-abierto'); }
-        if (combo)      { combo.classList.add('mp-combo-disabled'); }
+        if (dropdown) { dropdown.classList.remove('mp-sust-abierto'); }
+        if (combo) { combo.classList.add('mp-combo-disabled'); }
 
         row.classList.add('mp-ingrediente-quitado');
         btn.classList.add('activo');
@@ -2166,26 +2166,26 @@ function _mpFiltrarSustitutos(input) {
 function _mpSeleccionarSustituto(itemDiv, idComp) {
     const combo = itemDiv.closest('.mp-sustituir-combo');
     if (!combo) return;
-    const input    = combo.querySelector('.mp-sustituir-input');
-    const hidden   = combo.querySelector('.mp-sustituir-valor');
+    const input = combo.querySelector('.mp-sustituir-input');
+    const hidden = combo.querySelector('.mp-sustituir-valor');
     const dropdown = combo.querySelector('.mp-sustituir-dropdown');
     const nombreOrig = input ? input.dataset.nombreOrig : '';
 
-    const id     = itemDiv.dataset.id;
+    const id = itemDiv.dataset.id;
     const nombre = itemDiv.dataset.nombre;
 
-    if (input)    input.value  = nombre || '';
-    if (hidden)   hidden.value = id     || '';
+    if (input) input.value = nombre || '';
+    if (hidden) hidden.value = id || '';
     if (dropdown) dropdown.classList.remove('mp-sust-abierto');
 
     // Actualizar draft
     _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
     if (id) {
         _mpDraft.ingredientes_sustituidos.push({
-            id_componente:   idComp,
+            id_componente: idComp,
             nombre_original: nombreOrig,
-            id_nuevo:        parseInt(id),
-            nombre_nuevo:    nombre
+            id_nuevo: parseInt(id),
+            nombre_nuevo: nombre
         });
     }
 }
@@ -2297,9 +2297,9 @@ function _mpSeleccionarVarianteEndulzante(select) {
 
 /* ---- Toggle extra (agregar/quitar) ---- */
 function _mpToggleExtra(btn) {
-    const idExt    = parseInt(btn.dataset.id);
-    const nombre   = btn.dataset.nombre;
-    const precio   = parseFloat(btn.dataset.precio) || 0;
+    const idExt = parseInt(btn.dataset.id);
+    const nombre = btn.dataset.nombre;
+    const precio = parseFloat(btn.dataset.precio) || 0;
     const yaAgregado = _mpDraft.extras_agregados.some(e => e.id === idExt);
 
     if (yaAgregado) {
@@ -2392,9 +2392,9 @@ $('#mpBtnGuardar').on('click', function () {
         return;
     }
 
-    const p       = _mspProductos[_mspIdxSelec];
-    const precio  = parseFloat(p.precio_venta || 0);
-    const draft   = JSON.parse(JSON.stringify(_mpDraft));
+    const p = _mspProductos[_mspIdxSelec];
+    const precio = parseFloat(p.precio_venta || 0);
+    const draft = JSON.parse(JSON.stringify(_mpDraft));
 
     agregarProducto(
         parseInt(p.id),
@@ -2464,18 +2464,18 @@ $('#btnQuickAddMembresia').on('click', function () {
         const precio = parseFloat(p.precio_venta) || 0;
 
         detalleFactura.unshift({
-            _rowKey:              ++_rowKeyCounter,
-            id_presentacion:      parseInt(p.id),
+            _rowKey: ++_rowKeyCounter,
+            id_presentacion: parseInt(p.id),
             id_catalogo_menu_pos: parseInt(p.id_catalogo_menu_pos),
-            nombre:               p.nombre,
-            unidad:               p.nombre_unidad || 'Unidad',
+            nombre: p.nombre,
+            unidad: p.nombre_unidad || 'Unidad',
             precio_unitario_base: precio,
-            precio_unitario:      precio,
-            cantidad:             1,
-            costo_total_iva:      precio,
-            notas:                'Ingresar número de membresía',
-            es_personalizable:    false,
-            personalizacion:      {}
+            precio_unitario: precio,
+            cantidad: 1,
+            costo_total_iva: precio,
+            notas: 'Ingresar número de membresía',
+            es_personalizable: false,
+            personalizacion: {}
         });
         actualizarTablaDetalle();
 
@@ -2510,9 +2510,9 @@ $('#btnQuickAddMembresia').on('click', function () {
    ============================================================ */
 
 // Estado global de promociones
-let _promosActivas     = [];   // Todas las promos activas (catálogo)
+let _promosActivas = [];   // Todas las promos activas (catálogo)
 let _promoIdsAprobados = [];   // IDs aprobados/aplicados en este ticket por el cajero
-let _promoEvalTimer    = null; // Timer debounce para re-evaluar al cambiar carrito
+let _promoEvalTimer = null; // Timer debounce para re-evaluar al cambiar carrito
 
 /* ─── Carga inicial: todas las promos activas vigentes ──────── */
 function cargarPromosActivas() {
@@ -2536,7 +2536,7 @@ function cargarPromosActivas() {
 
 /* ─── Render: bloque "ACTIVOS" (casi aplican + disponibles, ordenados) ─── */
 function renderPromosActivos(potenciales, idsAplicables) {
-    potenciales   = potenciales   || [];
+    potenciales = potenciales || [];
     idsAplicables = idsAplicables || [];
 
     // 1. Promociones que casi aplican (con condiciones) que NO están en aplicables
@@ -2544,8 +2544,8 @@ function renderPromosActivos(potenciales, idsAplicables) {
         .filter(function (p) { return !idsAplicables.includes(parseInt(p.id)); })
         .map(function (p) {
             const total = parseInt(p.total_condiciones) || 1;
-            const met   = parseInt(p.condiciones_met) || 0;
-            const pct   = Math.min(100, Math.max(0, Math.round((met / total) * 100)));
+            const met = parseInt(p.condiciones_met) || 0;
+            const pct = Math.min(100, Math.max(0, Math.round((met / total) * 100)));
             return Object.assign({}, p, { _pct: pct });
         });
 
@@ -2611,37 +2611,37 @@ function evaluarPromocionesConCarrito() {
         .map(function (d) {
             const prod = todosProductos.find(function (p) { return p.id === d.id_presentacion; }) || {};
             return {
-                id:          d.id_presentacion,
-                id_grupo:             parseInt(prod.id_grupo    || 0),
-                id_subgrupo:          parseInt(prod.id_subgrupo || 0),
+                id: d.id_presentacion,
+                id_grupo: parseInt(prod.id_grupo || 0),
+                id_subgrupo: parseInt(prod.id_subgrupo || 0),
                 id_catalogo_menu_pos: parseInt(prod.id_catalogo_menu_pos || 0),
-                id_producto_maestro:  parseInt(prod.id_producto_maestro || 0),
-                precio:               parseFloat(d.precio_unitario || 0),
-                cantidad:             parseInt(d.cantidad || 1),
-                nombre:               d.nombre || prod.Nombre || '',
+                id_producto_maestro: parseInt(prod.id_producto_maestro || 0),
+                precio: parseFloat(d.precio_unitario || 0),
+                cantidad: parseInt(d.cantidad || 1),
+                nombre: d.nombre || prod.Nombre || '',
             };
         });
 
     // Contexto actual
-    const ahora   = new Date();
-    const dSem    = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const horaStr = String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
+    const ahora = new Date();
+    const dSem = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const horaStr = String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0');
     const tipoCli = $('input[name="tipo_cliente"]:checked').val() === 'club' ? 'Club' : 'General';
 
     const context = {
-        dia:          dSem[ahora.getDay()],
-        hora:         horaStr,
-        sucursal:     (typeof POS_SUCURSAL_ID !== 'undefined') ? String(POS_SUCURSAL_ID) : '',
-        canal:        'general',
+        dia: dSem[ahora.getDay()],
+        hora: horaStr,
+        sucursal: (typeof POS_SUCURSAL_ID !== 'undefined') ? String(POS_SUCURSAL_ID) : '',
+        canal: 'general',
         tipo_cliente: tipoCli
     };
 
     $.ajax({
-        url:         'ajax/evaluar_promociones.php',
-        type:        'POST',
+        url: 'ajax/evaluar_promociones.php',
+        type: 'POST',
         contentType: 'application/json',
-        data:        JSON.stringify({ context: context, cart: cart, approved_ids: _promoIdsAprobados }),
-        dataType:    'json',
+        data: JSON.stringify({ context: context, cart: cart, approved_ids: _promoIdsAprobados }),
+        dataType: 'json',
         success: function (res) {
             if (!res.success) return;
             renderPromosEvaluadas(res);
@@ -2656,16 +2656,16 @@ function renderPromosEvaluadas(res) {
     // Y además cumplen TODAS las condiciones con el carrito actual.
     // Si una promo estaba aprobada pero ya no califica, la quitamos automáticamente.
     var idsConfirmados = (res.promos_aplicadas || []).map(function (p) { return parseInt(p.id); });
-    var idsRevocados   = _promoIdsAprobados.filter(function (id) { return !idsConfirmados.includes(id); });
+    var idsRevocados = _promoIdsAprobados.filter(function (id) { return !idsConfirmados.includes(id); });
     if (idsRevocados.length > 0) {
         _promoIdsAprobados = idsConfirmados.slice(); // dejar solo las confirmadas
         // No necesitamos re-evaluar: el backend ya evaluó con approved_ids y devolvió la verdad
     }
 
     // ── Bloque "APLICABLES" (califican + ya aprobadas) ──
-    const aplican   = res.promos_aplican   || [];
+    const aplican = res.promos_aplican || [];
     const aplicadas = res.promos_aplicadas || [];
-    const todas     = [...aplican, ...aplicadas];
+    const todas = [...aplican, ...aplicadas];
     const idsAplicables = todas.map(function (p) { return parseInt(p.id); });
 
     if (todas.length > 0) {
@@ -2698,10 +2698,10 @@ function renderPromosEvaluadas(res) {
     // ══ APLICAR DESCUENTOS AL CARRITO ════════════════════════════
     // 1. Reset todos los descuentos de promo y flags de condición en detalleFactura
     detalleFactura.forEach(function (d) {
-        d.descuento_promo    = 0;
-        d.promos_en_item     = [];
+        d.descuento_promo = 0;
+        d.promos_en_item = [];
         d.es_condicion_promo = false;
-        d.qty_condicion      = 0; // unidades usadas como condición de promo (0 = ninguna)
+        d.qty_condicion = 0; // unidades usadas como condición de promo (0 = ninguna)
     });
 
     // Marcar ítems que son condición de alguna promo APLICADA (aprobada)
@@ -2713,7 +2713,7 @@ function renderPromosEvaluadas(res) {
         for (var k = 0; k < detalleFactura.length; k++) {
             if (String(detalleFactura[k].id_presentacion) === idStr) {
                 var d = detalleFactura[k];
-                d.qty_condicion      = qtyCond;
+                d.qty_condicion = qtyCond;
                 d.es_condicion_promo = true; // cualquier involucración = excluido de canje
                 break;
             }
@@ -2736,14 +2736,14 @@ function renderPromosEvaluadas(res) {
         }
         if (item && !item.es_canjeado) {
             item.descuento_promo = dtoItem;
-            item.promos_en_item  = ri.promos || [];
+            item.promos_en_item = ri.promos || [];
         }
     });
 
     // 3. Si hay descuento global de factura (pct_factura/monto_factura),
     //    es la diferencia entre total_descuento y la suma de descuentos por item
     var sumItemDtos = detalleFactura.reduce(function (s, d) { return s + (d.descuento_promo || 0); }, 0);
-    var totalDto    = Math.round((parseFloat(res.total_descuento) || 0) * 100) / 100;
+    var totalDto = Math.round((parseFloat(res.total_descuento) || 0) * 100) / 100;
     _promoDescuentoGlobal = Math.max(0, Math.round((totalDto - sumItemDtos) * 100) / 100);
 
     // 4. Actualizar totales y tabla SIN volver a disparar evaluarPromos
@@ -2775,11 +2775,11 @@ function quitarPromoAprobada(promoId) {
 function _labelResultado(tipo, valor) {
     const v = parseFloat(valor) || 0;
     switch (tipo) {
-        case 'pct_producto':   return v + '% dto. producto';
-        case 'pct_factura':    return v + '% dto. factura';
+        case 'pct_producto': return v + '% dto. producto';
+        case 'pct_factura': return v + '% dto. factura';
         case 'monto_producto': return 'C$ ' + v.toFixed(2) + ' dto./unidad';
-        case 'monto_factura':  return 'C$ ' + v.toFixed(2) + ' dto. factura';
-        default:               return tipo + ' · ' + v;
+        case 'monto_factura': return 'C$ ' + v.toFixed(2) + ' dto. factura';
+        default: return tipo + ' · ' + v;
     }
 }
 
@@ -2810,8 +2810,8 @@ document.getElementById('modalPersonalizacion').addEventListener('hidden.bs.moda
     // Limpiar selector de productos para que no quede visible en el próximo apertura
     $('#mpSelectorProductos').html('').show(); // show() porque en modo edicion lo ocultamos
     _mspModoEdicion = false;
-    _mspIdxTicket   = -1;
-    _mspIdxSelec    = -1;
-    _mspProductos   = [];
-    _mpIdx          = -1;
+    _mspIdxTicket = -1;
+    _mspIdxSelec = -1;
+    _mspProductos = [];
+    _mpIdx = -1;
 });
