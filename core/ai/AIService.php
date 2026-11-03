@@ -46,7 +46,7 @@ class AIService
             case 'google':
                 // Google Gemini via Native REST API (v1beta)
                 $this->endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/';
-                $this->model = 'gemini-3.8-flash';
+                $this->model = 'gemini-flash-latest';
                 break;
             case 'cerebras':
                 $this->endpoint = 'https://api.cerebras.ai/v1/chat/completions';
