@@ -18,14 +18,28 @@ El módulo POS/Facturación es el núcleo operacional de cada tienda. Permite al
 
 ## 2. Archivos Clave del Proyecto
 
-| Archivo | Descripción |
+> **Estructura de modulos POS** (reorganizada nov-2026):
+> - `modulos/pos/` — Ventas: nueva venta + historial de ventas
+> - `modulos/compras/` — Compras a proveedores: historial de facturas de compra
+> - `modulos/inicial/` — Caja inicial (conteo de efectivo al abrir turno)
+
+| Archivo | Descripcion |
 |---|---|
-| `sql/06_tablas_facturacion_pos.sql` | Script SQL definitivo v4.2 — 14 tablas con prefijo `pos_ventas_` |
-| `modulos/POS/promociones.php` | Listado de promociones |
-| `modulos/POS/promocion_form.php` | Formulario de creación/edición de promociones (Rule Builder) |
-| `modulos/POS/js/promociones.js` | Lógica del Rule Builder en frontend |
+| `sql/06_tablas_facturacion_pos.sql` | Script SQL definitivo v4.2 - 14 tablas con prefijo `pos_ventas_` |
+| `modulos/pos/facturas_nueva.php` | Vista principal del POS - nueva venta |
+| `modulos/pos/ventas_historial.php` | Historial de ventas (tabla `pos_ventas_facturas`) |
+| `modulos/pos/ajax/facturas_guardar.php` | Guarda la venta y registra puntos en BD |
+| `modulos/pos/ajax/ventas_get_historial.php` | Lista paginada de ventas |
+| `modulos/pos/ajax/ventas_get_detalle.php` | Detalle + lineas + pagos de una venta |
+| `modulos/compras/facturas_historial.php` | Historial de facturas de compra a proveedores (tabla `pos_facturas`) |
+| `modulos/compras/ajax/facturas_get_historial.php` | Lista paginada de compras |
+| `modulos/inicial/index.php` | Conteo de caja inicial por turno/sucursal |
+| `modulos/inicial/ajax/guardar_caja_inicial.php` | Guarda el conteo de caja en BD |
+| `modulos/pos/promociones.php` | Listado de promociones |
+| `modulos/pos/promocion_form.php` | Formulario de creacion/edicion de promociones (Rule Builder) |
+| `modulos/pos/js/promociones.js` | Logica del Rule Builder en frontend |
 | `modulos/productos/registro_producto_global.php` | Registro de productos (grupos, subgrupos, recetas, extras, endulzantes) |
-| `modulos/productos/pedido_sugerido.php` | Módulo de inventario sugerido semanal |
+| `modulos/productos/pedido_sugerido.php` | Modulo de inventario sugerido semanal |
 | `GitHub Pitaya/SQL/u839374897_erp (solo script de tablas).sql` | Script completo de tablas existentes en la BD (Maestro) |
 
 ---
@@ -266,9 +280,9 @@ Una línea tiene `bloquea_puntos = 1` si:
 ## 6. Módulo de Promociones (ya existente)
 
 El módulo de promociones está completamente funcional en:
-- **Lista**: `/modulos/POS/promociones.php`
-- **Form**: `/modulos/POS/promocion_form.php`
-- **JS**: `/modulos/POS/js/promociones.js`
+- **Lista**: `/modulos/pos/promociones.php`
+- **Form**: `/modulos/pos/promocion_form.php`
+- **JS**: `/modulos/pos/js/promociones.js`
 
 ### Tablas existentes del Rule Builder
 ```
@@ -470,7 +484,7 @@ Tras la fase de definición final, se han establecido los siguientes acuerdos pa
 - **Cupones**: Validación en tiempo real contra `cupones_sucursales` (lógica integrada del módulo de marketing).
 
 ### 11.3 Alcance y Limitaciones (Fase 1)
-- **Promociones**: Se incluirá la sección visual en el POS. Las promociones mostradas y aplicadas provienen de lo configurado en `/modulos/POS/promociones.php` y `/modulos/POS/promocion_form.php`. Sin embargo, la lógica de aplicación en el POS será manual o mediante placeholders en esta fase; el motor automático completo se integrará en una fase posterior.
+- **Promociones**: Se incluirá la sección visual en el POS. Las promociones mostradas y aplicadas provienen de lo configurado en `/modulos/pos/promociones.php` y `/modulos/pos/promocion_form.php`. Sin embargo, la lógica de aplicación en el POS será manual o mediante placeholders en esta fase; el motor automático completo se integrará en una fase posterior.
 - **Impresión**: No se realizará el envío físico a impresoras térmicas. El flujo de "Imprimir" validará la factura y cambiará su estado a `bloqueada`.
 - **Interacción**: Los atajos de teclado (F2, F4, etc.) serán elementos visuales de guía; la funcionalidad operativa se mantendrá vía click/touch por ahora.
 - **Exclusiones**: Las páginas de Apertura de Caja, Aligeramiento y Cierre de Caja no se modificarán, ya que son módulos funcionales existentes.
