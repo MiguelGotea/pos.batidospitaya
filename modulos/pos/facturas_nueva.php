@@ -54,24 +54,36 @@ try {
                     <div class="col-catalogo-promos d-flex flex-column gap-3">
 
                         <!-- Panel Catálogo de Productos -->
-                        <div class="panel-catalogo-productos">
+                        <div class="panel-catalogo-productos card-factura">
 
-                            <!-- Buscador rápido -->
-                            <div class="catalogo-header">
+                            <!-- Encabezado Menú -->
+                            <div class="card-header-factura">
+                                <i class="bi bi-grid-fill"></i>
+                                Menú
+                            </div>
+
+                            <!-- Tabs de Grupos con botón de búsqueda integrado a la derecha -->
+                            <div class="catalogo-tabs-header-wrap">
+                                <div class="grupos-tabs-bar" id="gruposTabs">
+                                    <span class="spinner-border spinner-border-sm text-secondary m-2"></span>
+                                </div>
+                                <button type="button" class="btn-toggle-buscar-catalogo" id="btnToggleBuscarCatalogo"
+                                    title="Buscar producto por nombre o código">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+
+                            <!-- Buscador desplegable (se expande al dar clic en la lupa) -->
+                            <div class="catalogo-buscador-colapsable" id="wrapBuscadorCatalogo" style="display: none;">
                                 <div class="buscador-catalogo-wrap">
                                     <i class="bi bi-search buscador-catalogo-icon"></i>
                                     <input type="text" id="buscarProducto" class="buscador-catalogo-input"
                                         placeholder="Buscar producto por nombre, código..." autocomplete="off">
                                     <button class="buscador-catalogo-clear" id="btnLimpiarBusqueda" type="button"
-                                        style="display:none;">
+                                        style="display:none;" title="Limpiar búsqueda">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
-                            </div>
-
-                            <!-- Tabs de Grupos -->
-                            <div class="grupos-tabs-bar" id="gruposTabs">
-                                <span class="spinner-border spinner-border-sm text-secondary m-2"></span>
                             </div>
 
                             <!-- Área de productos (subgrupos + cards o resultados de búsqueda) -->
@@ -101,40 +113,43 @@ try {
                         </div>
 
                         <!-- Sección de Promociones Dinámicas (carga desde BD) -->
-                        <div class="seccion-promociones-pos" id="seccionPromociones">
-                            <div class="promociones-header-pos mb-2 d-flex align-items-center justify-content-between">
-                                <span class="promociones-main-title">PROMOCIONES</span>
-                                <button type="button" class="btn-refrescar-promos" id="btnRefrescarPromos"
+                        <div class="card-factura seccion-promociones-pos" id="seccionPromociones">
+                            <div class="card-header-factura">
+                                <i class="bi bi-tag-fill"></i>
+                                Promociones
+                                <button type="button" class="btn-refrescar-promos ms-auto" id="btnRefrescarPromos"
                                     title="Evaluar promociones con el pedido actual">
                                     <i class="bi bi-arrow-clockwise"></i>
                                 </button>
                             </div>
 
-                            <!-- Estado de carga -->
-                            <div id="promosLoadingState" class="promos-estado-carga">
-                                <span class="spinner-border spinner-border-sm me-1 text-secondary"></span>
-                                <span class="text-muted small">Cargando promociones…</span>
-                            </div>
-
-                            <!-- Estado vacío (sin promos activas) -->
-                            <div id="promosEmptyState" class="promos-estado-vacio" style="display:none;">
-                                <i class="bi bi-tag-x text-muted"></i>
-                                <span class="text-muted small">No hay promociones activas en este momento.</span>
-                            </div>
-
-                            <!-- Bloque: Aplicables (carrito cumple condiciones) -->
-                            <div class="promociones-bloque mb-3" id="bloquePromosAplican" style="display:none;">
-                                <div class="promociones-sub-label">APLICABLES</div>
-                                <div class="promociones-grid-aplicables" id="gridPromosAplican">
-                                    <!-- Generado dinámicamente por JS -->
+                            <div class="card-body-factura">
+                                <!-- Estado de carga -->
+                                <div id="promosLoadingState" class="promos-estado-carga">
+                                    <span class="spinner-border spinner-border-sm me-1 text-secondary"></span>
+                                    <span class="text-muted small">Cargando promociones…</span>
                                 </div>
-                            </div>
 
-                            <!-- Bloque: Activos (casi aplican + disponibles) -->
-                            <div class="promociones-bloque" id="bloquePromosActivos" style="display:none;">
-                                <div class="promociones-sub-label">ACTIVOS</div>
-                                <div class="promociones-grid-recomendados" id="gridPromosActivos">
-                                    <!-- Generado dinámicamente por JS -->
+                                <!-- Estado vacío (sin promos activas) -->
+                                <div id="promosEmptyState" class="promos-estado-vacio" style="display:none;">
+                                    <i class="bi bi-tag-x text-muted"></i>
+                                    <span class="text-muted small">No hay promociones activas en este momento.</span>
+                                </div>
+
+                                <!-- Bloque: Aplicables (carrito cumple condiciones) -->
+                                <div class="promociones-bloque mb-3" id="bloquePromosAplican" style="display:none;">
+                                    <div class="promociones-sub-label">APLICABLES</div>
+                                    <div class="promociones-grid-aplicables" id="gridPromosAplican">
+                                        <!-- Generado dinámicamente por JS -->
+                                    </div>
+                                </div>
+
+                                <!-- Bloque: Activos (casi aplican + disponibles) -->
+                                <div class="promociones-bloque" id="bloquePromosActivos" style="display:none;">
+                                    <div class="promociones-sub-label">ACTIVOS</div>
+                                    <div class="promociones-grid-recomendados" id="gridPromosActivos">
+                                        <!-- Generado dinámicamente por JS -->
+                                    </div>
                                 </div>
                             </div>
                         </div><!-- /seccion-promociones-pos -->
@@ -146,6 +161,10 @@ try {
 
                         <!-- Cabecera de Cliente (Club Pitaya vs Cliente General) -->
                         <div class="card-factura card-cliente-pos">
+                            <div class="card-header-factura">
+                                <i class="bi bi-person-fill"></i>
+                                Tipo de Cliente
+                            </div>
                             <div class="card-body-factura py-2">
                                 <form id="formFactura" class="form-cabecera m-0">
                                     <div class="tipo-cliente-selector mb-2 d-flex align-items-center gap-3">
@@ -248,81 +267,85 @@ try {
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Sección Métodos de Pago y Desglose -->
-                                <div class="seccion-metodos-pago px-3 py-2 border-top">
-                                    <div class="d-flex align-items-center justify-content-between mb-1">
-                                        <span class="titulo-seccion-pago">MÉTODO DE PAGO</span>
-                                        <small class="text-muted" style="font-size: .72rem;">Toca para agregar</small>
-                                    </div>
-                                    <div class="metodos-pago-grid mb-2">
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo"
-                                            onclick="agregarMetodoPago('efectivo')">
-                                            <i class="bi bi-cash-stack"></i>
-                                            <span>EFECTIVO C$</span>
-                                        </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar"
-                                            onclick="agregarMetodoPago('efectivo_dolar')"
-                                            title="Pago en efectivo dólares USD">
-                                            <i class="bi bi-cash-coin"></i>
-                                            <span>EFECTIVO USD</span>
-                                        </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoPOS"
-                                            onclick="agregarMetodoPago('pos')">
-                                            <i class="bi bi-credit-card-2-front"></i>
-                                            <span>POS</span>
-                                        </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia"
-                                            onclick="agregarMetodoPago('transferencia')">
-                                            <i class="bi bi-bank"></i>
-                                            <span>TRANSF.</span>
-                                        </button>
-                                        <button type="button" class="btn-metodo-pago" id="btnPagoCupon"
-                                            onclick="agregarMetodoPago('cupon')"
-                                            title="Agregar pago con cupón de descuento">
-                                            <i class="bi bi-ticket-perforated"></i>
-                                            <span>CUPÓN</span>
-                                        </button>
-                                    </div>
+                            </div>
+                        </div>
 
-                                    <!-- Lista de pagos activos agregados -->
-                                    <div id="contenedorFilasPago" class="contenedor-filas-pago mb-2">
-                                        <!-- Se agregan dinámicamente -->
-                                    </div>
-
-                                    <!-- Desglose de totales y Propina -->
-                                    <div class="desglose-totales-pago">
-                                        <div class="fila-desglose">
-                                            <span class="lbl-desglose">Subtotal</span>
-                                            <span class="val-desglose" id="txtSubtotalFactura">C$ 0.00</span>
-                                        </div>
-                                        <div class="fila-desglose align-items-center">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="lbl-desglose mb-0">Propina (2%)</span>
-                                                <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
-                                                    <input class="form-check-input switch-propina-pitaya"
-                                                        type="checkbox" id="switchPropina">
-                                                </div>
-                                            </div>
-                                            <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
-                                        </div>
-                                        <div class="fila-desglose fila-total-destacado border-top pt-2 mt-1">
-                                            <span class="lbl-total-pagar">TOTAL A PAGAR</span>
-                                            <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
-                                        </div>
-                                        <!-- Estado de cobertura de pagos -->
-                                        <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2"
-                                            style="display: none;"></div>
-                                    </div>
-                                </div>
-
-                                <div class="px-3 py-2 border-top bg-light d-flex gap-2 justify-content-end">
-                                    <a href="facturas_historial.php" class="btn-cancelar-factura">
-                                        <i class="bi bi-x-circle"></i> Cancelar
-                                    </a>
-                                    <button type="button" class="btn-guardar-factura" id="btnGuardar">
-                                        <i class="bi bi-printer-fill"></i> Guardar e Imprimir
+                        <!-- Sección Métodos de Pago y Desglose -->
+                        <div class="card-factura card-metodo-pago-pos">
+                            <div class="card-header-factura">
+                                <i class="bi bi-credit-card-2-front-fill"></i>
+                                Método de Pago
+                                <small class="ms-auto text-white-50" style="font-size: .72rem; font-weight: normal;">Toca para agregar</small>
+                            </div>
+                            <div class="card-body-factura seccion-metodos-pago p-3">
+                                <div class="metodos-pago-grid mb-2">
+                                    <button type="button" class="btn-metodo-pago" id="btnPagoEfectivo"
+                                        onclick="agregarMetodoPago('efectivo')">
+                                        <i class="bi bi-cash-stack"></i>
+                                        <span>EFECTIVO C$</span>
+                                    </button>
+                                    <button type="button" class="btn-metodo-pago" id="btnPagoEfectivoDolar"
+                                        onclick="agregarMetodoPago('efectivo_dolar')"
+                                        title="Pago en efectivo dólares USD">
+                                        <i class="bi bi-cash-coin"></i>
+                                        <span>EFECTIVO USD</span>
+                                    </button>
+                                    <button type="button" class="btn-metodo-pago" id="btnPagoPOS"
+                                        onclick="agregarMetodoPago('pos')">
+                                        <i class="bi bi-credit-card-2-front"></i>
+                                        <span>POS</span>
+                                    </button>
+                                    <button type="button" class="btn-metodo-pago" id="btnPagoTransferencia"
+                                        onclick="agregarMetodoPago('transferencia')">
+                                        <i class="bi bi-bank"></i>
+                                        <span>TRANSF.</span>
+                                    </button>
+                                    <button type="button" class="btn-metodo-pago" id="btnPagoCupon"
+                                        onclick="agregarMetodoPago('cupon')"
+                                        title="Agregar pago con cupón de descuento">
+                                        <i class="bi bi-ticket-perforated"></i>
+                                        <span>CUPÓN</span>
                                     </button>
                                 </div>
+
+                                <!-- Lista de pagos activos agregados -->
+                                <div id="contenedorFilasPago" class="contenedor-filas-pago mb-2">
+                                    <!-- Se agregan dinámicamente -->
+                                </div>
+
+                                <!-- Desglose de totales y Propina -->
+                                <div class="desglose-totales-pago">
+                                    <div class="fila-desglose">
+                                        <span class="lbl-desglose">Subtotal</span>
+                                        <span class="val-desglose" id="txtSubtotalFactura">C$ 0.00</span>
+                                    </div>
+                                    <div class="fila-desglose align-items-center">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="lbl-desglose mb-0">Propina (2%)</span>
+                                            <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                                                <input class="form-check-input switch-propina-pitaya"
+                                                    type="checkbox" id="switchPropina">
+                                            </div>
+                                        </div>
+                                        <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
+                                    </div>
+                                    <div class="fila-desglose fila-total-destacado border-top pt-2 mt-1">
+                                        <span class="lbl-total-pagar">TOTAL A PAGAR</span>
+                                        <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
+                                    </div>
+                                    <!-- Estado de cobertura de pagos -->
+                                    <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2"
+                                        style="display: none;"></div>
+                                </div>
+                            </div>
+
+                            <div class="px-3 py-2 border-top bg-light d-flex gap-2 justify-content-end">
+                                <a href="facturas_historial.php" class="btn-cancelar-factura">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                                <button type="button" class="btn-guardar-factura" id="btnGuardar">
+                                    <i class="bi bi-printer-fill"></i> Guardar e Imprimir
+                                </button>
                             </div>
                         </div>
 

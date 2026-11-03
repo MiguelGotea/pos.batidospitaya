@@ -44,6 +44,30 @@ $(document).ready(function () {
         $('#buscarProducto').val('').trigger('input').focus();
     });
 
+    // Toggle expandir / colapsar buscador en catálogo
+    $('#btnToggleBuscarCatalogo').on('click', function () {
+        const $wrap = $('#wrapBuscadorCatalogo');
+        if ($wrap.is(':visible')) {
+            $wrap.slideUp(180, function () {
+                $('#btnToggleBuscarCatalogo').removeClass('activo');
+            });
+            if ($('#buscarProducto').val().trim() !== '') {
+                $('#buscarProducto').val('').trigger('input');
+            }
+        } else {
+            $(this).addClass('activo');
+            $wrap.slideDown(180, function () {
+                $('#buscarProducto').focus();
+            });
+        }
+    });
+
+    $('#buscarProducto').on('keydown', function (e) {
+        if (e.key === 'Escape') {
+            $('#btnToggleBuscarCatalogo').trigger('click');
+        }
+    });
+
     // Guardar factura
     $('#btnGuardar').on('click', function (e) {
         e.preventDefault();
@@ -838,6 +862,7 @@ function actualizarTablaDetalle() {
         $('#tablaDetalleBody').html(`
             <tr id="filaVacia">
                 <td colspan="${numCols}" class="empty-detalle">
+                    <i class="bi bi-box-seam me-2"></i>
                     <i class="bi bi-box-seam me-2"></i>
                     Selecciona productos desde el menu
                 </td>
@@ -1696,6 +1721,8 @@ function _resetFormulario($btn) {
     cambiarTipoCliente('general');
     $('#buscarProducto').val('');
     $('#btnLimpiarBusqueda').hide();
+    $('#wrapBuscadorCatalogo').hide();
+    $('#btnToggleBuscarCatalogo').removeClass('activo');
     if (grupoActivo !== null && _grupos) {
         cambiarGrupo(grupoActivo);
     } else if (todosProductos.length > 0) {
