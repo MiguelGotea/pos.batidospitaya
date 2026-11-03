@@ -1592,15 +1592,21 @@ function guardarFactura() {
         alertError(`Los pagos no cubren el total de la factura. Falta cubrir C$ ${Math.abs(diff).toFixed(2)}.`);
         return;
     }
-    if (diff > 0) {
-        alertError(`Los pagos ingresados (C$ ${totalPagos.toFixed(2)}) superan el total a pagar (C$ ${totalFactura.toFixed(2)}). Ajuste los montos.`);
-        return;
-    }
+
+    // Si hay cambio (diff > 0), se mostrará en la confirmación y se registrará como registro de cambio en BD.
+    const cambioTotal = diff > 0 ? diff : 0;
 
     // Modal de confirmacion con advertencia de bloqueo
+    let htmlConfirmacion = '<p style="font-size:0.95rem;margin:0">La factura quedará <strong>BLOQUEADA</strong> automáticamente después de imprimir y <strong>no podrá ser editada</strong>.<br><br>¿Desea continuar?</p>';
+    if (cambioTotal > 0) {
+        htmlConfirmacion = `<p style="font-size:0.95rem;margin:0">La factura quedará <strong>BLOQUEADA</strong> automáticamente después de imprimir y <strong>no podrá ser editada</strong>.</p>`
+            + `<p style="margin:8px 0 0;font-size:0.93rem;"><i class="bi bi-arrow-left-right"></i> Se registrará un cambio de <strong>C$ ${cambioTotal.toFixed(2)}</strong> a devolver al cliente.</p>`
+            + `<p style="margin:4px 0 0;font-size:0.85rem;color:#6c757d;">¿Desea continuar?</p>`;
+    }
+
     Swal.fire({
         title:              '¿Guardar e Imprimir?',
-        html:               '<p style="font-size:0.95rem;margin:0">La factura quedará <strong>BLOQUEADA</strong> automáticamente después de imprimir y <strong>no podrá ser editada</strong>.<br><br>¿Desea continuar?</p>',
+        html:               htmlConfirmacion,
         icon:               'warning',
         showCancelButton:   true,
         confirmButtonText:  'Sí, Guardar e Imprimir',
@@ -1609,11 +1615,11 @@ function guardarFactura() {
         cancelButtonColor:  '#6c757d',
     }).then((result) => {
         if (!result.isConfirmed) return;
-        _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura);
+        _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura, cambioTotal);
     });
 }
 
-function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura) {
+function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numero, fecha, totalFactura, cambioTotal) {
     const $btn       = $('#btnGuardar');
     const detalleStr = JSON.stringify(detalleFactura);
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Guardando…');
@@ -1629,7 +1635,8 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         subtotal:        calcularSubtotalFactura(),
         propina:         calcularMontoPropina(calcularSubtotalFactura()),
         con_propina:     conPropina ? 1 : 0,
-        total:           totalFactura
+        total:           totalFactura,
+        cambio_total:    cambioTotal || 0
     }, function (res) {
         if (!res.success) {
             alertError(res.message || 'Error al guardar la factura.');

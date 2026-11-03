@@ -16,6 +16,8 @@ try {
     $propina        = isset($_POST['propina']) ? round((float)$_POST['propina'], 2) : 0.00;
     $porcentajeProp = $conPropina ? 2.00 : 0.00;
     if (!$conPropina) $propina = 0.00;
+    // Cambio a devolver al cliente (diferencia entre total recibido y total factura)
+    $cambioTotal    = isset($_POST['cambio_total']) ? round((float)$_POST['cambio_total'], 2) : 0.00;
 
     $usuarioId      = $_SESSION['pos_colaborador_id'] ?? 1;
     $sucursalCodigo = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? '1');
@@ -298,6 +300,25 @@ try {
         ]);
 
         // MODO PRUEBAS: Aquí se activará el UPDATE a cupones_sucursales cuando el sistema se lance oficialmente.
+    }
+
+    // ---- 3b. Registrar cambio a devolver (monto negativo en efectivo NIO) ----
+    // Si el total recibido supera la factura, se registra la diferencia como fila de 'cambio'
+    // con monto negativo. Esto permite sumar todos los registros de una factura y obtener
+    // el neto real recibido (ejemplo: recibe C$1000 en efectivo → se guarda -440 de cambio,
+    // neto = 560 = total de la factura).
+    if ($cambioTotal > 0.00) {
+        $stmtPago->execute([
+            ':id_fac'       => $idFactura,
+            ':metodo'       => 'efectivo',
+            ':moneda'       => 'NIO',
+            ':monto_orig'   => -$cambioTotal,
+            ':monto_cor'    => -$cambioTotal,
+            ':tipo_cambio'  => null,
+            ':id_cupon'     => null,
+            ':codigo_cupon' => null,
+            ':ref'          => 'cambio'
+        ]);
     }
 
     // ---- 4. Registrar puntos si es socio Club Pitaya ----
