@@ -127,10 +127,12 @@ function plantillaBase(contenido) {
   html, body { width: 76mm; margin: 0; padding: 0; background: #fff; }
 }
 /* ── Base del ticket ── */
-body { font-family: 'Courier New', Courier, monospace; font-size: 9pt; line-height: 1.35; color: #000; background: #fff; margin: 0; padding: 0; }
+/* Punto 10: fuente más legible desde lejos — Arial/sans-serif con Courier como fallback */
+body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9pt; line-height: 1.4; color: #000; background: #fff; margin: 0; padding: 0; }
 .ticket-wrapper { width: 76mm; margin: 0 auto; padding: 0; }
-/* ── Cabecera ── */
-.ticket-logo { display: block; max-width: 55mm; height: auto; margin: 0 auto 2mm auto; }
+/* ── Cabecera factura ── */
+/* Punto 1: logo reducido 10% → de 55mm a ~49.5mm ≈ 50mm */
+.ticket-logo { display: block; max-width: 50mm; height: auto; margin: 0 auto 2mm auto; }
 .ticket-header { text-align: center; }
 .ticket-bienvenida { font-size: 10pt; font-weight: bold; text-align: center; margin: 1mm 0; }
 .ticket-meta { font-size: 7.5pt; text-align: center; margin: 1mm 0; line-height: 1.4; }
@@ -154,24 +156,39 @@ body { font-family: 'Courier New', Courier, monospace; font-size: 9pt; line-heig
 /* ── Pie ── */
 .ticket-footer { text-align: center; font-size: 7.5pt; margin-top: 3mm; line-height: 1.5; }
 .ticket-wifi { font-weight: bold; font-size: 8pt; }
-/* ── Comanda: cabecera estación ── */
+/* ─────────────────────────────────────────────
+   COMANDA — estilos mejorados
+   ───────────────────────────────────────────── */
+/* Punto 10: fuente sans-serif también en comanda */
+/* Cabecera estación */
 .comanda-estacion-titulo { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 0.5mm; border: 2px solid #000; padding: 1.5mm 2mm; margin-bottom: 2mm; line-height: 1.2; }
-.comanda-meta { font-size: 8pt; margin-bottom: 2mm; line-height: 1.4; }
-.comanda-meta-fila { display: flex; justify-content: space-between; }
+/* Puntos 2: cliente y pedido en líneas separadas, pedido grande y destacado */
+.comanda-meta { font-size: 8.5pt; margin-bottom: 0; line-height: 1.5; }
+.comanda-meta-cliente { font-size: 9pt; margin-bottom: 0.5mm; }
+.comanda-meta-pedido  { font-size: 13pt; font-weight: bold; letter-spacing: 0.3mm; margin-bottom: 0.5mm; }
+.comanda-meta-fechahora { font-size: 8pt; color: #333; }
+/* Punto 4: espacio después del bloque de cabecera logeable */
+.comanda-meta-wrapper { margin-bottom: 3mm; }
 /* ── Comanda: bloque de producto ── */
-.comanda-producto-bloque { margin-bottom: 3mm; border-bottom: 1px dashed #555; padding-bottom: 2mm; }
+/* Punto 5: espacio entre producto y producto */
+.comanda-producto-bloque { margin-bottom: 4mm; border-bottom: 1px dashed #555; padding-bottom: 3mm; }
 .comanda-prod-encabezado { display: flex; align-items: center; gap: 2mm; margin-bottom: 1.5mm; }
 .comanda-prod-cantidad { font-size: 14pt; font-weight: bold; border: 1.5px solid #000; min-width: 8mm; height: 8mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0 1mm; }
-.comanda-prod-nombre { font-size: 10pt; font-weight: bold; line-height: 1.2; }
+/* Punto 3: nombre de producto más grande */
+.comanda-prod-nombre { font-size: 12pt; font-weight: bold; line-height: 1.2; }
 /* ── Comanda: notas ── */
 .comanda-notas { background: #eee; border: 1px solid #bbb; padding: 1mm 2mm; font-size: 8pt; font-style: italic; margin-bottom: 1.5mm; word-break: break-word; }
 .comanda-notas-label { font-weight: bold; font-style: normal; font-size: 7.5pt; text-transform: uppercase; }
 /* ── Comanda: tabla ingredientes ── */
-.comanda-ingredientes { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.comanda-ingredientes th { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; text-align: left; padding-bottom: 0.5mm; }
-.comanda-ingredientes td { padding: 0.4mm 0; vertical-align: middle; }
-.comanda-ingredientes th.col-tipo, .comanda-ingredientes td.col-tipo { width: 5mm; font-weight: bold; text-align: center; }
-.comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 9mm; text-align: right; }
+.comanda-ingredientes { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.comanda-ingredientes th { font-size: 8pt; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; text-align: left; padding-bottom: 0.8mm; }
+/* Punto 5: espacio entre filas de ingredientes */
+.comanda-ingredientes td { padding: 1mm 0; vertical-align: middle; }
+.comanda-ingredientes th.col-tipo, .comanda-ingredientes td.col-tipo { width: 6mm; font-weight: bold; text-align: center; }
+.comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 11mm; text-align: right; }
+/* Punto 6: separador de grupo de tipo — media línea tenue */
+.comanda-grupo-sep td { padding-top: 0; padding-bottom: 0; height: 2mm; }
+.comanda-grupo-sep-linea { border-bottom: 0.5px dashed #aaa; margin: 0; }
 /* ── Tachado grueso ── */
 .comanda-tachado, .comanda-fila-tachada td {
   text-decoration: line-through;
@@ -182,11 +199,16 @@ body { font-family: 'Courier New', Courier, monospace; font-size: 9pt; line-heig
 }
 .comanda-fila-nuevo td { font-weight: bold; }
 .comanda-tipo-e, .comanda-tipo-x { font-weight: bold; }
-/* ── Completar pedido ── */
-.comanda-completar-titulo { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; border-top: 2px solid #000; padding-top: 1.5mm; margin-top: 2mm; margin-bottom: 1mm; }
-.comanda-completar-tabla { width: 100%; border-collapse: collapse; font-size: 8pt; }
-.comanda-completar-tabla td { padding: 0.4mm 0; }
-.comanda-completar-tabla td.col-cant { text-align: right; width: 8mm; font-weight: bold; }
+/* ── Completar pedido — punto 8: tabla con encabezados y checklist ── */
+.comanda-completar-wrapper { margin-top: 4mm; padding-top: 3mm; border-top: 2px solid #000; }
+.comanda-completar-titulo { font-size: 9pt; font-weight: bold; text-transform: uppercase; margin-bottom: 1.5mm; letter-spacing: 0.2mm; }
+.comanda-completar-tabla { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+.comanda-completar-tabla th { font-weight: bold; font-size: 8pt; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 1mm; text-align: left; }
+.comanda-completar-tabla th.col-check { width: 6mm; text-align: center; }
+.comanda-completar-tabla th.col-cant-h { width: 10mm; text-align: right; }
+.comanda-completar-tabla td { padding: 1mm 0; vertical-align: middle; border-bottom: 0.5px dashed #ccc; }
+.comanda-completar-tabla td.col-check { text-align: center; font-size: 10pt; }
+.comanda-completar-tabla td.col-cant { text-align: right; width: 10mm; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -210,6 +232,59 @@ function esc(str) {
 function formatoMoneda(n) {
     const num = parseFloat(n) || 0;
     return 'C$ ' + num.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* ── Conversión de decimales a fracciones (punto 9) ────────────────────────── */
+// Fracciones soportadas: 1/2, 1/4, 1/8, 1/3, 1/6
+// Tolerancia para detectar el residuo fraccionario
+const FRACCIONES_SOPORTE = [
+    { num: 1, den: 2, valor: 0.5          },
+    { num: 1, den: 4, valor: 0.25         },
+    { num: 1, den: 8, valor: 0.125        },
+    { num: 1, den: 3, valor: 1/3          },
+    { num: 1, den: 6, valor: 1/6          },
+];
+const FRACCION_TOLERANCIA = 0.015; // tolera hasta ±0.015 de diferencia
+
+function decimalAFraccion(numero) {
+    const num = parseFloat(numero);
+    if (isNaN(num)) return String(numero);
+
+    const entero   = Math.floor(num);
+    const residuo  = num - entero;
+
+    // Si el residuo es casi 0 → número entero
+    if (residuo < FRACCION_TOLERANCIA) {
+        return String(entero);
+    }
+
+    // Buscar qué fracción se acerca más al residuo
+    let mejorMatch = null;
+    let mejorDif   = Infinity;
+    for (const frac of FRACCIONES_SOPORTE) {
+        const dif = Math.abs(residuo - frac.valor);
+        if (dif < mejorDif) {
+            mejorDif   = dif;
+            mejorMatch = frac;
+        }
+    }
+
+    // Si la mejor coincidencia está dentro de la tolerancia → usar fracción
+    if (mejorMatch && mejorDif <= FRACCION_TOLERANCIA) {
+        const fracStr = mejorMatch.num + '/' + mejorMatch.den;
+        return entero > 0 ? entero + '+' + fracStr : fracStr;
+    }
+
+    // Sin coincidencia → mostrar decimales
+    return num % 1 === 0 ? String(num) : num.toFixed(3).replace(/\.?0+$/, '');
+}
+
+/* ── Formatea la cantidad de un ingrediente con fracciones cuando aplica ───── */
+function formatearCantidad(cantidad, unidad) {
+    const num = parseFloat(cantidad);
+    if (isNaN(num)) return String(cantidad);
+    const fracStr = decimalAFraccion(num);
+    return unidad ? fracStr + ' ' + unidad : fracStr;
 }
 
 function formatoFechaHora(fechaHora) {
@@ -344,16 +419,16 @@ function renderizarComandaEstacion(comanda, factura) {
     const { fecha, hora } = formatoFechaHora(factura.fecha_hora);
     const nombreCliente   = factura.nombre_cliente || 'Cliente';
 
+    // ── Cabecera: puntos 2, 4 ─────────────────────────────────────────────
+    // Punto 2: Cliente en una línea, Pedido en otra (grande y resaltado), Fecha/Hora en tercera
+    // Punto 4: wrapper con margen inferior para separar visualmente del primer producto
     let html = `
 <div class="comanda-estacion-titulo">${esc(comanda.nombre_grupo)}</div>
-<div class="comanda-meta">
-  <div class="comanda-meta-fila">
-    <span><strong>Cliente:</strong> ${esc(nombreCliente)}</span>
-    <span><strong>Pedido:</strong> ${esc(factura.id)}</span>
-  </div>
-  <div class="comanda-meta-fila">
-    <span>Fecha: ${esc(fecha)}</span>
-    <span>Hora: ${esc(hora)}</span>
+<div class="comanda-meta-wrapper">
+  <div class="comanda-meta">
+    <div class="comanda-meta-cliente"><strong>Cliente:</strong> ${esc(nombreCliente)}</div>
+    <div class="comanda-meta-pedido">#${esc(factura.id)}</div>
+    <div class="comanda-meta-fechahora">${esc(fecha)} &nbsp; ${esc(hora)}</div>
   </div>
 </div>
 <hr class="ticket-sep-solid">`;
@@ -364,7 +439,7 @@ function renderizarComandaEstacion(comanda, factura) {
 
         html += `<div class="comanda-producto-bloque">`;
 
-        // Encabezado: cantidad + nombre
+        // Encabezado: cantidad + nombre (punto 3: nombre más grande via CSS)
         html += `
 <div class="comanda-prod-encabezado">
   <div class="comanda-prod-cantidad">${esc(linea.cantidad)}</div>
@@ -394,14 +469,14 @@ function renderizarComandaEstacion(comanda, factura) {
         // ── Endulzante (primera fila si el grupo lleva endulzante) ────────
         if (comanda.lleva_endulzante && linea.endulzante_comanda) {
             const e = linea.endulzante_comanda;
+            const cantE = decimalAFraccion(parseFloat(e.factor) || 0);
             html += `
     <tr>
       <td class="col-tipo comanda-tipo-e">E</td>
       <td>${esc(e.nombre)} ${esc(e.unidad_medida)}</td>
-      <td class="col-cant">${esc(e.factor)}</td>
+      <td class="col-cant">${esc(cantE)}</td>
     </tr>`;
         } else if (comanda.lleva_endulzante && pers.endulzante_texto) {
-            // Fallback: texto plano del resumen de notas
             html += `
     <tr>
       <td class="col-tipo comanda-tipo-e">E</td>
@@ -410,14 +485,27 @@ function renderizarComandaEstacion(comanda, factura) {
     </tr>`;
         }
 
-        // ── Ingredientes de la receta ─────────────────────────────────────
-        (linea.ingredientes_receta || []).forEach(ing => {
+        // ── Ingredientes de la receta con separadores de grupo (punto 6) ──
+        // Agrupamos las filas por tipo para insertar separador entre grupos
+        const ingredientes = linea.ingredientes_receta || [];
+        let tipoAnterior   = comanda.lleva_endulzante ? 'E' : null; // tipo del último bloque renderizado
+
+        ingredientes.forEach((ing, idx) => {
             const nombreComponente = ing.nombre_componente || ing.nombre_ingrediente;
             const tipo             = ing.tipo_comanda || '-';
-            const cantidad         = parseFloat(ing.cantidad) || 0;
-            const cantStr          = cantidad === Math.floor(cantidad)
-                                        ? String(Math.floor(cantidad))
-                                        : cantidad.toFixed(2);
+            const cantidadNum      = parseFloat(ing.cantidad) || 0;
+            // Punto 9: usar fracciones en lugar de decimales
+            const cantStr          = decimalAFraccion(cantidadNum) + (ing.unidad ? ' ' + ing.unidad : '');
+
+            // Punto 6: insertar separador de media línea cuando cambia el tipo
+            // (excepto antes del primer ingrediente si ya hubo endulzante del mismo tipo)
+            if (tipoAnterior !== null && tipo !== tipoAnterior) {
+                html += `
+    <tr class="comanda-grupo-sep">
+      <td colspan="3"><div class="comanda-grupo-sep-linea"></div></td>
+    </tr>`;
+            }
+            tipoAnterior = tipo;
 
             // ¿Este ingrediente fue quitado?
             const esQuitado = (pers.ingredientes_quitados || []).some(
@@ -430,7 +518,6 @@ function renderizarComandaEstacion(comanda, factura) {
             );
 
             if (esQuitado) {
-                // Fila tachada
                 html += `
     <tr class="comanda-fila-tachada">
       <td class="col-tipo">${esc(tipo)}</td>
@@ -453,7 +540,6 @@ function renderizarComandaEstacion(comanda, factura) {
       <td class="col-cant">${esc(cantStr)}</td>
     </tr>`;
             } else {
-                // Fila normal
                 html += `
     <tr>
       <td class="col-tipo">${esc(tipo)}</td>
@@ -464,6 +550,13 @@ function renderizarComandaEstacion(comanda, factura) {
         });
 
         // ── Extras agregados ──────────────────────────────────────────────
+        // Punto 6: separador antes del bloque X si hubo ingredientes previos
+        if ((ingredientes.length > 0 || comanda.lleva_endulzante) && (pers.extras || []).length > 0) {
+            html += `
+    <tr class="comanda-grupo-sep">
+      <td colspan="3"><div class="comanda-grupo-sep-linea"></div></td>
+    </tr>`;
+        }
         (pers.extras || []).forEach(extraNombre => {
             html += `
     <tr>
@@ -479,22 +572,34 @@ function renderizarComandaEstacion(comanda, factura) {
 </div>`; // /comanda-producto-bloque
     });
 
-    // ── Sección "Completar Pedido con..." ──────────────────────────────────
+    // ── Sección "Completar Pedido con..." (punto 7 + punto 8) ──────────────
+    // Punto 7: espacio arriba del bloque (via .comanda-completar-wrapper con margin-top)
+    // Punto 8: tabla con encabezados (☐ Producto | Cant) para uso como checklist
     if (comanda.completar_con && comanda.completar_con.length > 0) {
         html += `
-<div class="comanda-completar-titulo">Completar Pedido con...</div>
-<table class="comanda-completar-tabla">
-  <tbody>`;
+<div class="comanda-completar-wrapper">
+  <div class="comanda-completar-titulo">Completar Pedido con...</div>
+  <table class="comanda-completar-tabla">
+    <thead>
+      <tr>
+        <th class="col-check">&#9744;</th>
+        <th>Producto</th>
+        <th class="col-cant-h">Can</th>
+      </tr>
+    </thead>
+    <tbody>`;
         comanda.completar_con.forEach(item => {
             html += `
-    <tr>
-      <td>${esc(item.nombre_producto)}</td>
-      <td class="col-cant">${esc(item.cantidad)}</td>
-    </tr>`;
+      <tr>
+        <td class="col-check">&#9744;</td>
+        <td>${esc(item.nombre_producto)}</td>
+        <td class="col-cant">${esc(item.cantidad)}</td>
+      </tr>`;
         });
         html += `
-  </tbody>
-</table>`;
+    </tbody>
+  </table>
+</div>`;
     }
 
     return plantillaBase(html);

@@ -2,7 +2,7 @@
 ## Lógica de Negocio, Configuración y Referencia Técnica
 
 > **Módulo:** `modulos/pos/facturas_nueva.php` + `facturas_nueva.js`  
-> **Última actualización:** Noviembre 2026  
+> **Última actualización:** Noviembre 2026 (rev. 2 — Nov 2 2026)  
 > **Autor técnico:** Sistema Pitaya Web
 
 ---
@@ -748,3 +748,169 @@ th {
 ---
 
 *Documento generado para el equipo técnico de Batidos Pitaya · Sistema POS · `pos.batidospitaya.com`*
+
+---
+
+## 9. Cambios Visuales — Rev. 2 (Nov 2, 2026)
+
+Los siguientes cambios se aplicaron en `pos_impresion_termica.js` en la revisión 2:
+
+### 9.1 Factura — Logo reducido 10%
+
+El ancho máximo del logo pasó de `55mm` a `50mm` (≈ −10%).
+
+```css
+/* Antes */
+.ticket-logo { max-width: 55mm; }
+/* Después */
+.ticket-logo { max-width: 50mm; }
+```
+
+---
+
+### 9.2 Comanda — Cabecera reestructurada
+
+**Antes:** Cliente y Pedido en una misma fila `flex justify-content: space-between`.
+
+**Después:** Tres líneas independientes para mayor legibilidad a distancia:
+
+```
+Línea 1: Cliente: [nombre]
+Línea 2: #[número de pedido]   ← fuente 13pt, bold, destacado
+Línea 3: [fecha]   [hora]
+```
+
+CSS involucrado:
+```css
+.comanda-meta-cliente  { font-size: 9pt; }
+.comanda-meta-pedido   { font-size: 13pt; font-weight: bold; letter-spacing: 0.3mm; }
+.comanda-meta-fechahora { font-size: 8pt; }
+```
+
+---
+
+### 9.3 Comanda — Nombre de producto más grande
+
+```css
+/* Antes */
+.comanda-prod-nombre { font-size: 10pt; }
+/* Después */
+.comanda-prod-nombre { font-size: 12pt; }
+```
+
+---
+
+### 9.4 Comanda — Espacio después de la cabecera de datos
+
+Se agregó `.comanda-meta-wrapper` con `margin-bottom: 3mm` para crear aire visual entre la cabecera (cliente/pedido/fecha) y el primer producto.
+
+---
+
+### 9.5 Comanda — Espacio entre productos
+
+```css
+/* Antes */
+.comanda-producto-bloque { margin-bottom: 3mm; padding-bottom: 2mm; }
+/* Después */
+.comanda-producto-bloque { margin-bottom: 4mm; padding-bottom: 3mm; }
+```
+
+---
+
+### 9.6 Comanda — Separador de grupos de ingredientes por tipo
+
+Entre el último ingrediente de un tipo y el primero del siguiente tipo se inserta una fila separadora de media línea tenue (no una línea completa, para distinguirla del separador entre productos):
+
+```html
+<tr class="comanda-grupo-sep">
+  <td colspan="3"><div class="comanda-grupo-sep-linea"></div></td>
+</tr>
+```
+
+```css
+.comanda-grupo-sep-linea { border-bottom: 0.5px dashed #aaa; }
+```
+
+**Lógica JS:** Se rastrea el `tipo` del ingrediente anterior; cuando cambia, se emite la fila separadora. El endulzante (`E`) también cuenta como un tipo. Los extras (`X`) también reciben un separador previo si hay ingredientes antes.
+
+---
+
+### 9.7 Comanda — Espacio arriba de "Completar Pedido con..."
+
+El bloque de completar pedido usa `.comanda-completar-wrapper` con `margin-top: 4mm; padding-top: 3mm; border-top: 2px solid #000;` para separarlo visualmente del último producto.
+
+---
+
+### 9.8 Comanda — "Completar Pedido con..." como tabla con encabezados y checklist
+
+**Antes:** tabla sin encabezados, sin separadores entre filas.
+
+**Después:** tabla con encabezados (`☐ | Producto | Can`) y cada fila con un checkbox impreso (`☐`) para uso como lista de verificación manual.
+
+```html
+<thead>
+  <tr>
+    <th class="col-check">☐</th>
+    <th>Producto</th>
+    <th class="col-cant-h">Can</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="col-check">☐</td>
+    <td>Açaí Bowl Tropical</td>
+    <td class="col-cant">1</td>
+  </tr>
+</tbody>
+```
+
+Las filas tienen `border-bottom: 0.5px dashed #ccc` para separación visual entre ítems.
+
+---
+
+### 9.9 Comanda — Cantidades como fracciones
+
+Las cantidades de ingredientes se convierten de decimal a fracción antes de mostrarse.
+
+**Fracciones soportadas:** `1/2`, `1/4`, `1/8`, `1/3`, `1/6`
+
+**Tolerancia:** `±0.015` (para manejar redondeos de la BD como `0.3333...` o `0.1666...`)
+
+**Función:** `decimalAFraccion(numero)` en `pos_impresion_termica.js`
+
+| Valor BD | Mostrado |
+|----------|----------|
+| `4.3333` | `4+1/3` |
+| `8.125`  | `8+1/8` |
+| `0.5`    | `1/2`   |
+| `2.25`   | `2+1/4` |
+| `1.1667` | `1+1/6` |
+| `3.777`  | `3.777` (sin equivalente) |
+
+Si no hay equivalente dentro de la tolerancia, se muestra el decimal tal cual (limpiando ceros finales).
+
+---
+
+### 9.10 Todos los documentos — Fuente más legible
+
+Se cambió la fuente base de `Courier New` (monoespaciada) a **`Arial / Helvetica / sans-serif`** para mejor lectura a distancia en papel térmico.
+
+```css
+/* Antes */
+body { font-family: 'Courier New', Courier, monospace; }
+/* Después */
+body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+```
+
+> [!NOTE]
+> El cambio a sans-serif mejora la legibilidad visual pero puede afectar el alineamiento de columnas numéricas en la factura. Si se requiere alineación perfecta de decimales, evaluar usar `font-variant-numeric: tabular-nums` o volver a monoespaciada solo para las columnas de precio.
+
+---
+
+### Consideraciones de compatibilidad
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Fracciones** | Solo aplican a cantidades de ingredientes en comanda. Los totales y precios en factura siguen mostrando decimales con 2 cifras. |
+| **Checklist** | El caracter `☐` (U+2610) es Unicode estándar; si la impresora no lo renderiza, reemplazar por `-` o `[ ]` en la constante del JS. |
+| **Separadores de grupo** | Si un ingrediente cambia de tipo dentro de una sustitución (fila tachada + fila nueva), el separador se emite al inicio del bloque del nuevo tipo, no entre las dos filas de sustitución. |
