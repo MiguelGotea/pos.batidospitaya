@@ -169,3 +169,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
     <script src="js/ventas_historial.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
+

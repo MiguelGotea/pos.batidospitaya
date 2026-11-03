@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
