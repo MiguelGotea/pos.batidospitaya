@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
@@ -9,7 +9,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Facturas — POS</title>
+    <title>Historial de Compras — POS</title>
     <meta name="description" content="Historial de facturas de compra y abastecimiento de tienda">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -22,15 +22,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
     <?= renderPOSSidebar('ventas') ?>
 
     <div class="pos-main-container">
-        <?= renderPOSHeader('Historial de Facturas') ?>
+        <?= renderPOSHeader('Historial de Compras') ?>
 
         <div class="pos-content">
             <div class="container-fluid p-3">
 
                 <!-- Barra superior -->
                 <div class="d-flex justify-content-end align-items-center mb-3 flex-wrap gap-2">
-                    <a href="facturas_nueva.php" class="btn btn-success d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i> Nueva Factura
+                    <a href="facturas_nueva_compra.php" class="btn btn-success d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle"></i> Nueva Factura de Compra
                     </a>
                 </div>
 

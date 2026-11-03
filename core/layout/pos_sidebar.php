@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * POS Sidebar Component
@@ -22,7 +22,17 @@ function renderPOSSidebar($activeModule = 'inicio')
             'url'   => '#',
             'sub'   => [
                 ['titulo' => 'Nueva Venta',      'url' => '/modulos/pos/facturas_nueva.php'],
-                ['titulo' => 'Historial Ventas', 'url' => '/modulos/pos/facturas_historial.php'],
+                ['titulo' => 'Historial Ventas', 'url' => '/modulos/pos/ventas_historial.php'],
+            ]
+        ],
+        [
+            'id'    => 'compras',
+            'titulo' => 'Compras',
+            'icon'  => 'fas fa-shopping-basket',
+            'url'   => '#',
+            'sub'   => [
+                ['titulo' => 'Nueva Factura de Compra', 'url' => '/modulos/pos/facturas_nueva_compra.php'],
+                ['titulo' => 'Historial de Compras',    'url' => '/modulos/pos/facturas_historial.php'],
             ]
         ],
         [
