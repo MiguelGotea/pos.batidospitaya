@@ -1,6 +1,7 @@
-<?php
+﻿<?php
+
 /**
- * index.php — Conteo de Caja Inicial
+ * caja_inicial.php — Conteo de Caja Inicial
  * Módulo POS / modulos/inicial/index.php
  */
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/auth/auth_pos.php';
@@ -9,7 +10,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 
+
 $hoy = date('Y-m-d');
+
 
 // Obtener la sucursal activa según la lógica de asignación (el más reciente sin fecha de fin o con fecha futura)
 $sucursalId   = null;
@@ -48,18 +51,20 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja Inicial — POS</title>
     <meta name="description" content="Conteo de caja inicial: denominaciones en córdobas y dólares con cálculo automático de totales">
-    <link rel="icon" href="/core/assets/img/icon12.png" type="image/png">
+    <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/core/assets/css/global_tools.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="/modulos/pos/css/caja_inicial.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
 </head>
+
 <body>
     <?= renderPOSSidebar('caja') ?>
 
@@ -221,6 +226,7 @@ try {
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="/modulos/pos/js/caja_inicial.js?v=<?php echo time(); ?>"></script>
+    <script src="js/caja_inicial.js?v=<?php echo time(); ?>"></script>
 </body>
+
 </html>

@@ -1,8 +1,8 @@
 ﻿<?php
 // facturas_get_detalle.php
-require_once '../../core/auth/auth_pos.php';
+require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
-require_once '../../core/database/conexion.php';
+require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
