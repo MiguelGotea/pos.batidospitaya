@@ -1975,14 +1975,32 @@ function abrirModalPersonalizacion(idx) {
     }
 
     // ── Cargar todos los productos del mismo catálogo ──
+    // La clave del _catCache usa TODOS los ids del catálogo ordenados (igual que _precargarCatalogos).
+    // Buscar en _grupos el catálogo que contiene id_catalogo_menu_pos para obtener la clave exacta.
+    let _catIdsParaEdicion = [item.id_catalogo_menu_pos];
+    if (_grupos) {
+        const idBuscado = parseInt(item.id_catalogo_menu_pos);
+        outerLoop:
+        for (let g = 0; g < _grupos.length; g++) {
+            for (let sg = 0; sg < _grupos[g].subgrupos.length; sg++) {
+                for (let c = 0; c < _grupos[g].subgrupos[sg].catalogos.length; c++) {
+                    const cat = _grupos[g].subgrupos[sg].catalogos[c];
+                    if (cat.ids && cat.ids.some(function (id) { return parseInt(id) === idBuscado; })) {
+                        _catIdsParaEdicion = cat.ids;
+                        break outerLoop;
+                    }
+                }
+            }
+        }
+    }
+    const _catKey = _catIdsParaEdicion.slice().sort(function (a, b) { return a - b; }).join(',');
+
     $('#mpSelectorProductos').show().html(
         '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
     );
     $('#mpCuerpo').html(
         '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando opciones…</span></div>'
     );
-
-    const _catKey = String(item.id_catalogo_menu_pos);
 
     function _procesarProductosCatEdicion(res) {
         if (!res.success || !res.data || res.data.length === 0) {
@@ -2000,25 +2018,24 @@ function abrirModalPersonalizacion(idx) {
             _catCache[_catKey] = res;
         }
 
-        // Si solo hay un producto, ocultar el selector (igual que en catálogo nuevo)
-        if (_mspProductos.length <= 1) {
-            $('#mpSelectorProductos').html('').hide();
-        }
-
         // Preseleccionar la variante actualmente facturada
         let idxActual = _mspProductos.findIndex(p => parseInt(p.id) === parseInt(item.id_presentacion));
         if (idxActual < 0) idxActual = 0; // fallback al primero si no se encuentra
         _mspIdxSelec = idxActual;
 
-        _renderSelectorProductos();
-        // Marcar el botón activo
-        $(`#mpSelectorProductos .msp-btn-producto[data-idx="${idxActual}"]`).addClass('activo');
-
-        // Actualizar subtítulo con nombre del producto seleccionado
         const pActual = _mspProductos[idxActual];
+
         if (_mspProductos.length > 1) {
+            // Múltiples variantes: mostrar el selector y renderizarlo
+            $('#mpSelectorProductos').show();
+            _renderSelectorProductos();
+            // _renderSelectorProductos ya marca el botón activo según _mspIdxSelec,
+            // pero forzamos la clase por si acaso
+            $(`#mpSelectorProductos .msp-btn-producto[data-idx="${idxActual}"]`).addClass('activo');
             $('#mpSubtitulo').text(`${escHtml(pActual.Nombre)} — Ajusta opciones`).show();
         } else {
+            // Un solo producto: ocultar el selector
+            $('#mpSelectorProductos').html('').hide();
             $('#mpSubtitulo').hide();
         }
 
@@ -2034,7 +2051,7 @@ function abrirModalPersonalizacion(idx) {
     $.ajax({
         url: 'ajax/get_productos_catalogo.php',
         type: 'GET',
-        data: { ids_catalogo: item.id_catalogo_menu_pos },
+        data: { ids_catalogo: _catIdsParaEdicion.join(',') },
         dataType: 'json',
         success: _procesarProductosCatEdicion,
         error: function () {
