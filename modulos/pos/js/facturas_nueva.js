@@ -1985,22 +1985,27 @@ function abrirModalPersonalizacion(idx) {
 
     // ── Cargar todos los productos del mismo catálogo ──
     // La clave del _catCache usa TODOS los ids del catálogo ordenados (igual que _precargarCatalogos).
-    // Buscar en _grupos el catálogo que contiene id_catalogo_menu_pos para obtener la clave exacta.
+    // Estrategia: buscar en _catCache la clave cuyo string contiene el id_catalogo_menu_pos del item.
+    // Esto evita tener que recorrer _grupos (que es un Map anidado y puede no estar disponible).
     let _catIdsParaEdicion = [item.id_catalogo_menu_pos];
-    if (_grupos) {
+    const idBuscadoStr = String(parseInt(item.id_catalogo_menu_pos));
+    const claveEncontrada = Object.keys(_catCache).find(function (key) {
+        return key.split(',').some(function (part) { return part.trim() === idBuscadoStr; });
+    });
+    if (claveEncontrada) {
+        _catIdsParaEdicion = claveEncontrada.split(',').map(function (s) { return parseInt(s.trim()); });
+    } else if (_grupos) {
+        // Fallback: recorrer _grupos si es un Map disponible
         const idBuscado = parseInt(item.id_catalogo_menu_pos);
-        outerLoop:
-        for (let g = 0; g < _grupos.length; g++) {
-            for (let sg = 0; sg < _grupos[g].subgrupos.length; sg++) {
-                for (let c = 0; c < _grupos[g].subgrupos[sg].catalogos.length; c++) {
-                    const cat = _grupos[g].subgrupos[sg].catalogos[c];
+        _grupos.forEach(function (grupo) {
+            grupo.subgrupos.forEach(function (sg) {
+                sg.catalogos.forEach(function (cat) {
                     if (cat.ids && cat.ids.some(function (id) { return parseInt(id) === idBuscado; })) {
                         _catIdsParaEdicion = cat.ids;
-                        break outerLoop;
                     }
-                }
-            }
-        }
+                });
+            });
+        });
     }
     const _catKey = _catIdsParaEdicion.slice().sort(function (a, b) { return a - b; }).join(',');
     // ── DEBUG TEMPORAL ──
