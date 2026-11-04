@@ -93,7 +93,7 @@ try {
     }
 
     // JOIN base
-    $joins = "LEFT JOIN clientes_club c ON v.id_cliente_club = c.id
+    $joins = "LEFT JOIN clientesclub c ON v.id_cliente_club = c.id
               LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario";
 
     // COUNT
