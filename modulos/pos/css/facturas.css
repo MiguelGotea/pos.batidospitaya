@@ -3368,32 +3368,35 @@
         .mp-selector-productos-wrap {
             background: #f0faf9;
             border-bottom: 1.5px solid #cce8e5;
-            padding-bottom: 0.75rem;
+            padding: 0.35rem 0.85rem !important;
         }
 
         /* ── Fila horizontal de botones ───────────────────────────── */
         .msp-productos-selector {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            align-items: flex-start;
+            gap: 0.45rem;
+            align-items: center;
         }
 
-        /* ── Botón de cada opción de producto ─────────────────────── */
+        /* ── Botón de cada opción de producto (2 líneas compactas: nombre + precio) ── */
         .msp-btn-producto {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.2rem;
-            padding: 0.45rem 0.9rem;
-            border-radius: 10px;
+            justify-content: center;
+            gap: 0.1rem;
+            padding: 0.28rem 0.75rem;
+            border-radius: 8px;
             border: 1.5px solid #b2d8d4;
             background: #ffffff;
             cursor: pointer;
             transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
-            min-width: 80px;
-            max-width: 160px;
+            min-width: 120px;
+            max-width: 260px;
+            flex: 0 1 auto;
             text-align: center;
+            line-height: 1.15;
         }
 
         .msp-btn-producto:hover {
@@ -3414,18 +3417,29 @@
             color: #ffffff;
         }
 
+        /* Línea 1: Nombre en una sola línea */
         .msp-btn-nombre {
-            font-size: .82rem;
+            font-size: .8rem;
             font-weight: 600;
             color: #1e293b;
             line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            width: 100%;
+            display: block;
         }
 
+        /* Línea 2: Precio */
         .msp-btn-precio {
             font-size: .75rem;
             color: #0E544C;
-            font-weight: 500;
+            font-weight: 600;
             font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+            white-space: nowrap;
+            display: block;
         }
 
 
@@ -3666,16 +3680,65 @@
 
 
 /* ============================================================
-   Fix: dropdown de sustitución de ingredientes no se recorta
-   El modal-body con modal-dialog-scrollable tiene overflow:auto
-   por Bootstrap, lo que crea un stacking context que corta el
-   dropdown absoluto. Se sobreescribe SOLO para el modal de
-   personalización, delegando el scroll al contenedor raíz del modal.
+   Modal de Personalización: Scroll vertical garantizado y layout contenido
+   Garantiza scrollbar vertical cuando las recetas son grandes,
+   manteniendo encabezado, selector de producto y pie de modal siempre visibles.
    ============================================================ */
-#modalPersonalizacion .modal-body {
-    overflow: visible;
-}
 #modalPersonalizacion .modal-dialog {
-    overflow-y: auto;
-    max-height: calc(100vh - 3.5rem);
+    max-width: 1240px;
+    width: 96%;
+    max-height: calc(100vh - 2.5rem);
+    margin: 1.25rem auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#modalPersonalizacion .modal-content {
+    max-height: calc(100vh - 2.5rem) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border-radius: 14px;
+}
+
+#modalPersonalizacion .modal-header {
+    flex-shrink: 0 !important;
+    padding: 0.85rem 1.25rem;
+}
+
+#modalPersonalizacion .modal-header .modal-icon-badge {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+}
+
+#modalPersonalizacion .mp-selector-productos-wrap {
+    flex-shrink: 0 !important;
+}
+
+#modalPersonalizacion .modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+#modalPersonalizacion .modal-body::-webkit-scrollbar {
+    width: 7px;
+}
+#modalPersonalizacion .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+#modalPersonalizacion .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+#modalPersonalizacion .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+#modalPersonalizacion .modal-footer {
+    flex-shrink: 0 !important;
+    padding: 0.5rem 1rem !important;
 }

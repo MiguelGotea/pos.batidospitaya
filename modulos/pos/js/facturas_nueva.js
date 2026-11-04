@@ -711,7 +711,8 @@ function _renderSelectorProductos() {
         const precio = parseFloat(p.precio_venta || 0);
         const activo = i === _mspIdxSelec ? ' activo' : '';
         html += `<button type="button" class="msp-btn-producto${activo}" data-idx="${i}"
-                         onclick="_mspSeleccionarProducto(${i})">
+                         onclick="_mspSeleccionarProducto(${i})"
+                         title="${escAttr(p.Nombre)}">
                     <span class="msp-btn-nombre">${escHtml(p.Nombre)}</span>
                     <span class="msp-btn-precio">C$ ${precio.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                  </button>`;
@@ -2158,7 +2159,14 @@ function _mpAbrirDropdownSust(input) {
     const dropdown = combo.querySelector('.mp-sustituir-dropdown');
     // Mostrar todos los items antes de abrir
     combo.querySelectorAll('.mp-sust-item').forEach(item => item.style.display = '');
-    if (dropdown) dropdown.classList.add('mp-sust-abierto');
+    if (dropdown) {
+        dropdown.classList.add('mp-sust-abierto');
+        setTimeout(() => {
+            if (typeof input.scrollIntoView === 'function') {
+                input.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }, 50);
+    }
 }
 
 /* ---- Combo buscable: cerrar con delay (permite el clic en item) ---- */
