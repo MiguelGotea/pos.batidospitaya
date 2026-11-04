@@ -2232,9 +2232,12 @@ function _mpRenderContenido(datos) {
             <div class="mp-ingredientes-lista">`;
 
         datos.ingredientes.filter(ing => ing.orden_comanda !== null && ing.orden_comanda !== undefined).forEach(ing => {
-            const idComp = parseInt(ing.id_componente);  // normalizar a número para comparación segura
-            const quitado = _mpDraft.ingredientes_quitados.some(q => parseInt(q.id_componente) === idComp);
-            const sustituido = _mpDraft.ingredientes_sustituidos.find(s => parseInt(s.id_componente) === idComp);
+            const idComp = parseInt(ing.id_componente);       // ID de fila en receta (cambia entre variantes)
+            const idIng  = parseInt(ing.id_ingrediente);      // id_presentacion_producto (ESTABLE entre variantes)
+
+            // Matching por id_ingrediente (estable) para soportar cambio de variante
+            const quitado   = _mpDraft.ingredientes_quitados.some(q  => parseInt(q.id_ingrediente)  === idIng);
+            const sustituido = _mpDraft.ingredientes_sustituidos.find(s => parseInt(s.id_ingrediente) === idIng);
 
             const nombreActual = sustituido ? sustituido.nombre_nuevo : '';
             const valorActual = sustituido ? sustituido.id_nuevo : '';
@@ -2248,16 +2251,17 @@ function _mpRenderContenido(datos) {
             });
 
             htmlReceta += `
-            <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}">
+            <div class="mp-ingrediente-row ${quitado ? 'mp-ingrediente-quitado' : ''}" data-comp="${idComp}" data-ing-id="${idIng}">
                 <div class="mp-ing-nombre">
                     <strong>${escHtml(ing.nombre_ingrediente)}</strong>
                 </div>
                 <div class="mp-ing-controles">
                     <!-- Combo buscable de sustitución (fuente: tabla extras) -->
-                    <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}">
+                    <div class="mp-sustituir-combo ${quitado ? 'mp-combo-disabled' : ''}" data-comp="${idComp}" data-ing-id="${idIng}">
                         <input type="text"
                                 class="mp-sustituir-input"
                                 data-comp="${idComp}"
+                                data-ing-id="${idIng}"
                                 data-nombre-orig="${escAttr(ing.nombre_ingrediente)}"
                                 value="${escAttr(nombreActual)}"
                                 placeholder="Sin cambio"
@@ -2266,13 +2270,13 @@ function _mpRenderContenido(datos) {
                                 oninput="_mpFiltrarSustitutos(this)"
                                 onfocus="_mpAbrirDropdownSust(this)"
                                 onblur="_mpBlurSustituto(this)">
-                        <input type="hidden" class="mp-sustituir-valor" data-comp="${idComp}" value="${valorActual || ''}">
+                        <input type="hidden" class="mp-sustituir-valor" data-comp="${idComp}" data-ing-id="${idIng}" value="${valorActual || ''}">
                         <div class="mp-sustituir-dropdown">
                             ${dropdownHtml}
                         </div>
                     </div>
                     <!-- Toggle quitar -->
-                    <button type="button" class="btn-mp-quitar ${quitado ? 'activo' : ''}" data-comp="${idComp}"
+                    <button type="button" class="btn-mp-quitar ${quitado ? 'activo' : ''}" data-comp="${idComp}" data-ing-id="${idIng}"
                             onclick="_mpToggleQuitarIngrediente(this, '${escAttr(ing.nombre_ingrediente)}')"
                             title="${quitado ? 'Restaurar' : 'Quitar este ingrediente'}">
                         ${quitado ? '<i class="bi bi-plus-circle"></i>' : '<i class="bi bi-x-circle"></i>'}
@@ -2379,17 +2383,18 @@ function _mpRenderContenido(datos) {
 /* ---- Toggle: quitar / restaurar ingrediente ---- */
 function _mpToggleQuitarIngrediente(btn, nombreComponente) {
     const idComp = parseInt(btn.dataset.comp);
+    const idIng  = parseInt(btn.dataset.ingId);  // id_presentacion_producto (estable entre variantes)
     const row = btn.closest('.mp-ingrediente-row');
     const combo = row ? row.querySelector('.mp-sustituir-combo') : null;
     const inputSust = combo ? combo.querySelector('.mp-sustituir-input') : null;
     const hiddenSust = combo ? combo.querySelector('.mp-sustituir-valor') : null;
     const dropdown = combo ? combo.querySelector('.mp-sustituir-dropdown') : null;
 
-    const yaQuitado = _mpDraft.ingredientes_quitados.some(q => parseInt(q.id_componente) === idComp);
+    const yaQuitado = _mpDraft.ingredientes_quitados.some(q => parseInt(q.id_ingrediente) === idIng);
 
     if (yaQuitado) {
         // Restaurar
-        _mpDraft.ingredientes_quitados = _mpDraft.ingredientes_quitados.filter(q => parseInt(q.id_componente) !== idComp);
+        _mpDraft.ingredientes_quitados = _mpDraft.ingredientes_quitados.filter(q => parseInt(q.id_ingrediente) !== idIng);
         row.classList.remove('mp-ingrediente-quitado');
         btn.classList.remove('activo');
         btn.innerHTML = '<i class="bi bi-x-circle"></i>';
@@ -2397,10 +2402,10 @@ function _mpToggleQuitarIngrediente(btn, nombreComponente) {
         if (inputSust) { inputSust.disabled = false; }
         if (combo) { combo.classList.remove('mp-combo-disabled'); }
     } else {
-        // Quitar
-        _mpDraft.ingredientes_quitados.push({ id_componente: idComp, nombre_componente: nombreComponente });
+        // Quitar — almacenar ambos IDs: id_componente (receta actual) e id_ingrediente (estable)
+        _mpDraft.ingredientes_quitados.push({ id_componente: idComp, id_ingrediente: idIng, nombre_componente: nombreComponente });
         // Cancelar sustitución previa si la había
-        _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
+        _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => parseInt(s.id_ingrediente) !== idIng);
         if (inputSust) { inputSust.value = ''; inputSust.disabled = true; }
         if (hiddenSust) { hiddenSust.value = ''; }
         if (dropdown) { dropdown.classList.remove('mp-sust-abierto'); }
@@ -2466,6 +2471,7 @@ function _mpSeleccionarSustituto(itemDiv, idComp) {
     const hidden = combo.querySelector('.mp-sustituir-valor');
     const dropdown = combo.querySelector('.mp-sustituir-dropdown');
     const nombreOrig = input ? input.dataset.nombreOrig : '';
+    const idIng = parseInt(combo.dataset.ingId);  // id_presentacion_producto (estable)
 
     const id = itemDiv.dataset.id;
     const nombre = itemDiv.dataset.nombre;
@@ -2474,11 +2480,12 @@ function _mpSeleccionarSustituto(itemDiv, idComp) {
     if (hidden) hidden.value = id || '';
     if (dropdown) dropdown.classList.remove('mp-sust-abierto');
 
-    // Actualizar draft
-    _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => s.id_componente !== idComp);
+    // Actualizar draft usando id_ingrediente como clave estable
+    _mpDraft.ingredientes_sustituidos = _mpDraft.ingredientes_sustituidos.filter(s => parseInt(s.id_ingrediente) !== idIng);
     if (id) {
         _mpDraft.ingredientes_sustituidos.push({
             id_componente: idComp,
+            id_ingrediente: idIng,
             nombre_original: nombreOrig,
             id_nuevo: parseInt(id),
             nombre_nuevo: nombre
@@ -2645,28 +2652,49 @@ function _mpActualizarResumenExtras() {
 
 /* ---- Fusionar personalización original con una nueva receta al cambiar de variante ---- */
 /*
+ * Estrategia de matching por id_ingrediente (= id_presentacion_producto):
+ *  - Este ID es ESTABLE entre variantes del mismo catálogo (20oz y 16oz comparten el mismo
+ *    id_presentacion_producto para "Hielo oz", aunque el id de fila de receta difiere).
+ *  - Se actualiza id_componente al valor de la nueva receta al copiar la personalización.
+ *
  * Reglas:
  *  - notas, endulzante, extras_agregados → siempre se conservan
- *  - ingredientes_quitados   → solo si el id_componente existe en la nueva receta
- *  - ingredientes_sustituidos → solo si el id_componente original existe en la nueva receta
- *
- * Los ingredientes que no existen en la nueva variante se descartan silenciosamente.
+ *  - ingredientes_quitados   → se conservan si id_ingrediente existe en nueva receta (con id_componente actualizado)
+ *  - ingredientes_sustituidos → igual
+ *  - Ingredientes sin match → descartados silenciosamente
  */
 function _fusionarPersonalizacion(draftOriginal, datosRecetaNueva) {
-    const idsNuevaReceta = new Set(
-        (datosRecetaNueva.ingredientes || []).map(function (i) { return parseInt(i.id_componente); })
-    );
+    // Mapa id_ingrediente → id_componente de la nueva receta
+    const ingIdACompId = {};
+    (datosRecetaNueva.ingredientes || []).forEach(function (i) {
+        ingIdACompId[parseInt(i.id_ingrediente)] = parseInt(i.id_componente);
+    });
 
-    const quitadosFiltrados = (draftOriginal.ingredientes_quitados || [])
-        .filter(function (q) { return idsNuevaReceta.has(parseInt(q.id_componente)); });
+    const quitadosFiltrados = [];
+    (draftOriginal.ingredientes_quitados || []).forEach(function (q) {
+        const idIng = parseInt(q.id_ingrediente);
+        if (ingIdACompId[idIng] !== undefined) {
+            quitadosFiltrados.push({
+                id_componente: ingIdACompId[idIng],  // id actualizado al de la nueva receta
+                id_ingrediente: idIng,
+                nombre_componente: q.nombre_componente
+            });
+        }
+    });
 
-    const sustituidosFiltrados = (draftOriginal.ingredientes_sustituidos || [])
-        .filter(function (s) { return idsNuevaReceta.has(parseInt(s.id_componente)); });
-
-    // ── DEBUG TEMPORAL ──
-    console.log('[FUSION] idsNuevaReceta:', Array.from(idsNuevaReceta));
-    console.log('[FUSION] quitados originales:', draftOriginal.ingredientes_quitados);
-    console.log('[FUSION] quitados filtrados:', quitadosFiltrados);
+    const sustituidosFiltrados = [];
+    (draftOriginal.ingredientes_sustituidos || []).forEach(function (s) {
+        const idIng = parseInt(s.id_ingrediente);
+        if (ingIdACompId[idIng] !== undefined) {
+            sustituidosFiltrados.push({
+                id_componente: ingIdACompId[idIng],  // id actualizado al de la nueva receta
+                id_ingrediente: idIng,
+                nombre_original: s.nombre_original,
+                id_nuevo: s.id_nuevo,
+                nombre_nuevo: s.nombre_nuevo
+            });
+        }
+    });
 
     return {
         ingredientes_quitados: quitadosFiltrados,
