@@ -2232,9 +2232,9 @@ function _mpRenderContenido(datos) {
             <div class="mp-ingredientes-lista">`;
 
         datos.ingredientes.filter(ing => ing.orden_comanda !== null && ing.orden_comanda !== undefined).forEach(ing => {
-            const idComp = ing.id_componente;
-            const quitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
-            const sustituido = _mpDraft.ingredientes_sustituidos.find(s => s.id_componente === idComp);
+            const idComp = parseInt(ing.id_componente);  // normalizar a número para comparación segura
+            const quitado = _mpDraft.ingredientes_quitados.some(q => parseInt(q.id_componente) === idComp);
+            const sustituido = _mpDraft.ingredientes_sustituidos.find(s => parseInt(s.id_componente) === idComp);
 
             const nombreActual = sustituido ? sustituido.nombre_nuevo : '';
             const valorActual = sustituido ? sustituido.id_nuevo : '';
@@ -2385,11 +2385,11 @@ function _mpToggleQuitarIngrediente(btn, nombreComponente) {
     const hiddenSust = combo ? combo.querySelector('.mp-sustituir-valor') : null;
     const dropdown = combo ? combo.querySelector('.mp-sustituir-dropdown') : null;
 
-    const yaQuitado = _mpDraft.ingredientes_quitados.some(q => q.id_componente === idComp);
+    const yaQuitado = _mpDraft.ingredientes_quitados.some(q => parseInt(q.id_componente) === idComp);
 
     if (yaQuitado) {
         // Restaurar
-        _mpDraft.ingredientes_quitados = _mpDraft.ingredientes_quitados.filter(q => q.id_componente !== idComp);
+        _mpDraft.ingredientes_quitados = _mpDraft.ingredientes_quitados.filter(q => parseInt(q.id_componente) !== idComp);
         row.classList.remove('mp-ingrediente-quitado');
         btn.classList.remove('activo');
         btn.innerHTML = '<i class="bi bi-x-circle"></i>';
@@ -2662,6 +2662,11 @@ function _fusionarPersonalizacion(draftOriginal, datosRecetaNueva) {
 
     const sustituidosFiltrados = (draftOriginal.ingredientes_sustituidos || [])
         .filter(function (s) { return idsNuevaReceta.has(parseInt(s.id_componente)); });
+
+    // ── DEBUG TEMPORAL ──
+    console.log('[FUSION] idsNuevaReceta:', Array.from(idsNuevaReceta));
+    console.log('[FUSION] quitados originales:', draftOriginal.ingredientes_quitados);
+    console.log('[FUSION] quitados filtrados:', quitadosFiltrados);
 
     return {
         ingredientes_quitados: quitadosFiltrados,
