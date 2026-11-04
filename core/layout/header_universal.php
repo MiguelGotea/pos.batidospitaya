@@ -745,7 +745,7 @@ function renderHeader($usuario, $titulo = '')
                 if (isCheckingSession) return Promise.resolve(true);
                 isCheckingSession = true;
 
-                const pingUrl = getBaseUrl() + '/core/auth/ping.php';
+                const pingUrl = '/core/auth/ping.php';
                 return fetch(pingUrl, {
                     method: 'GET',
                     cache: 'no-store',
