@@ -1775,6 +1775,23 @@
     text-align: right;
     background: transparent;
     font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Quitar flechas arriba/abajo en inputs de monto de pago */
+.input-monto-pago::-webkit-outer-spin-button,
+.input-monto-pago::-webkit-inner-spin-button,
+.contenedor-filas-pago input[type=number]::-webkit-outer-spin-button,
+.contenedor-filas-pago input[type=number]::-webkit-inner-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.contenedor-filas-pago input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .btn-quitar-pago {
