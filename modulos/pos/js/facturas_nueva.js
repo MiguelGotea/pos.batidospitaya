@@ -458,9 +458,97 @@ function cargarProductosElegibles() {
         }
         todosProductos = res.data;
         renderizarCatalogoPorGrupos(todosProductos);
+
+        // ── Precarga silenciosa de recetas en background ──────────────────
+        // Una vez que el catálogo está visible, lanzamos UNA sola petición
+        // que trae todas las recetas y las mete en _mpCache. Así, cuando el
+        // cajero toque cualquier producto el modal abre INSTANTÁNEO (sin
+        // "Cargando receta…"). Si la precarga aún no terminó cuando se abre
+        // el modal, el flujo normal de AJAX individual sigue funcionando.
+        _precargarTodasLasRecetas();
+        // ─────────────────────────────────────────────────────────────────
     }, 'json').fail(function () {
         $('#catalogoPanel').html(`<p class="no-productos-msg text-danger">Error al cargar productos.</p>`);
     });
+}
+
+/**
+ * _precargarTodasLasRecetas()
+ * Llama al endpoint masivo get_recetas_todas.php y llena _mpCache
+ * con los datos de cada producto personalizable. Se ejecuta en background
+ * sin mostrar ningún indicador al usuario.
+ * También precarga _catCache con los productos agrupados por id_catalogo.
+ */
+function _precargarTodasLasRecetas() {
+    $.ajax({
+        url: 'ajax/get_recetas_todas.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (!res.success || !res.recetas) return;
+            // Llenar _mpCache con cada receta recibida
+            Object.keys(res.recetas).forEach(function (idPres) {
+                const idNum = parseInt(idPres, 10);
+                if (!_mpCache[idNum]) {
+                    _mpCache[idNum] = res.recetas[idPres];
+                }
+            });
+            // Pre-poblar _catCache agrupando todosProductos por id_catalogo_menu_pos.
+            // Esto evita la llamada a get_productos_catalogo.php al abrir el modal.
+            if (todosProductos && todosProductos.length > 0) {
+                _precargarCatalogos();
+            }
+        },
+        error: function () {
+            // Falla silenciosa: el flujo individual de AJAX sigue funcionando.
+            console.warn('[POS] Precarga de recetas no disponible; se usará carga bajo demanda.');
+        }
+    });
+}
+
+/**
+ * _precargarCatalogos()
+ * Agrupa todosProductos por sus ids de catálogo y llena _catCache con el
+ * formato exacto que devuelve get_productos_catalogo.php, evitando esa
+ * petición extra al abrir el modal de selección de producto.
+ */
+function _precargarCatalogos() {
+    // La clave es el string de ids ordenados, igual que en abrirModalSeleccionProducto.
+    // Reconstruir el mapa de catálogos desde todosProductos
+    // Cada entrada del catálogo tiene id_catalogo_menu_pos → array de productos
+    const tmpMap = {};
+    todosProductos.forEach(function (p) {
+        const cid = parseInt(p.id_catalogo_menu_pos) || 0;
+        if (!cid) return;
+        if (!tmpMap[cid]) tmpMap[cid] = [];
+        tmpMap[cid].push(p);
+    });
+
+    // Para cada clasificación del catálogo (un botón = varios ids_catalogo),
+    // construir la clave y guardar en _catCache
+    if (_grupos) {
+        _grupos.forEach(function (grupo) {
+            grupo.subgrupos.forEach(function (sg) {
+                sg.catalogos.forEach(function (cat) {
+                    const key = cat.ids.slice().sort(function (a, b) { return a - b; }).join(',');
+                    if (_catCache[key]) return; // ya cargado
+                    // Recolectar los productos de todos los ids de esta clasificación
+                    const prods = [];
+                    cat.ids.forEach(function (cid) {
+                        (tmpMap[cid] || []).forEach(function (p) {
+                            // Evitar duplicados por id de presentación
+                            if (!prods.find(function (x) { return x.id === p.id; })) {
+                                prods.push(p);
+                            }
+                        });
+                    });
+                    if (prods.length > 0) {
+                        _catCache[key] = { success: true, data: prods };
+                    }
+                });
+            });
+        });
+    }
 }
 
 /* ---- Renderizar catálogo por grupos (tabs + subgrupos + cards) ---- */
@@ -629,6 +717,10 @@ let _mspIdxSelec = -1;     // índice dentro de _mspProductos del producto selec
 let _mspModoEdicion = false;  // true si estamos editando un ítem ya existente en el ticket
 let _mspIdxTicket = -1;     // índice en detalleFactura (si es edición)
 
+// Caché de productos por clave de ids de catálogo (evita AJAX repetido a get_productos_catalogo.php)
+// Clave: ids ordenados y unidos por coma, ej. "5,6,12"
+const _catCache = {};
+
 /* ---- Abrir el modal de selección de producto de una clasificación ---- */
 function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
     // idsCatalogo puede ser un array [1,2,3] o un entero legado
@@ -657,7 +749,52 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
     $('#mpSubtitulo').text('Ajusta tus preferencias');
     $('#mpAjustePrecio').hide();
 
-    // Mostrar spinner mientras carga los productos de la clasificación
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
+    modal.show();
+
+    // ── Clave de caché: ids ordenados para consistencia ───────────────
+    const _catKey = _idsArray.slice().sort(function (a, b) { return a - b; }).join(',');
+
+    // Función interna que procesa el resultado (sea del caché o del AJAX)
+    function _procesarProductosCat(res) {
+        if (!res.success || !res.data || res.data.length === 0) {
+            $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>No hay productos disponibles en esta clasificación.</span>');
+            $('#mpCuerpo').html('');
+            return;
+        }
+        _mspProductos = res.data;
+
+        // Guardar en caché para próximas veces
+        if (!_catCache[_catKey]) {
+            _catCache[_catKey] = res;
+        }
+
+        // Elegir por defecto el producto más caro
+        let maxIdx = 0;
+        let maxPrecio = -1;
+        _mspProductos.forEach((p, i) => {
+            const precio = parseFloat(p.precio_venta || 0);
+            if (precio > maxPrecio) {
+                maxPrecio = precio;
+                maxIdx = i;
+            }
+        });
+        _mspIdxSelec = maxIdx;
+
+        _renderSelectorProductos();
+        _mspSeleccionarProducto(maxIdx);
+    }
+
+    // ── Usar caché si está disponible (evita el AJAX por completo) ────
+    if (_catCache[_catKey]) {
+        // Respuesta inmediata desde caché — sin spinner visible
+        $('#mpSelectorProductos').show().html('');
+        $('#mpCuerpo').html('');
+        _procesarProductosCat(_catCache[_catKey]);
+        return;
+    }
+
+    // ── Fallback: mostrar spinner y cargar por AJAX ───────────────────
     $('#mpSelectorProductos').show().html(
         '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
     );
@@ -665,37 +802,12 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
         '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando opciones…</span></div>'
     );
 
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
-    modal.show();
-
-    // Cargar productos de este catalogo_menu_pos (puede ser uno o varios IDs)
     $.ajax({
         url: 'ajax/get_productos_catalogo.php',
         type: 'GET',
         data: { ids_catalogo: _idsArray.join(',') },
         dataType: 'json',
-        success: function (res) {
-            if (!res.success || !res.data || res.data.length === 0) {
-                $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>No hay productos disponibles en esta clasificación.</span>');
-                return;
-            }
-            _mspProductos = res.data;
-
-            // Elegir por defecto el producto más caro
-            let maxIdx = 0;
-            let maxPrecio = -1;
-            _mspProductos.forEach((p, i) => {
-                const precio = parseFloat(p.precio_venta || 0);
-                if (precio > maxPrecio) {
-                    maxPrecio = precio;
-                    maxIdx = i;
-                }
-            });
-            _mspIdxSelec = maxIdx;
-
-            _renderSelectorProductos();
-            _mspSeleccionarProducto(maxIdx);
-        },
+        success: _procesarProductosCat,
         error: function () {
             $('#mpSelectorProductos').html('<span class="text-danger small"><i class="bi bi-cloud-slash me-1"></i>Error al cargar los productos.</span>');
         }
