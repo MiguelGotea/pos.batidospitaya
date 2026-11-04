@@ -853,23 +853,23 @@ function _mspSeleccionarProducto(idx) {
     }
     $('#mpAjustePrecio').hide();
 
-    // Resetear draft de personalización al cambiar producto
-    _mpDraft = {
-        ingredientes_quitados: [],
-        ingredientes_sustituidos: [],
-        endulzante_id: null,
-        endulzante_nombre: '',
-        extras_agregados: [],
-        monto_extras: 0,
-        notas: ''
-    };
-
-    // Solo si estamos en modo edición de un ítem del ticket, precargar su personalización
-    if (_mspModoEdicion && _mspIdxTicket >= 0 && detalleFactura[_mspIdxTicket]) {
-        if (detalleFactura[_mspIdxTicket].personalizacion) {
-            _mpDraft = JSON.parse(JSON.stringify(detalleFactura[_mspIdxTicket].personalizacion));
-        }
-        _mpDraft.notas = detalleFactura[_mspIdxTicket].notas || _mpDraft.notas || '';
+    // En modo edición con cambio de variante: fusionar personalización original con la nueva receta.
+    // En modo nuevo (desde catálogo): resetear el draft completamente.
+    if (_mspModoEdicion && _mpDraftOriginal) {
+        // La fusión real ocurre en el callback de éxito del AJAX, una vez que tenemos la nueva receta.
+        // Por ahora copiamos el draft original como punto de partida para que la UI
+        // pueda previsualizar notas, endulzante y extras mientras carga.
+        _mpDraft = JSON.parse(JSON.stringify(_mpDraftOriginal));
+    } else {
+        _mpDraft = {
+            ingredientes_quitados: [],
+            ingredientes_sustituidos: [],
+            endulzante_id: null,
+            endulzante_nombre: '',
+            extras_agregados: [],
+            monto_extras: 0,
+            notas: ''
+        };
     }
 
     // Mostrar spinner mientras carga receta
@@ -878,6 +878,10 @@ function _mspSeleccionarProducto(idx) {
     // Cargar receta (usa caché igual que antes)
     const idPres = parseInt(p.id);
     if (_mpCache[idPres]) {
+        // Si estamos en modo edición, fusionar antes de renderizar
+        if (_mspModoEdicion && _mpDraftOriginal) {
+            _mpDraft = _fusionarPersonalizacion(_mpDraftOriginal, _mpCache[idPres]);
+        }
         _mpRenderContenido(_mpCache[idPres]);
         return;
     }
@@ -890,6 +894,10 @@ function _mspSeleccionarProducto(idx) {
         success: function (res) {
             if (res.success) {
                 _mpCache[idPres] = res;
+                // En modo edición: fusionar personalización original con la nueva receta
+                if (_mspModoEdicion && _mpDraftOriginal) {
+                    _mpDraft = _fusionarPersonalizacion(_mpDraftOriginal, res);
+                }
                 _mpRenderContenido(res);
             } else {
                 $('#mpCuerpo').html(`<div class="alert alert-warning m-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'No se pudieron cargar los datos de receta.')}</div>`);
@@ -1892,14 +1900,18 @@ let _mpIdx = -1;
 // Copia de trabajo de la personalización (se confirma solo al dar "Aplicar")
 let _mpDraft = null;
 
+// Snapshot de la personalización original al abrir en modo edición (fuente de fusión al cambiar variante)
+let _mpDraftOriginal = null;
+
 // Cache de datos de receta por id_presentacion
 const _mpCache = {};
 
 /* ---- Abrir modal para EDITAR personalización de ítem existente en el ticket ---- */
 /*
  * Este modo se activa desde el botón de personalización en la fila del ticket.
- * A diferencia del flujo de selección de catálogo, aquí ya hay un producto
- * seleccionado, así que mostramos directamente su receta sin el selector.
+ * Carga todos los productos del mismo catálogo (id_catalogo_menu_pos) del ítem,
+ * muestra el selector de variantes preseleccionando la actual, y permite cambiar
+ * de variante conservando la personalización aplicada (fusión inteligente).
  */
 function abrirModalPersonalizacion(idx) {
     const item = detalleFactura[idx];
@@ -1911,8 +1923,8 @@ function abrirModalPersonalizacion(idx) {
     _mspProductos = [];
     _mspIdxSelec = -1;
 
-    // Clonar personalización actual como borrador de trabajo
-    _mpDraft = JSON.parse(JSON.stringify(item.personalizacion || {
+    // Clonar personalización actual como borrador de trabajo y como snapshot original
+    const persBase = item.personalizacion || {
         ingredientes_quitados: [],
         ingredientes_sustituidos: [],
         endulzante_id: null,
@@ -1920,34 +1932,135 @@ function abrirModalPersonalizacion(idx) {
         extras_agregados: [],
         monto_extras: 0,
         notas: ''
-    }));
+    };
+    _mpDraft = JSON.parse(JSON.stringify(persBase));
     _mpDraft.notas = (typeof item.notas === 'string') ? item.notas : (_mpDraft.notas || '');
+    // Guardar snapshot inmutable para usarlo como fuente de fusión al cambiar variante
+    _mpDraftOriginal = JSON.parse(JSON.stringify(_mpDraft));
 
-    // Actualizar título del modal — sin selector de productos (ya está elegido)
-    $('#modalPersonalizacionLabel').text('Personalizar: ' + item.nombre);
+    // Configurar encabezado del modal
+    $('#modalPersonalizacionLabel').text(escHtml(item.nombre));
     $('#mpSubtitulo').text('Ajusta ingredientes, endulzante y extras');
-    // Ocultar el selector de productos (no aplica en edición directa)
-    $('#mpSelectorProductos').html('').hide();
-    $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
     $('#mpAjustePrecio').hide();
 
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPersonalizacion'));
     modal.show();
 
-    // Si ya está en caché, no volver a pedir
-    if (_mpCache[item.id_presentacion]) {
-        _mpRenderContenido(_mpCache[item.id_presentacion]);
+    // ── Si el ítem no tiene id_catalogo_menu_pos, fallback al comportamiento anterior ──
+    if (!item.id_catalogo_menu_pos) {
+        $('#mpSelectorProductos').html('').hide();
+        $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
+        if (_mpCache[item.id_presentacion]) {
+            _mpRenderContenido(_mpCache[item.id_presentacion]);
+            return;
+        }
+        $.ajax({
+            url: 'ajax/get_receta_producto.php',
+            type: 'GET',
+            data: { id_presentacion: item.id_presentacion },
+            dataType: 'json',
+            success: function (res) {
+                if (res.success) {
+                    _mpCache[item.id_presentacion] = res;
+                    _mpRenderContenido(res);
+                } else {
+                    $('#mpCuerpo').html(`<div class="alert alert-warning m-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'No se pudieron cargar los datos de receta.')}</div>`);
+                }
+            },
+            error: function () {
+                $('#mpCuerpo').html('<div class="alert alert-danger m-3"><i class="bi bi-cloud-slash me-1"></i> Error de conexión al cargar la receta.</div>');
+            }
+        });
+        return;
+    }
+
+    // ── Cargar todos los productos del mismo catálogo ──
+    $('#mpSelectorProductos').show().html(
+        '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
+    );
+    $('#mpCuerpo').html(
+        '<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando opciones…</span></div>'
+    );
+
+    const _catKey = String(item.id_catalogo_menu_pos);
+
+    function _procesarProductosCatEdicion(res) {
+        if (!res.success || !res.data || res.data.length === 0) {
+            // Sin datos de catálogo: ocultar selector y cargar receta directa
+            $('#mpSelectorProductos').html('').hide();
+            _mspProductos = [];
+            _mpCargarRecetaEdicion(item.id_presentacion);
+            return;
+        }
+
+        _mspProductos = res.data;
+
+        // Guardar en caché
+        if (!_catCache[_catKey]) {
+            _catCache[_catKey] = res;
+        }
+
+        // Si solo hay un producto, ocultar el selector (igual que en catálogo nuevo)
+        if (_mspProductos.length <= 1) {
+            $('#mpSelectorProductos').html('').hide();
+        }
+
+        // Preseleccionar la variante actualmente facturada
+        let idxActual = _mspProductos.findIndex(p => parseInt(p.id) === parseInt(item.id_presentacion));
+        if (idxActual < 0) idxActual = 0; // fallback al primero si no se encuentra
+        _mspIdxSelec = idxActual;
+
+        _renderSelectorProductos();
+        // Marcar el botón activo
+        $(`#mpSelectorProductos .msp-btn-producto[data-idx="${idxActual}"]`).addClass('activo');
+
+        // Actualizar subtítulo con nombre del producto seleccionado
+        const pActual = _mspProductos[idxActual];
+        if (_mspProductos.length > 1) {
+            $('#mpSubtitulo').text(`${escHtml(pActual.Nombre)} — Ajusta opciones`).show();
+        } else {
+            $('#mpSubtitulo').hide();
+        }
+
+        // Cargar receta del producto actualmente facturado con draft precargado
+        _mpCargarRecetaEdicion(parseInt(pActual.id));
+    }
+
+    if (_catCache[_catKey]) {
+        _procesarProductosCatEdicion(_catCache[_catKey]);
         return;
     }
 
     $.ajax({
+        url: 'ajax/get_productos_catalogo.php',
+        type: 'GET',
+        data: { ids_catalogo: item.id_catalogo_menu_pos },
+        dataType: 'json',
+        success: _procesarProductosCatEdicion,
+        error: function () {
+            // Error de red: ocultar selector y cargar receta directa
+            $('#mpSelectorProductos').html('').hide();
+            _mspProductos = [];
+            _mpCargarRecetaEdicion(item.id_presentacion);
+        }
+    });
+}
+
+/* ---- Cargar receta en modo edición (con draft ya precargado en _mpDraft) ---- */
+function _mpCargarRecetaEdicion(idPresentacion) {
+    $('#mpCuerpo').html('<div class="d-flex align-items-center justify-content-center py-5"><span class="spinner-border spinner-border-sm me-2 text-secondary"></span><span class="text-muted">Cargando receta…</span></div>');
+    if (_mpCache[idPresentacion]) {
+        _mpRenderContenido(_mpCache[idPresentacion]);
+        return;
+    }
+    $.ajax({
         url: 'ajax/get_receta_producto.php',
         type: 'GET',
-        data: { id_presentacion: item.id_presentacion },
+        data: { id_presentacion: idPresentacion },
         dataType: 'json',
         success: function (res) {
             if (res.success) {
-                _mpCache[item.id_presentacion] = res;
+                _mpCache[idPresentacion] = res;
                 _mpRenderContenido(res);
             } else {
                 $('#mpCuerpo').html(`<div class="alert alert-warning m-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escHtml(res.message || 'No se pudieron cargar los datos de receta.')}</div>`);
@@ -2494,6 +2607,38 @@ function _mpActualizarResumenExtras() {
     }
 }
 
+/* ---- Fusionar personalización original con una nueva receta al cambiar de variante ---- */
+/*
+ * Reglas:
+ *  - notas, endulzante, extras_agregados → siempre se conservan
+ *  - ingredientes_quitados   → solo si el id_componente existe en la nueva receta
+ *  - ingredientes_sustituidos → solo si el id_componente original existe en la nueva receta
+ *
+ * Los ingredientes que no existen en la nueva variante se descartan silenciosamente.
+ */
+function _fusionarPersonalizacion(draftOriginal, datosRecetaNueva) {
+    const idsNuevaReceta = new Set(
+        (datosRecetaNueva.ingredientes || []).map(function (i) { return parseInt(i.id_componente); })
+    );
+
+    const quitadosFiltrados = (draftOriginal.ingredientes_quitados || [])
+        .filter(function (q) { return idsNuevaReceta.has(parseInt(q.id_componente)); });
+
+    const sustituidosFiltrados = (draftOriginal.ingredientes_sustituidos || [])
+        .filter(function (s) { return idsNuevaReceta.has(parseInt(s.id_componente)); });
+
+    return {
+        ingredientes_quitados: quitadosFiltrados,
+        ingredientes_sustituidos: sustituidosFiltrados,
+        endulzante_id: draftOriginal.endulzante_id || null,
+        endulzante_nombre: draftOriginal.endulzante_nombre || '',
+        endulzante_nombre_grupo: draftOriginal.endulzante_nombre_grupo || '',
+        extras_agregados: JSON.parse(JSON.stringify(draftOriginal.extras_agregados || [])),
+        monto_extras: draftOriginal.monto_extras || 0,
+        notas: draftOriginal.notas || ''
+    };
+}
+
 /* ---- Aplicar personalización / Confirmar selección de producto al ticket ---- */
 /*
  * Hay dos modos:
@@ -2512,10 +2657,23 @@ $('#mpBtnGuardar').on('click', function () {
     /* ── MODO EDICIÓN (ítem ya existente en el ticket) ── */
     if (_mspModoEdicion && _mpIdx >= 0 && detalleFactura[_mpIdx]) {
         const item = detalleFactura[_mpIdx];
+
+        // Si hay selector de variantes visible y el usuario eligió una diferente → actualizar datos del producto
+        if (_mspProductos.length > 0 && _mspIdxSelec >= 0 && _mspProductos[_mspIdxSelec]) {
+            const varianteElegida = _mspProductos[_mspIdxSelec];
+            const nuevoPrecioBase = parseFloat(varianteElegida.precio_venta || 0);
+            const nuevoId = parseInt(varianteElegida.id);
+
+            // Solo actualizar si cambió el producto (o aunque sea el mismo, aplicar precio actual del catálogo)
+            item.id_presentacion = nuevoId;
+            item.nombre = varianteElegida.Nombre;
+            item.precio_unitario_base = nuevoPrecioBase;
+        }
+
         item.personalizacion = JSON.parse(JSON.stringify(_mpDraft));
         item.notas = notaIngresada;
 
-        // Ajustar precio_unitario: precio base + monto de extras
+        // Recalcular precio_unitario: precio base (posiblemente nueva variante) + monto de extras
         item.precio_unitario = Math.round(((item.precio_unitario_base || 0) + (_mpDraft.monto_extras || 0)) * 100) / 100;
         item.costo_total_iva = Math.round(item.cantidad * item.precio_unitario * 100) / 100;
 
@@ -2961,4 +3119,5 @@ document.getElementById('modalPersonalizacion').addEventListener('hidden.bs.moda
     _mspIdxSelec = -1;
     _mspProductos = [];
     _mpIdx = -1;
+    _mpDraftOriginal = null; // Limpiar snapshot de edición para evitar contaminación entre sesiones
 });
