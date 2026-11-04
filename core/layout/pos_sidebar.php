@@ -56,6 +56,7 @@ function renderPOSSidebar($activeModule = 'inicio')
 
     ob_start();
 ?>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
             --sidebar-width: 70px;
