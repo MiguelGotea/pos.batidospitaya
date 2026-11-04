@@ -1,4 +1,4 @@
-# Guia Rapida — POS Pitaya
+﻿# Guia Rapida — POS Pitaya
 
 > Documento vivo. Se ira alimentando con cada herramienta habilitada.
 
@@ -38,3 +38,21 @@ También se puede activar la **propina del 2%** mediante un interruptor en el de
 ### 7. Guardar e Imprimir
 Una vez que los pagos cubren el total de la factura, se habilita el botón **Guardar e Imprimir**, que registra la venta y genera el ticket.
 
+### 8. Editar un producto ya agregado (icono ✏️)
+
+Cada linea del carrito tiene un icono de **lapiz** que permite editar el producto **despues de haberlo agregado**.
+
+#### Que puedes hacer desde el modo edicion:
+- **Cambiar la variante** (ej. de Pina Colada 20oz → 16oz): las tabs superiores muestran todas las presentaciones del mismo catalogo.
+- **Ajustar ingredientes**: quitar o sustituir ingredientes de la nueva variante.
+- **Cambiar endulzante** o cantidad de sobres.
+- **Agregar o quitar extras**.
+
+#### Como funciona la fusion de personalizacion:
+Al cambiar de variante, el sistema transfiere automaticamente tu personalizacion anterior a la nueva variante:
+- **Notas, endulzante y extras**: siempre se conservan.
+- **Ingredientes quitados/sustituidos**: se conservan si el mismo ingrediente existe en la nueva variante (identificado por id_ingrediente). Si un ingrediente no existe en la nueva variante, se descarta silenciosamente.
+
+#### Cancelar vs Aplicar:
+- **Cancelar**: el carrito no cambia, se descarta cualquier modificacion.
+- **Aplicar**: el producto en el carrito se actualiza con la nueva variante y/o personalizacion. El precio se recalcula automaticamente (precio base de la nueva variante + extras).
