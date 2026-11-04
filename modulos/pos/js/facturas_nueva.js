@@ -1917,6 +1917,15 @@ function abrirModalPersonalizacion(idx) {
     const item = detalleFactura[idx];
     if (!item) return;
 
+    // ── DEBUG TEMPORAL ── borrar luego
+    console.log('[EDIT-MODAL] item:', {
+        id_presentacion: item.id_presentacion,
+        nombre: item.nombre,
+        id_catalogo_menu_pos: item.id_catalogo_menu_pos,
+        tiene_catalogo: !!item.id_catalogo_menu_pos
+    });
+    console.log('[EDIT-MODAL] _grupos disponible:', !!window._grupos, typeof _grupos);
+
     _mpIdx = idx;
     _mspModoEdicion = true;
     _mspIdxTicket = idx;
@@ -1994,6 +2003,9 @@ function abrirModalPersonalizacion(idx) {
         }
     }
     const _catKey = _catIdsParaEdicion.slice().sort(function (a, b) { return a - b; }).join(',');
+    // ── DEBUG TEMPORAL ──
+    console.log('[EDIT-MODAL] _catIdsParaEdicion:', _catIdsParaEdicion, '| _catKey:', _catKey);
+    console.log('[EDIT-MODAL] ¿En caché?', !!_catCache[_catKey], '| Claves en caché:', Object.keys(_catCache));
 
     $('#mpSelectorProductos').show().html(
         '<div class="d-flex align-items-center gap-2 py-2"><span class="spinner-border spinner-border-sm text-secondary"></span><span class="text-muted small">Cargando opciones…</span></div>'
@@ -2003,6 +2015,8 @@ function abrirModalPersonalizacion(idx) {
     );
 
     function _procesarProductosCatEdicion(res) {
+        // ── DEBUG TEMPORAL ──
+        console.log('[EDIT-MODAL] _procesarProductosCatEdicion res:', res);
         if (!res.success || !res.data || res.data.length === 0) {
             // Sin datos de catálogo: ocultar selector y cargar receta directa
             $('#mpSelectorProductos').html('').hide();
