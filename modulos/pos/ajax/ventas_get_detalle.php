@@ -16,7 +16,7 @@ try {
                 COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido)) AS cliente,
                 CONCAT(o.Nombre, ' ', o.Apellido) AS cajero
          FROM pos_ventas_facturas v
-         LEFT JOIN clientesclub c ON v.id_cliente_club = c.id
+         LEFT JOIN clientesclub c ON v.id_cliente_club = c.membresia
          LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario
          WHERE v.id = :id"
     );
