@@ -512,11 +512,66 @@ Tras la fase de definición final, se han establecido los siguientes acuerdos pa
     - **Canjeado**: Toggle que aplica costo 0.00 al producto.
     - **Íconos de Acción**:
         - 🔄 *Dos flechas*: Cambiar tamaño (si aplica).
-        - ✏️ *Lápiz*: Editar producto (reabre el modal de personalización).
+        - ✏️ *Lápiz*: Editar producto — reabre el modal de personalización en **modo edición**, permitiendo cambiar la variante del producto y ajustar ingredientes/endulzante/extras. Ver sección 11.7.
         - 📋 *Copiar*: Duplica la línea con todas sus configuraciones.
 - **Gestión de Pagos**: Permite agregar múltiples métodos de pago. Al hacer clic en un método, se genera una fila para ingresar el monto correspondiente. Se pueden eliminar métodos agregados con un ícono de 'X'.
 - **Cupones**: Se ingresa el código y se valida en tiempo real con un botón "Validar" (reutilizando la lógica de `/modulos/marketing/cupones.php`).
 - **Propina**: Se incluye un toggle de "Propina 2%" que aplica el porcentaje al total de la factura.
 
+
+### 11.7 Edicion de Producto con Cambio de Variante (Implementado Nov 2026)
+
+#### Descripcion General
+El icono ✏️ (lapiz) en cada linea del carrito reabre el modal de personalizacion en **modo edicion**. A diferencia del flujo de alta (donde el modal se abre vacio), en modo edicion:
+
+1. Se muestra el **selector de variantes** (tabs superiores) con todas las presentaciones del mismo catalogo de menu.
+2. La variante actualmente facturada queda preseleccionada.
+3. El cajero puede **cambiar de variante** o solo ajustar la personalizacion actual.
+4. Al aplicar, se actualiza id_presentacion, 
+ombre y precio_unitario_base en detalleFactura.
+
+#### Variables Clave
+- _mspModoEdicion (boolean): activo cuando el modal se abre desde el lapiz.
+- _mspIdxEdicion (number): indice del item en detalleFactura que se esta editando.
+- _mpDraftOriginal (object | null): snapshot del draft al momento de abrir el modal; sirve como fuente de verdad para la fusion al cambiar variante. Se limpia en hidden.bs.modal.
+
+#### Flujo de Apertura (abrirModalPersonalizacion)
+1. Snapshot: _mpDraftOriginal = JSON.parse(JSON.stringify(_mpDraft)).
+2. Si el item tiene id_catalogo_menu_pos:
+   - Busca la clave correcta en _catCache iterando Object.keys(_catCache).find(key => key.split(',').some(part => part.trim() === idBuscadoStr)).
+   - Muestra #mpSelectorProductos con spinner y lanza AJAX para cargar el catalogo.
+   - Preselecciona la variante actual por id_presentacion.
+3. Si el item **no** tiene id_catalogo_menu_pos: flujo legacy (oculta el selector, carga receta directa).
+
+#### Fusion de Personalizacion al Cambiar Variante (_fusionarPersonalizacion)
+Cuando el cajero cambia a otra variante, la personalizacion se **fusiona inteligentemente** usando id_ingrediente (= id_presentacion_producto en componentes_receta_producto) como clave estable:
+
+| Dato | Comportamiento |
+|---|---|
+| 
+otas | Siempre se conserva |
+| endulzante | Siempre se conserva |
+| extras_agregados | Siempre se conservan (no dependen de receta) |
+| monto_extras | Siempre se conserva |
+| ingredientes_quitados | Se conserva si id_ingrediente existe en la nueva receta; id_componente se actualiza al valor de la nueva receta |
+| ingredientes_sustituidos | Igual que quitados |
+
+> **Por que id_ingrediente y no id_componente**: componentes_receta_producto.id (alias id_componente) cambia entre variantes para el mismo ingrediente (ej. Hielo oz tiene id=1046 en receta 20oz e id=1056 en receta 16oz). En cambio, id_presentacion_producto (alias id_ingrediente) es estable: Hielo oz = 93 en ambas recetas.
+
+#### Actualizacion de Precio al Aplicar
+`
+precio_unitario_base  = precio de la nueva variante
+precio_unitario       = precio_unitario_base + monto_extras
+costo_total_iva       = precio_unitario * cantidad
+`
+
+#### Cancelar vs Aplicar
+- **Cancelar**: el draft se descarta; detalleFactura[idx] no se modifica.
+- **Aplicar**: se actualizan id_presentacion, 
+ombre, precio_unitario_base, precio_unitario y costo_total_iva del item.
+
+#### Compatibilidad con Items sin Catalogo
+Productos sin id_catalogo_menu_pos (ej. membresías, productos simples sin variantes) siguen el flujo original: el selector de tabs se oculta y el modal abre directamente la receta del producto.
+
 ---
-*Documento actualizado el 2026-05-18*
+*Documento actualizado el 2026-11-04*
