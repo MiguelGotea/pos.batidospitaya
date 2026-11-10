@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // facturas_guardar.php — Guardado de ventas del POS Web
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -84,16 +84,18 @@ try {
         $costoTotalIva     = isset($item['costo_total_iva']) ? (float)$item['costo_total_iva'] : 0;
         $idPresentacion    = isset($item['id_presentacion']) ? (int)$item['id_presentacion'] : 0;
         $idCatMenuPos      = isset($item['id_catalogo_menu_pos']) ? (int)$item['id_catalogo_menu_pos'] : null;
+        $esCombo           = !empty($item['es_combo']);  // los combos nunca acumulan puntos
         $esCanjeadoItem    = ($tipoCliente === 'club' && !empty($item['es_canjeado']));
         // Ítems condición de promo: excluidos de acumulación y canje de puntos
         $esCondicionPromo  = !empty($item['es_condicion_promo']);
 
-        if ($idPresentacion <= 0) throw new Exception("Producto invalido en la linea " . ($i + 1) . ".");
+        // Combo padre: id_presentacion puede ser null (el combo no tiene pp propio)
+        if (!$esCombo && $idPresentacion <= 0) throw new Exception("Producto invalido en la linea " . ($i + 1) . ".");
         if ($cantidad <= 0)       throw new Exception("La cantidad debe ser mayor a 0 en la linea " . ($i + 1) . ".");
         if ($costoTotalIva < 0)   throw new Exception("El costo no puede ser negativo en la linea " . ($i + 1) . ".");
 
-        // Los ítems condición de promo quedan excluidos del cálculo de puntos
-        if (!$esCondicionPromo) {
+        // Los combos y los ítems condición de promo quedan excluidos del cálculo de puntos
+        if (!$esCondicionPromo && !$esCombo) {
             if ($esCanjeadoItem) {
                 // Buscar regla de canje: especifica por producto primero, luego por catalogo
                 if ($idCatMenuPos && isset($reglasCanje[$idCatMenuPos][$idPresentacion])) {
@@ -177,14 +179,52 @@ try {
     $idFactura = (int)$conn->lastInsertId();
 
     // ---- 2. Insertar en pos_ventas_factura_lineas ----
+    // Para ítems regulares: 1 fila por ítem
+    // Para combos: 1 fila padre (el combo) + N filas hijas (los items elegidos en cada slot)
     $sqlLinea = "INSERT INTO pos_ventas_factura_lineas
-                 (id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad, precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total, es_canje_puntos, notas)
-                 VALUES (:id_fac, :id_pres, :nombre_snap, :cant, :precio_snap, :precio_extras, :precio_final, :precio_total, :es_canje, :notas)";
+                 (id_linea_padre, id_slot_combo, upcharge_combo,
+                  id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad,
+                  precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total,
+                  es_canje_puntos, notas)
+                 VALUES (:id_padre, :id_slot, :upcharge,
+                         :id_fac, :id_pres, :nombre_snap, :cant,
+                         :precio_snap, :precio_extras, :precio_final, :precio_total,
+                         :es_canje, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
+
+    // Función auxiliar para construir el resumen de personalización
+    $fnResumenPers = function (array $pers, bool $esCanjeado): array {
+        $resumen = [];
+        if ($esCanjeado) {
+            $resumen[] = "PRODUCTO CANJEADO (Puntos)";
+        }
+        if (!empty($pers['endulzante_nombre'])) {
+            $resumen[] = "Endulzante: " . trim($pers['endulzante_nombre']);
+        }
+        if (!empty($pers['ingredientes_quitados']) && is_array($pers['ingredientes_quitados'])) {
+            $quits = array_column($pers['ingredientes_quitados'], 'nombre_componente');
+            if (!empty($quits)) $resumen[] = "Sin: " . implode(', ', $quits);
+        }
+        if (!empty($pers['ingredientes_sustituidos']) && is_array($pers['ingredientes_sustituidos'])) {
+            $susts = [];
+            foreach ($pers['ingredientes_sustituidos'] as $s) {
+                $orig  = isset($s['nombre_original']) ? trim($s['nombre_original']) : '';
+                $nuevo = isset($s['nombre_nuevo'])    ? trim($s['nombre_nuevo'])    : 'Otro';
+                $susts[] = $orig ? "{$orig} → {$nuevo}" : $nuevo;
+            }
+            if (!empty($susts)) $resumen[] = "Cambio: " . implode(', ', $susts);
+        }
+        if (!empty($pers['extras_agregados']) && is_array($pers['extras_agregados'])) {
+            $exts = array_column($pers['extras_agregados'], 'nombre');
+            if (!empty($exts)) $resumen[] = "Extra: " . implode(', ', $exts);
+        }
+        return $resumen;
+    };
 
     foreach ($detalle as $item) {
         $isClubCliente  = ($tipoCliente === 'club' && !empty($idClienteClub));
         $esCanjeado     = ($isClubCliente && !empty($item['es_canjeado'])) ? 1 : 0;
+        $esCombo        = !empty($item['es_combo']);
         $cantidad       = (float)$item['cantidad'];
         $costoTotalIva  = $esCanjeado ? 0 : (float)$item['costo_total_iva'];
         $precioUnitario = ($cantidad > 0) ? round($costoTotalIva / $cantidad, 2) : 0;
@@ -192,44 +232,24 @@ try {
         $nombreSnap     = isset($item['nombre']) ? trim($item['nombre']) : 'Producto';
         $notasItem      = !empty($item['notas']) ? trim($item['notas']) : '';
 
-        // Procesar resumen de personalización para auditoría y cocina
+        // Personalización de línea
         $montoExtras = 0;
-        $resumenPers = [];
-        if ($esCanjeado) {
-            $resumenPers[] = "PRODUCTO CANJEADO (Puntos)";
+        $persData    = (!empty($item['personalizacion']) && is_array($item['personalizacion'])) ? $item['personalizacion'] : [];
+        $resumenPers = $fnResumenPers($persData, (bool)$esCanjeado);
+        if (isset($persData['monto_extras'])) {
+            $montoExtras = (float)$persData['monto_extras'];
         }
-        if (!empty($item['personalizacion']) && is_array($item['personalizacion'])) {
-            $p = $item['personalizacion'];
-            if (!empty($p['endulzante_nombre'])) {
-                $resumenPers[] = "Endulzante: " . trim($p['endulzante_nombre']);
-            }
-            if (!empty($p['ingredientes_quitados']) && is_array($p['ingredientes_quitados'])) {
-                $quits = array_column($p['ingredientes_quitados'], 'nombre_componente');
-                if (!empty($quits)) $resumenPers[] = "Sin: " . implode(', ', $quits);
-            }
-            if (!empty($p['ingredientes_sustituidos']) && is_array($p['ingredientes_sustituidos'])) {
-                $susts = [];
-                foreach ($p['ingredientes_sustituidos'] as $s) {
-                    $orig  = isset($s['nombre_original']) ? trim($s['nombre_original']) : '';
-                    $nuevo = isset($s['nombre_nuevo'])    ? trim($s['nombre_nuevo'])    : 'Otro';
-                    $susts[] = $orig ? "{$orig} → {$nuevo}" : $nuevo;
-                }
-                if (!empty($susts)) $resumenPers[] = "Cambio: " . implode(', ', $susts);
-            }
-            if (!empty($p['extras_agregados']) && is_array($p['extras_agregados'])) {
-                $exts = array_column($p['extras_agregados'], 'nombre');
-                if (!empty($exts)) $resumenPers[] = "Extra: " . implode(', ', $exts);
-            }
-            $montoExtras = isset($p['monto_extras']) ? (float)$p['monto_extras'] : 0;
-        }
-
-        $textoPers = !empty($resumenPers) ? "[" . implode(" | ", $resumenPers) . "]" : "";
+        $textoPers  = !empty($resumenPers) ? "[" . implode(" | ", $resumenPers) . "]" : "";
         $notasFinal = trim(($notasItem ? $notasItem . " " : "") . $textoPers);
         if ($notasFinal === "") $notasFinal = null;
 
+        // ── Insertar línea padre (regular o combo) ──────────────────────────
         $stmtLinea->execute([
+            ':id_padre'      => null,                   // siempre null para la raíz
+            ':id_slot'       => null,                   // null en padre
+            ':upcharge'      => 0.00,                   // null en padre
             ':id_fac'        => $idFactura,
-            ':id_pres'       => (int)$item['id_presentacion'],
+            ':id_pres'       => $esCombo ? null : (int)$item['id_presentacion'],
             ':nombre_snap'   => $nombreSnap,
             ':cant'          => $cantidad,
             ':precio_snap'   => $precioBase,
@@ -239,6 +259,39 @@ try {
             ':es_canje'      => $esCanjeado,
             ':notas'         => $notasFinal
         ]);
+        $idLineaPadre = (int)$conn->lastInsertId();
+
+        // ── Si es combo: insertar una línea hija por cada item seleccionado ──
+        if ($esCombo && !empty($item['combo_items']) && is_array($item['combo_items'])) {
+            foreach ($item['combo_items'] as $hijo) {
+                $idSlot       = !empty($hijo['id_slot'])       ? (int)$hijo['id_slot']       : null;
+                $upcharge     = !empty($hijo['upcharge'])       ? (float)$hijo['upcharge']     : 0.00;
+                $idPresHijo   = !empty($hijo['id_presentacion'])? (int)$hijo['id_presentacion']: null;
+                $nombreHijo   = !empty($hijo['nombre_catalogo'])? trim($hijo['nombre_catalogo']): 'Producto combo';
+                $persHijo     = (!empty($hijo['personalizacion']) && is_array($hijo['personalizacion'])) ? $hijo['personalizacion'] : [];
+                $resumenHijo  = $fnResumenPers($persHijo, false);
+                $notasHijo    = !empty($persHijo['notas']) ? trim($persHijo['notas']) : '';
+                $textoHijo    = !empty($resumenHijo) ? "[" . implode(" | ", $resumenHijo) . "]" : "";
+                $notasHijoFin = trim(($notasHijo ? $notasHijo . " " : "") . $textoHijo);
+                if ($notasHijoFin === "") $notasHijoFin = null;
+
+                $stmtLinea->execute([
+                    ':id_padre'      => $idLineaPadre,
+                    ':id_slot'       => $idSlot,
+                    ':upcharge'      => $upcharge,
+                    ':id_fac'        => $idFactura,
+                    ':id_pres'       => $idPresHijo,
+                    ':nombre_snap'   => $nombreHijo,
+                    ':cant'          => $cantidad,          // misma cantidad que el padre
+                    ':precio_snap'   => 0.00,               // precio 0 en hijos (precio real va en el padre)
+                    ':precio_extras' => 0.00,
+                    ':precio_final'  => 0.00,
+                    ':precio_total'  => 0.00,
+                    ':es_canje'      => 0,
+                    ':notas'         => $notasHijoFin
+                ]);
+            }
+        }
     }
 
     // ---- 3. Insertar en pos_ventas_factura_pagos ----

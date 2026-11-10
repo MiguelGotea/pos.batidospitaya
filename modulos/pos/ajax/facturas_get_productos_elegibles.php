@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // facturas_get_productos_elegibles.php
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -16,6 +16,7 @@ try {
                    COALESCE(cmp.nombre, pm.Nombre, pp.Nombre) AS nombre_catalogo,
                    COALESCE(g.id, 0) AS id_grupo,
                    COALESCE(g.nombre, 'Otros') AS grupo,
+                   COALESCE(g.es_combo, 0) AS es_combo,
                    COALESCE(sg.id, 0) AS id_subgrupo,
                    COALESCE(sg.nombre, 'General') AS subgrupo,
                    COALESCE(up.nombre, 'Unidad') AS nombre_unidad,

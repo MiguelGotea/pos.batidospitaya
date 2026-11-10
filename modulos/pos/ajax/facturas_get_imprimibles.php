@@ -49,6 +49,9 @@ try {
     $stmtLineas = $conn->prepare("
         SELECT
             fl.id                          AS id_linea,
+            fl.id_linea_padre,
+            fl.id_slot_combo,
+            fl.upcharge_combo,
             fl.id_producto_presentacion,
             fl.nombre_producto_snapshot    AS nombre_producto,
             fl.cantidad,
@@ -62,6 +65,7 @@ try {
             g.nombre                       AS nombre_grupo,
             g.estacion_trabajo,
             g.lleva_endulzante,
+            g.es_combo,
             /* Endulzante elegido: id_endulzante_producto FK -> producto_presentacion (grupo Endulzantes)
                Pero en este POS, el endulzante se guarda en notas como texto resumen.
                Para la comanda necesitamos datos estructurados: los tomamos del campo notas si no
@@ -69,12 +73,12 @@ try {
             fl.id_endulzante_producto,
             fl.nivel_endulzante
         FROM pos_ventas_factura_lineas fl
-        JOIN producto_presentacion pp ON pp.id = fl.id_producto_presentacion
+        LEFT JOIN producto_presentacion pp ON pp.id = fl.id_producto_presentacion
         LEFT JOIN catalogo_menu_pos cmp ON cmp.id = pp.id_catalogo_menu_pos
         LEFT JOIN subgrupo_presentacion_producto sg ON sg.id = cmp.id_subgrupo
         LEFT JOIN grupo_presentacion_producto g ON g.id = sg.id_grupo_presentacion_producto
         WHERE fl.id_factura = :id
-        ORDER BY fl.orden_preparacion ASC, fl.id ASC
+        ORDER BY fl.id ASC
     ");
     $stmtLineas->execute([':id' => $idFactura]);
     $lineas = $stmtLineas->fetchAll(PDO::FETCH_ASSOC);
@@ -118,10 +122,32 @@ try {
         $personalizacion = parsearNotasPersonalizacion($linea['notas'] ?? '');
 
         $lineasConIngredientes[] = array_merge($linea, [
-            'ingredientes_receta' => $ingredientesLinea,
+            'ingredientes_receta'      => $ingredientesLinea,
             'personalizacion_parseada' => $personalizacion,
+            'es_linea_padre_combo'     => (!empty($linea['es_combo']) && is_null($linea['id_linea_padre'])),
+            'es_linea_hijo_combo'      => !is_null($linea['id_linea_padre']),
+            'combo_hijos'              => [],  // se rellena abajo
         ]);
     }
+
+    // Agrupar hijos bajo su padre combo
+    $indicePorId = [];
+    foreach ($lineasConIngredientes as $k => $ln) {
+        $indicePorId[(int)$ln['id_linea']] = $k;
+    }
+    foreach ($lineasConIngredientes as $k => $ln) {
+        if (!is_null($ln['id_linea_padre'])) {
+            $kPadre = $indicePorId[(int)$ln['id_linea_padre']] ?? null;
+            if ($kPadre !== null) {
+                $lineasConIngredientes[$kPadre]['combo_hijos'][] = $ln;
+            }
+        }
+    }
+    // Eliminar líneas hijas de la lista plana (quedan en combo_hijos del padre)
+    $lineasConIngredientes = array_values(array_filter(
+        $lineasConIngredientes,
+        fn($ln) => is_null($ln['id_linea_padre'])
+    ));
 
     // ── 5. Cargar endulzante completo si tiene id_endulzante_producto ───────────
     // El campo id_endulzante_producto en factura_lineas es FK a producto_presentacion (grupo Endulzantes)

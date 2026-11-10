@@ -488,6 +488,52 @@ try {
             </div>
         </div>
     </div>
+    <!-- ===== MODAL COMBO ===== -->
+    <div class="modal fade" id="modalCombo" tabindex="-1" aria-labelledby="modalComboLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-personalizacion-dialog">
+            <div class="modal-content border-0 shadow-lg modal-pos-custom">
+                <div class="modal-header modal-header-pos">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-icon-badge">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" id="modalComboLabel">Configurar Combo</h5>
+                            <span class="modal-subtitle-pos" id="modalComboSubtitulo">Elige los productos de cada slot</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <!-- Navegación de slots -->
+                <div id="comboSlotNav" class="combo-slot-nav px-3 pt-2 pb-1" style="display:none;">
+                    <!-- Generado dinámicamente por JS: botones de slot -->
+                </div>
+
+                <div class="modal-body p-0 bg-light" id="comboCuerpo">
+                    <div class="d-flex align-items-center justify-content-center py-5">
+                        <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
+                        <span class="text-muted">Cargando combo…</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white border-0 py-2 px-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small me-2">Total combo:</span>
+                        <strong id="comboTotalDisplay" class="text-dark" style="font-size:1rem;">C$ 0.00</strong>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn-guardar-factura px-4" id="btnAplicarCombo">
+                            <i class="bi bi-check2-circle me-1"></i> Agregar al Pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FIN MODAL COMBO ===== -->
+
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -500,6 +546,7 @@ try {
     </script>
     <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
+    <script src="js/pos_combos.js?v=<?php echo time(); ?>"></script>
 </body>
 
 </html>

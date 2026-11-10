@@ -3742,3 +3742,203 @@
     flex-shrink: 0 !important;
     padding: 0.5rem 1rem !important;
 }
+
+/* ============================================================
+   ESTILOS DE COMBOS
+   ============================================================ */
+
+/* ── Card de combo en el catálogo ── */
+.producto-card-pos.producto-combo {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    border-left: 3px solid #c4b5fd;
+    position: relative;
+}
+.producto-card-pos.producto-combo:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+    box-shadow: 0 4px 14px rgba(109, 40, 217, .35);
+}
+.combo-card-icon {
+    font-size: .78rem;
+    opacity: .85;
+}
+
+/* ── Badge "Combo" en fila padre del ticket ── */
+.badge-combo-padre {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #ede9fe;
+    color: #5b21b6;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: .72rem;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+/* ── Fila hijo de combo en el ticket ── */
+.fila-combo-hijo td {
+    padding: .15rem .75rem .15rem 1.5rem !important;
+    background: #f9f7ff;
+    border-bottom: 1px solid #ede9fe !important;
+}
+.combo-hijo-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .82rem;
+    color: #374151;
+}
+.combo-hijo-icon {
+    font-size: .78rem;
+    flex-shrink: 0;
+}
+.combo-hijo-nombre {
+    flex: 1;
+}
+.combo-hijo-upcharge {
+    font-size: .75rem;
+    color: #6d28d9;
+    font-weight: 600;
+}
+.combo-hijo-tags {
+    margin-top: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+/* ── Modal combo: navegación de slots ── */
+.combo-slot-nav {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+    padding: .5rem .75rem;
+}
+.combo-slot-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 20px;
+    padding: .28rem .9rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+}
+.combo-slot-tab.active {
+    background: #5b21b6;
+    border-color: #5b21b6;
+    color: #fff;
+}
+.combo-slot-tab.completo {
+    border-color: #16a34a;
+}
+.combo-slot-tab.completo:not(.active) {
+    color: #15803d;
+}
+.slot-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #e5e7eb;
+    border-radius: 50%;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #374151;
+}
+.combo-slot-tab.active .slot-num {
+    background: rgba(255,255,255,.25);
+    color: #fff;
+}
+
+/* ── Grid de items dentro de un slot ── */
+.combo-slot-cuerpo {
+    min-height: 200px;
+}
+.combo-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .6rem;
+    margin-bottom: .75rem;
+}
+.combo-item-card {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: .65rem .75rem;
+    cursor: pointer;
+    transition: border-color .12s, transform .1s, box-shadow .1s;
+    text-align: left;
+}
+.combo-item-card:hover {
+    border-color: #7c3aed;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(124,58,237,.2);
+}
+.combo-item-card.seleccionado {
+    border-color: #5b21b6;
+    background: #f5f3ff;
+    box-shadow: 0 0 0 3px rgba(91,33,182,.2);
+}
+.combo-item-nombre {
+    font-size: .84rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 3px;
+}
+.combo-item-tamano {
+    font-weight: 400;
+    color: #64748b;
+    margin-left: 3px;
+}
+.combo-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.combo-item-upcharge {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #6d28d9;
+}
+.combo-item-pers-icon {
+    font-size: .72rem;
+    color: #64748b;
+}
+.combo-minmax-badge {
+    font-size: .72rem !important;
+    background: #7c3aed !important;
+}
+.combo-slot-nav-botones {
+    border-top: 1px solid #e5e7eb;
+    padding-top: .6rem;
+}
+.btn-pers-combo-item {
+    font-size: .75rem;
+    padding: 2px 8px;
+    width: 100%;
+}
+
+/* ── Modal Combo scrollbar ── */
+#modalCombo .modal-body {
+    overflow-y: auto;
+    max-height: calc(85vh - 180px);
+}
+#modalCombo .modal-body::-webkit-scrollbar {
+    width: 5px;
+}
+#modalCombo .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+#modalCombo .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
