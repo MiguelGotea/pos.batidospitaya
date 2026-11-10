@@ -185,11 +185,11 @@ try {
                  (id_linea_padre, id_slot_combo, upcharge_combo,
                   id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad,
                   precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total,
-                  es_canje_puntos, notas)
+                  es_canje_puntos, bloquea_puntos, notas)
                  VALUES (:id_padre, :id_slot, :upcharge,
                          :id_fac, :id_pres, :nombre_snap, :cant,
                          :precio_snap, :precio_extras, :precio_final, :precio_total,
-                         :es_canje, :notas)";
+                         :es_canje, :bloquea_puntos, :notas)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     // Función auxiliar para construir el resumen de personalización
@@ -247,7 +247,7 @@ try {
         $stmtLinea->execute([
             ':id_padre'      => null,                   // siempre null para la raíz
             ':id_slot'       => null,                   // null en padre
-            ':upcharge'      => 0.00,                   // null en padre
+            ':upcharge'      => 0.00,
             ':id_fac'        => $idFactura,
             ':id_pres'       => $esCombo ? null : (int)$item['id_presentacion'],
             ':nombre_snap'   => $nombreSnap,
@@ -257,6 +257,7 @@ try {
             ':precio_final'  => $precioUnitario,
             ':precio_total'  => $costoTotalIva,
             ':es_canje'      => $esCanjeado,
+            ':bloquea_puntos'=> $esCombo ? 1 : 0,      // combos siempre bloquean puntos
             ':notas'         => $notasFinal
         ]);
         $idLineaPadre = (int)$conn->lastInsertId();
@@ -288,6 +289,7 @@ try {
                     ':precio_final'  => 0.00,
                     ':precio_total'  => 0.00,
                     ':es_canje'      => 0,
+                    ':bloquea_puntos'=> 1,                  // hijos de combo nunca acumulan puntos
                     ':notas'         => $notasHijoFin
                 ]);
             }
