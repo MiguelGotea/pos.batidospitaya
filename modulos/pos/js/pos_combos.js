@@ -15,11 +15,15 @@
  *  2. cambiarGrupo detecta si un catalogo pertenece a un grupo combo
  *     y lo renderiza con onclick="abrirModalCombo(id, nombre)".
  *  3. abrirModalCombo() llama a get_combo_config.php y renderiza slots.
- *  4. Click en card AGREGA al array de selecciones (no toggle). X quita.
- *     Si es personalizable, el modal de pers se abre ENCIMA del combo modal
- *     (el combo modal NO se cierra). Aplicar guarda la config, no factura.
- *  5. btnAplicarCombo valida y agrega el combo completo a detalleFactura.
- *  6. actualizarTablaDetalle (patcheada aqui) renderiza filas padre + hijos.
+ *  4. Click en card siempre AGREGA al array del slot (hasta max_seleccion).
+ *     El usuario puede agregar el mismo item varias veces. El boton X
+ *     de la lista enlistada es la unica forma de quitar.
+ *     selecciones es un ARRAY DE ARRAYS: selecciones[slotIdx] = [item, ...].
+ *  5. Si un item es personalizable, el modal de pers se abre ENCIMA del
+ *     combo modal (z-index: 1075). El combo modal NO se cierra.
+ *     Al aplicar, solo guarda la config en memoria; no agrega nada al ticket.
+ *  6. btnAplicarCombo valida minimos y agrega el combo completo a detalleFactura.
+ *  7. actualizarTablaDetalle (patcheada aqui) renderiza filas padre + hijos.
  */
 
 'use strict';
@@ -35,7 +39,14 @@ let _comboState = null;
 */
 
 let _comboModalBS = null;           // instancia Bootstrap del #modalCombo
-let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-flujo de pers
+/*
+  _comboSubflujoPendiente toma dos formas segun el origen:
+    - Sub-flujo de configuracion de combo (desde _abrirPersComboItem):
+        { slotIdx, selIdx, _lenAntes, _procesandoGuardar? }
+    - Edicion de hijo ya en el ticket (desde editarItemCombo):
+        { slotIdx:0, _modoEdicionTicket:true, itemIdx, hijoIdx, _lenAntes }
+*/
+let _comboSubflujoPendiente = null;
 
 /* ============================================================
    PATCH a renderizarCatalogoPorGrupos
