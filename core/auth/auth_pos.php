@@ -521,4 +521,5 @@ function obtenerUsuarioActual()
         return null;
     }
 }
+
 ?>
