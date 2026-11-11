@@ -3927,6 +3927,34 @@
     width: 100%;
 }
 
+/* ── Lista de items seleccionados en el slot (multi-seleccion) ── */
+.combo-sel-lista {
+    background: #f8fffe;
+    border: 1px solid #d1ece9;
+    border-radius: 8px;
+    padding: .4rem .6rem;
+    margin-top: .5rem;
+}
+.combo-sel-item {
+    font-size: .82rem;
+    color: #374151;
+    gap: .5rem;
+}
+.combo-sel-item:last-child {
+    border-bottom: none !important;
+}
+.combo-sel-item .btn-outline-secondary {
+    font-size: .72rem;
+    padding: 1px 7px;
+    border-color: #0E544C;
+    color: #0E544C;
+    white-space: nowrap;
+}
+.combo-sel-item .btn-outline-secondary:hover {
+    background: #0E544C;
+    color: #fff;
+}
+
 /* ── Modal Combo scrollbar ── */
 #modalCombo .modal-body {
     overflow-y: auto;
