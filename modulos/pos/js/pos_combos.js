@@ -15,46 +15,46 @@
  *  2. cambiarGrupo detecta si un catalogo pertenece a un grupo combo
  *     y lo renderiza con onclick="abrirModalCombo(id, nombre)".
  *  3. abrirModalCombo() llama a get_combo_config.php y renderiza slots.
- *  4. El cajero elige productos para cada slot (array, soporta multi-seleccion);
- *     si es personalizable se abre el modal de personalizacion en modo sub-flujo.
- *  5. btnAplicarCombo valida y agrega el combo a detalleFactura.
+ *  4. Click en card AGREGA al array de selecciones (no toggle). X quita.
+ *     Si es personalizable, el modal de pers se abre ENCIMA del combo modal
+ *     (el combo modal NO se cierra). Aplicar guarda la config, no factura.
+ *  5. btnAplicarCombo valida y agrega el combo completo a detalleFactura.
  *  6. actualizarTablaDetalle (patcheada aqui) renderiza filas padre + hijos.
  */
 
 'use strict';
 
 /* ============================================================
-   ESTADO GLOBAL DEL COMBO
+   ESTADO GLOBAL
    ============================================================ */
 let _comboState = null;
 /*
   _comboState.selecciones es un ARRAY de arrays:
-  selecciones[slotIdx] = [ { slotIdx, id_slot_item, ... }, ... ]
-  Soporta min_seleccion..max_seleccion items por slot.
+    selecciones[slotIdx] = [ { slotIdx, id_slot_item, ... }, ... ]
+  Cada slot soporta 1..max_seleccion items.
 */
 
-let _comboModalBS = null;         // instancia Bootstrap del modal
-let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-flujo
+let _comboModalBS = null;           // instancia Bootstrap del #modalCombo
+let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-flujo de pers
 
 /* ============================================================
    PATCH a renderizarCatalogoPorGrupos
    Agrega es_combo al Map de grupos para que cambiarGrupo lo use
    ============================================================ */
 (function () {
-    const _origRender = typeof renderizarCatalogoPorGrupos === 'function'
+    var _origRender = typeof renderizarCatalogoPorGrupos === 'function'
         ? renderizarCatalogoPorGrupos : null;
 
     if (!_origRender) {
-        console.warn('[pos_combos] renderizarCatalogoPorGrupos no encontrada. El patch no aplico.');
+        console.warn('[pos_combos] renderizarCatalogoPorGrupos no encontrada.');
         return;
     }
 
     window.renderizarCatalogoPorGrupos = function (lista) {
         _origRender(lista);
-
         if (typeof _grupos !== 'undefined' && _grupos instanceof Map) {
-            lista.forEach(p => {
-                const gId = parseInt(p.id_grupo) || 0;
+            lista.forEach(function (p) {
+                var gId = parseInt(p.id_grupo) || 0;
                 if (_grupos.has(gId)) {
                     _grupos.get(gId).es_combo = parseInt(p.es_combo) === 1;
                 }
@@ -69,10 +69,10 @@ let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-
    con onclick="abrirModalCombo()" en lugar de _abrirCatalogoDesdeCard()
    ============================================================ */
 (function () {
-    const _origCambiarGrupo = typeof cambiarGrupo === 'function' ? cambiarGrupo : null;
+    var _origCambiarGrupo = typeof cambiarGrupo === 'function' ? cambiarGrupo : null;
 
     if (!_origCambiarGrupo) {
-        console.warn('[pos_combos] cambiarGrupo no encontrada. El patch no aplico.');
+        console.warn('[pos_combos] cambiarGrupo no encontrada.');
         return;
     }
 
@@ -80,24 +80,24 @@ let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-
         _origCambiarGrupo(grupoId);
 
         if (typeof _grupos === 'undefined' || !_grupos.has(grupoId)) return;
-        const grupo = _grupos.get(grupoId);
+        var grupo = _grupos.get(grupoId);
         if (!grupo.es_combo) return;
 
-        let html = '<div class="subgrupos-columnas">';
-        grupo.subgrupos.forEach(sg => {
-            html += `<div class="subgrupo-col">`;
-            html += `<div class="subgrupo-header">${escHtml(sg.nombre)}</div>`;
-            sg.catalogos.forEach(cat => {
-                const idCatalogo = cat.ids[0];
-                html += `<div class="producto-card-pos producto-combo" tabindex="0" role="button"
-                              data-ids="${escAttr(JSON.stringify(cat.ids))}"
-                              data-nombre="${escAttr(cat.nombre)}"
-                              onclick="abrirModalCombo(${idCatalogo}, '${escAttr(cat.nombre)}')"
-                              onkeypress="if(event.key==='Enter') abrirModalCombo(${idCatalogo}, '${escAttr(cat.nombre)}')">
-                    <i class="fas fa-layer-group combo-card-icon me-1"></i>${escHtml(cat.nombre)}
-                </div>`;
+        var html = '<div class="subgrupos-columnas">';
+        grupo.subgrupos.forEach(function (sg) {
+            html += '<div class="subgrupo-col">';
+            html += '<div class="subgrupo-header">' + escHtml(sg.nombre) + '</div>';
+            sg.catalogos.forEach(function (cat) {
+                var idCatalogo = cat.ids[0];
+                html += '<div class="producto-card-pos producto-combo" tabindex="0" role="button"' +
+                    ' data-ids="' + escAttr(JSON.stringify(cat.ids)) + '"' +
+                    ' data-nombre="' + escAttr(cat.nombre) + '"' +
+                    ' onclick="abrirModalCombo(' + idCatalogo + ', \'' + escAttr(cat.nombre) + '\')"' +
+                    ' onkeypress="if(event.key===\'Enter\') abrirModalCombo(' + idCatalogo + ', \'' + escAttr(cat.nombre) + '\')">' +
+                    '<i class="fas fa-layer-group combo-card-icon me-1"></i>' + escHtml(cat.nombre) +
+                    '</div>';
             });
-            html += `</div>`;
+            html += '</div>';
         });
         html += '</div>';
         $('#catalogoPanel').html(html);
@@ -110,67 +110,68 @@ let _comboSubflujoPendiente = null; // {slotIdx, selIdx, _lenAntes} durante sub-
    ============================================================ */
 (function () {
     $(document).ready(function () {
-        const _origActualizar = typeof actualizarTablaDetalle === 'function'
+        var _origActualizar = typeof actualizarTablaDetalle === 'function'
             ? actualizarTablaDetalle : null;
         if (!_origActualizar) {
-            console.warn('[pos_combos] actualizarTablaDetalle no encontrada. El patch no aplico.');
+            console.warn('[pos_combos] actualizarTablaDetalle no encontrada.');
             return;
         }
 
         window.actualizarTablaDetalle = function () {
             _origActualizar();
 
-            detalleFactura.forEach((item, idx) => {
+            detalleFactura.forEach(function (item, idx) {
                 if (!item.es_combo || !item.combo_items || !item.combo_items.length) return;
 
-                const $filaPadre = $(`#fila-${item._rowKey}`);
+                var $filaPadre = $('#fila-' + item._rowKey);
                 if ($filaPadre.length) {
                     $filaPadre.find('.item-nombre').prepend(
-                        `<span class="badge-combo-padre me-1"><i class="fas fa-layer-group"></i> Combo</span>`
+                        '<span class="badge-combo-padre me-1"><i class="fas fa-layer-group"></i> Combo</span>'
                     );
                 }
 
-                const numCols = $('th#thCanjeado:visible').length ? 4 : 3;
-                let $ultimaFila = $(`tr[data-idx="${idx}"]`).last();
+                var numCols = $('th#thCanjeado:visible').length ? 4 : 3;
+                var $ultimaFila = $('tr[data-idx="' + idx + '"]').last();
 
-                item.combo_items.forEach((hijo, hijoIdx) => {
-                    const pers = hijo.personalizacion || {};
-                    let tagsParts = [];
+                item.combo_items.forEach(function (hijo, hijoIdx) {
+                    var pers = hijo.personalizacion || {};
+                    var tagsParts = [];
                     if (pers.endulzante_nombre) {
-                        tagsParts.push(`<span class="badge-pers-item"><i class="bi bi-water"></i> ${escHtml(pers.endulzante_nombre)}</span>`);
+                        tagsParts.push('<span class="badge-pers-item"><i class="bi bi-water"></i> ' + escHtml(pers.endulzante_nombre) + '</span>');
                     }
                     if (pers.extras_agregados && pers.extras_agregados.length) {
-                        const extrasStr = pers.extras_agregados.map(e => escHtml(e.nombre)).join(', ');
-                        tagsParts.push(`<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> ${extrasStr}</span>`);
+                        var extrasStr = pers.extras_agregados.map(function (e) { return escHtml(e.nombre); }).join(', ');
+                        tagsParts.push('<span class="badge-pers-item badge-pers-extra"><i class="bi bi-plus-circle"></i> ' + extrasStr + '</span>');
                     }
                     if (pers.ingredientes_quitados && pers.ingredientes_quitados.length) {
-                        tagsParts.push(`<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> ${pers.ingredientes_quitados.map(i => escHtml(i.nombre_componente)).join(', ')}</span>`);
+                        tagsParts.push('<span class="badge-pers-item badge-pers-quitar"><i class="bi bi-x"></i> ' +
+                            pers.ingredientes_quitados.map(function (i) { return escHtml(i.nombre_componente); }).join(', ') + '</span>');
                     }
                     if (pers.notas && pers.notas.trim()) {
-                        tagsParts.push(`<span class="badge-pers-item"><i class="bi bi-chat-left-text"></i> ${escHtml(pers.notas.trim())}</span>`);
+                        tagsParts.push('<span class="badge-pers-item"><i class="bi bi-chat-left-text"></i> ' + escHtml(pers.notas.trim()) + '</span>');
                     }
 
-                    const upchargeStr = hijo.upcharge > 0
-                        ? ` <span class="combo-hijo-upcharge">(+C$ ${parseFloat(hijo.upcharge).toFixed(2)})</span>` : '';
+                    var upchargeStr = hijo.upcharge > 0
+                        ? ' <span class="combo-hijo-upcharge">(+C$ ' + parseFloat(hijo.upcharge).toFixed(2) + ')</span>' : '';
 
-                    const btnEditar = hijo.es_personalizable
-                        ? `<button type="button" class="btn-personalizar-fila ms-1" onclick="editarItemCombo(${idx}, ${hijoIdx})" title="Personalizar"><i class="bi bi-pencil"></i></button>`
+                    var btnEditar = hijo.es_personalizable
+                        ? '<button type="button" class="btn-personalizar-fila ms-1" onclick="editarItemCombo(' + idx + ', ' + hijoIdx + ')" title="Personalizar"><i class="bi bi-pencil"></i></button>'
                         : '';
 
-                    const filaHija = `
-                    <tr class="fila-combo-hijo" data-combo-idx="${idx}" data-hijo-idx="${hijoIdx}">
-                        <td colspan="${numCols}">
-                            <div class="combo-hijo-row">
-                                <i class="bi bi-arrow-return-right combo-hijo-icon text-muted"></i>
-                                <span class="combo-hijo-nombre">${escHtml(hijo.nombre_catalogo)}${hijo.tamano_producto ? ' <small class="text-muted">'+escHtml(hijo.tamano_producto)+'</small>' : ''}${upchargeStr}</span>
-                                ${btnEditar}
-                            </div>
-                            ${tagsParts.length ? `<div class="combo-hijo-tags ps-4">${tagsParts.join('')}</div>` : ''}
-                        </td>
-                    </tr>`;
+                    var filaHija = '<tr class="fila-combo-hijo" data-combo-idx="' + idx + '" data-hijo-idx="' + hijoIdx + '">' +
+                        '<td colspan="' + numCols + '">' +
+                        '<div class="combo-hijo-row">' +
+                        '<i class="bi bi-arrow-return-right combo-hijo-icon text-muted"></i>' +
+                        '<span class="combo-hijo-nombre">' + escHtml(hijo.nombre_catalogo) +
+                        (hijo.tamano_producto ? ' <small class="text-muted">' + escHtml(hijo.tamano_producto) + '</small>' : '') +
+                        upchargeStr + '</span>' +
+                        btnEditar +
+                        '</div>' +
+                        (tagsParts.length ? '<div class="combo-hijo-tags ps-4">' + tagsParts.join('') + '</div>' : '') +
+                        '</td></tr>';
 
                     $ultimaFila.after(filaHija);
-                    $ultimaFila = $(`tr.fila-combo-hijo[data-combo-idx="${idx}"][data-hijo-idx="${hijoIdx}"]`);
+                    $ultimaFila = $('tr.fila-combo-hijo[data-combo-idx="' + idx + '"][data-hijo-idx="' + hijoIdx + '"]');
                 });
             });
         };
@@ -187,11 +188,11 @@ function abrirModalCombo(idCatalogo, nombreCombo) {
     $('#modalComboLabel').text(nombreCombo || 'Configurar Combo');
     $('#modalComboSubtitulo').text('Cargando...');
     $('#comboSlotNav').hide().empty();
-    $('#comboCuerpo').html(`
-        <div class="d-flex align-items-center justify-content-center py-5">
-            <span class="spinner-border spinner-border-sm me-2 text-secondary"></span>
-            <span class="text-muted">Cargando combo...</span>
-        </div>`);
+    $('#comboCuerpo').html(
+        '<div class="d-flex align-items-center justify-content-center py-5">' +
+        '<span class="spinner-border spinner-border-sm me-2 text-secondary"></span>' +
+        '<span class="text-muted">Cargando combo...</span></div>'
+    );
     $('#comboTotalDisplay').text('C$ 0.00');
     $('#btnAplicarCombo').prop('disabled', true);
 
@@ -203,23 +204,23 @@ function abrirModalCombo(idCatalogo, nombreCombo) {
     $.getJSON('/modulos/pos/ajax/get_combo_config.php', { id_catalogo_menu_pos: idCatalogo })
         .done(function (res) {
             if (!res.success) {
-                $('#comboCuerpo').html(`<div class="alert alert-danger m-3">${escHtml(res.message || 'Error al cargar el combo.')}</div>`);
+                $('#comboCuerpo').html('<div class="alert alert-danger m-3">' + escHtml(res.message || 'Error al cargar el combo.') + '</div>');
                 return;
             }
-            const combo = res.combo;
+            var combo = res.combo;
             _comboState = {
                 id_catalogo:   combo.id_catalogo,
                 nombre:        combo.nombre,
                 observaciones: combo.observaciones,
                 precio_base:   parseFloat(combo.precio_venta) || 0,
                 slots:         combo.slots || [],
-                selecciones:   (combo.slots || []).map(() => []),  // array de arrays
+                selecciones:   (combo.slots || []).map(function () { return []; }),
                 slotActivoIdx: 0
             };
 
             // Pre-seleccionar defaults: push al array del slot
-            _comboState.slots.forEach((slot, sIdx) => {
-                const defItem = slot.items.find(it => it.es_default);
+            _comboState.slots.forEach(function (slot, sIdx) {
+                var defItem = slot.items.find(function (it) { return it.es_default; });
                 if (defItem) {
                     _comboState.selecciones[sIdx].push({
                         slotIdx:              sIdx,
@@ -245,7 +246,7 @@ function abrirModalCombo(idCatalogo, nombreCombo) {
             _actualizarTotalCombo();
         })
         .fail(function () {
-            $('#comboCuerpo').html(`<div class="alert alert-danger m-3">Error de conexion al cargar el combo.</div>`);
+            $('#comboCuerpo').html('<div class="alert alert-danger m-3">Error de conexion al cargar el combo.</div>');
         });
 }
 
@@ -255,16 +256,18 @@ function abrirModalCombo(idCatalogo, nombreCombo) {
 function _renderizarNavSlots() {
     if (!_comboState || !_comboState.slots.length) return;
 
-    let html = '';
-    _comboState.slots.forEach((slot, idx) => {
-        const sels = _comboState.selecciones[idx];
-        const completo = slot.min_seleccion > 0 && sels.length >= slot.min_seleccion;
-        const activo = idx === _comboState.slotActivoIdx;
-        const cls = `combo-slot-tab ${activo ? 'active' : ''} ${completo ? 'completo' : ''}`;
-        html += `<button type="button" class="${cls}" onclick="_cambiarSlotActivo(${idx})">
-            ${completo ? '<i class="bi bi-check-circle-fill me-1 text-success"></i>' : `<span class="slot-num">${idx + 1}</span>`}
-            ${escHtml(slot.nombre)}
-        </button>`;
+    var html = '';
+    _comboState.slots.forEach(function (slot, idx) {
+        var sels    = _comboState.selecciones[idx];
+        var completo = slot.min_seleccion > 0 && sels.length >= slot.min_seleccion;
+        var activo   = idx === _comboState.slotActivoIdx;
+        var cls      = 'combo-slot-tab' + (activo ? ' active' : '') + (completo ? ' completo' : '');
+        html += '<button type="button" class="' + cls + '" onclick="_cambiarSlotActivo(' + idx + ')">' +
+            (completo
+                ? '<i class="bi bi-check-circle-fill me-1 text-success"></i>'
+                : '<span class="slot-num">' + (idx + 1) + '</span>') +
+            ' ' + escHtml(slot.nombre) +
+            '</button>';
     });
 
     $('#comboSlotNav').html(html).show();
@@ -285,136 +288,153 @@ function _cambiarSlotActivo(idx) {
    ============================================================ */
 function _renderizarSlotActivo() {
     if (!_comboState) return;
-    const slot = _comboState.slots[_comboState.slotActivoIdx];
+    var slotIdx = _comboState.slotActivoIdx;
+    var slot    = _comboState.slots[slotIdx];
     if (!slot) return;
 
-    const selsActuales = _comboState.selecciones[_comboState.slotActivoIdx]; // array
-    const descripcion = slot.descripcion ? `<p class="text-muted small mb-2 px-3">${escHtml(slot.descripcion)}</p>` : '';
+    var selsActuales = _comboState.selecciones[slotIdx]; // array
 
-    // Texto del badge: muestra progreso cuando max > 1
-    let minMaxLabel;
-    if (slot.min_seleccion === slot.max_seleccion) {
-        minMaxLabel = 'Elige ' + slot.min_seleccion;
-    } else {
-        minMaxLabel = 'Elige entre ' + slot.min_seleccion + ' y ' + slot.max_seleccion;
-    }
-    const progresoLabel = slot.max_seleccion > 1
+    // Badge de progreso
+    var minMaxLabel = (slot.min_seleccion === slot.max_seleccion)
+        ? 'Elige ' + slot.min_seleccion
+        : 'Elige entre ' + slot.min_seleccion + ' y ' + slot.max_seleccion;
+    var progresoLabel = slot.max_seleccion > 1
         ? ' (' + selsActuales.length + '/' + slot.max_seleccion + ')' : '';
 
-    let html = `<div class="combo-slot-cuerpo p-3">`;
-    html += `<div class="d-flex align-items-center mb-2">
-        <strong class="me-2">${escHtml(slot.nombre)}</strong>
-        <span class="badge bg-secondary combo-minmax-badge">${escHtml(minMaxLabel)}${progresoLabel}</span>
-    </div>`;
-    html += descripcion;
+    var html = '<div class="combo-slot-cuerpo p-3">';
+    html += '<div class="d-flex align-items-center mb-2">' +
+        '<strong class="me-2">' + escHtml(slot.nombre) + '</strong>' +
+        '<span class="badge bg-secondary combo-minmax-badge">' + escHtml(minMaxLabel) + progresoLabel + '</span>' +
+        '</div>';
+
+    if (slot.descripcion) {
+        html += '<p class="text-muted small mb-2">' + escHtml(slot.descripcion) + '</p>';
+    }
 
     if (!slot.items.length) {
-        html += `<div class="alert alert-warning">Este slot no tiene productos configurados.</div>`;
+        html += '<div class="alert alert-warning">Este slot no tiene productos configurados.</div>';
     } else {
-        html += `<div class="combo-items-grid">`;
-        slot.items.forEach(item => {
-            const esSel = selsActuales.some(s => s.id_slot_item === item.id_slot_item);
-            const upchargeStr = item.upcharge > 0
-                ? `<span class="combo-item-upcharge">+C$ ${parseFloat(item.upcharge).toFixed(2)}</span>` : '';
-            const tamanoStr = item.tamano_producto
-                ? `<small class="combo-item-tamano">${escHtml(item.tamano_producto)}</small>` : '';
-            const persIcon = item.es_personalizable
-                ? `<span class="combo-item-pers-icon" title="Personalizable"><i class="bi bi-pencil"></i></span>` : '';
+        // Grid de opciones: sin icono de lapiz, solo nombre + tamaño + upcharge
+        // Click SIEMPRE agrega (hasta max_seleccion). Quitar desde la lista enlistada.
+        var yaLleno = selsActuales.length >= slot.max_seleccion;
 
-            html += `<div class="combo-item-card ${esSel ? 'seleccionado' : ''}"
-                          onclick="_seleccionarItemCombo(${_comboState.slotActivoIdx}, ${JSON.stringify(item).replace(/"/g, '&quot;')})"
-                          role="button" tabindex="0"
-                          onkeypress="if(event.key==='Enter') _seleccionarItemCombo(${_comboState.slotActivoIdx}, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                <div class="combo-item-nombre">${escHtml(item.nombre_catalogo)} ${tamanoStr}</div>
-                <div class="combo-item-meta">${upchargeStr} ${persIcon}</div>
-            </div>`;
+        html += '<div class="combo-items-grid">';
+        slot.items.forEach(function (item) {
+            // Resaltar si ya fue elegido al menos una vez
+            var veces = selsActuales.filter(function (s) { return s.id_slot_item === item.id_slot_item; }).length;
+            var esSel = veces > 0;
+
+            var upchargeStr = item.upcharge > 0
+                ? '<span class="combo-item-upcharge">+C$ ' + parseFloat(item.upcharge).toFixed(2) + '</span>' : '';
+            var tamanoStr = item.tamano_producto
+                ? '<small class="combo-item-tamano">' + escHtml(item.tamano_producto) + '</small>' : '';
+
+            // Cursor de "no-drop" si ya esta lleno y no es el mismo item que podria reemplazarse
+            var cardCls = 'combo-item-card' + (esSel ? ' seleccionado' : '') + (yaLleno && !esSel ? ' agotado' : '');
+
+            // Serializar item para pasar al onclick (evitar problemas con comillas)
+            var itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
+
+            html += '<div class="' + cardCls + '"' +
+                ' onclick="_agregarItemCombo(' + slotIdx + ', ' + itemJson + ')"' +
+                ' role="button" tabindex="0"' +
+                ' onkeypress="if(event.key===\'Enter\') _agregarItemCombo(' + slotIdx + ', ' + itemJson + ')">' +
+                '<div class="combo-item-nombre">' + escHtml(item.nombre_catalogo) + ' ' + tamanoStr + '</div>' +
+                '<div class="combo-item-meta">' + upchargeStr + '</div>' +
+                '</div>';
         });
-        html += `</div>`;
+        html += '</div>';
 
-        // Lista de seleccionados con boton Personalizar por item
+        // Lista de items ya seleccionados con boton X (quitar) y Personalizar si aplica
         if (selsActuales.length > 0) {
-            html += `<div class="combo-sel-lista mt-2 px-1">`;
-            selsActuales.forEach((sel, selIdx) => {
-                html += `<div class="combo-sel-item d-flex align-items-center justify-content-between py-1 border-bottom">
-                    <span class="small"><i class="bi bi-check-circle-fill text-success me-1"></i>${escHtml(sel.nombre_catalogo)}${sel.tamano_producto ? ' <small class="text-muted">'+escHtml(sel.tamano_producto)+'</small>' : ''}</span>
-                    ${sel.es_personalizable ? `<button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="event.stopPropagation();_abrirPersComboItem(${_comboState.slotActivoIdx},${selIdx})">
-                        <i class="bi bi-pencil me-1"></i>Personalizar</button>` : ''}
-                </div>`;
+            html += '<div class="combo-sel-lista mt-2">';
+            selsActuales.forEach(function (sel, selIdx) {
+                var persBtn = sel.es_personalizable
+                    ? '<button type="button" class="btn btn-sm btn-outline-secondary combo-sel-pers-btn"' +
+                      ' onclick="event.stopPropagation();_abrirPersComboItem(' + slotIdx + ',' + selIdx + ')">' +
+                      '<i class="bi bi-pencil me-1"></i>Personalizar</button>'
+                    : '';
+                // Indicador de que tiene personalizacion guardada
+                var persBadge = '';
+                if (sel.personalizacion) {
+                    var p = sel.personalizacion;
+                    var tieneConfig = (p.endulzante_id || (p.extras_agregados && p.extras_agregados.length) ||
+                        (p.ingredientes_quitados && p.ingredientes_quitados.length) || (p.notas && p.notas.trim()));
+                    if (tieneConfig) {
+                        persBadge = '<span class="badge bg-success ms-1" style="font-size:.65rem">personalizado</span>';
+                    }
+                }
+                html += '<div class="combo-sel-item d-flex align-items-center justify-content-between py-1 border-bottom">' +
+                    '<span class="small"><i class="bi bi-check-circle-fill text-success me-1"></i>' +
+                    escHtml(sel.nombre_catalogo) +
+                    (sel.tamano_producto ? ' <small class="text-muted">' + escHtml(sel.tamano_producto) + '</small>' : '') +
+                    persBadge +
+                    '</span>' +
+                    '<div class="d-flex gap-1 align-items-center">' +
+                    persBtn +
+                    '<button type="button" class="btn btn-sm btn-outline-danger combo-sel-quitar-btn"' +
+                    ' onclick="event.stopPropagation();_quitarItemCombo(' + slotIdx + ',' + selIdx + ')"' +
+                    ' title="Quitar"><i class="bi bi-x-lg"></i></button>' +
+                    '</div>' +
+                    '</div>';
             });
-            html += `</div>`;
+            html += '</div>';
         }
     }
 
-    html += `</div>`;
+    html += '</div>'; // combo-slot-cuerpo
 
     // Botones de navegacion
-    const hayAnterior = _comboState.slotActivoIdx > 0;
-    const haySiguiente = _comboState.slotActivoIdx < _comboState.slots.length - 1;
-    html += `<div class="combo-slot-nav-botones px-3 pb-3 d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary btn-sm" ${hayAnterior ? '' : 'disabled'}
-            onclick="_cambiarSlotActivo(${_comboState.slotActivoIdx - 1})">
-            <i class="bi bi-chevron-left me-1"></i>Anterior
-        </button>
-        ${haySiguiente ? `<button type="button" class="btn btn-primary btn-sm"
-            onclick="_cambiarSlotActivo(${_comboState.slotActivoIdx + 1})">
-            Siguiente<i class="bi bi-chevron-right ms-1"></i>
-        </button>` : `<button type="button" class="btn btn-success btn-sm" onclick="_validarYAplicarCombo()">
-            <i class="bi bi-check2-circle me-1"></i>Listo
-        </button>`}
-    </div>`;
+    var hayAnterior  = slotIdx > 0;
+    var haySiguiente = slotIdx < _comboState.slots.length - 1;
+    html += '<div class="combo-slot-nav-botones px-3 pb-3 d-flex justify-content-between">' +
+        '<button type="button" class="btn btn-outline-secondary btn-sm"' +
+        (hayAnterior ? '' : ' disabled') +
+        ' onclick="_cambiarSlotActivo(' + (slotIdx - 1) + ')">' +
+        '<i class="bi bi-chevron-left me-1"></i>Anterior</button>';
+
+    if (haySiguiente) {
+        html += '<button type="button" class="btn btn-primary btn-sm"' +
+            ' onclick="_cambiarSlotActivo(' + (slotIdx + 1) + ')">' +
+            'Siguiente<i class="bi bi-chevron-right ms-1"></i></button>';
+    } else {
+        html += '<button type="button" class="btn btn-success btn-sm" onclick="_validarYAplicarCombo()">' +
+            '<i class="bi bi-check2-circle me-1"></i>Listo</button>';
+    }
+    html += '</div>';
 
     $('#comboCuerpo').html(html);
     _actualizarBtnAplicar();
 }
 
 /* ============================================================
-   SELECCIONAR ITEM DE SLOT (soporta multi-seleccion)
+   AGREGAR ITEM AL SLOT (siempre agrega, hasta max_seleccion)
+   El usuario puede agregar el mismo item varias veces.
+   Para quitar usa el boton X de la lista enlistada.
    ============================================================ */
-function _seleccionarItemCombo(slotIdx, item) {
+function _agregarItemCombo(slotIdx, item) {
     if (!_comboState) return;
-    const slot = _comboState.slots[slotIdx];
-    const sels = _comboState.selecciones[slotIdx]; // array
+    var slot = _comboState.slots[slotIdx];
+    var sels = _comboState.selecciones[slotIdx];
 
-    const existingIdx = sels.findIndex(s => s.id_slot_item === item.id_slot_item);
-
-    if (existingIdx >= 0) {
-        // Deseleccionar si ya estaba elegido
-        sels.splice(existingIdx, 1);
-    } else if (sels.length < slot.max_seleccion) {
-        // Agregar al array si hay espacio
-        sels.push({
-            slotIdx,
-            id_slot_item:         item.id_slot_item,
-            id_slot:              slot.id,
-            id_presentacion:      item.id_presentacion,
-            id_catalogo_menu_pos: item.id_catalogo_menu_pos,
-            nombre_catalogo:      item.nombre_catalogo,
-            tamano_producto:      item.tamano_producto || null,
-            es_personalizable:    item.es_personalizable,
-            precio_venta:         parseFloat(item.precio_venta) || 0,
-            upcharge:             parseFloat(item.upcharge) || 0,
-            personalizacion:      _persVacia()
-        });
-    } else if (slot.max_seleccion === 1) {
-        // Reemplazar si el slot solo admite 1
-        sels[0] = {
-            slotIdx,
-            id_slot_item:         item.id_slot_item,
-            id_slot:              slot.id,
-            id_presentacion:      item.id_presentacion,
-            id_catalogo_menu_pos: item.id_catalogo_menu_pos,
-            nombre_catalogo:      item.nombre_catalogo,
-            tamano_producto:      item.tamano_producto || null,
-            es_personalizable:    item.es_personalizable,
-            precio_venta:         parseFloat(item.precio_venta) || 0,
-            upcharge:             parseFloat(item.upcharge) || 0,
-            personalizacion:      _persVacia()
-        };
-    } else {
-        // Limite alcanzado para multi-seleccion
-        alertError('Maximo ' + slot.max_seleccion + ' productos para este slot');
+    if (sels.length >= slot.max_seleccion) {
+        alertError('Ya elegiste el maximo de ' + slot.max_seleccion + ' producto(s) para este slot. Usa el boton X para quitar uno.');
         return;
     }
+
+    sels.push({
+        slotIdx:              slotIdx,
+        id_slot_item:         item.id_slot_item,
+        id_slot:              slot.id,
+        id_presentacion:      item.id_presentacion,
+        id_catalogo_menu_pos: item.id_catalogo_menu_pos,
+        nombre_catalogo:      item.nombre_catalogo,
+        tamano_producto:      item.tamano_producto || null,
+        es_personalizable:    item.es_personalizable,
+        precio_venta:         parseFloat(item.precio_venta) || 0,
+        upcharge:             parseFloat(item.upcharge) || 0,
+        personalizacion:      _persVacia()
+    });
 
     _actualizarTotalCombo();
     _renderizarNavSlots();
@@ -422,45 +442,127 @@ function _seleccionarItemCombo(slotIdx, item) {
 }
 
 /* ============================================================
-   ABRIR MODAL DE PERSONALIZACION PARA UN ITEM DE COMBO (sub-flujo)
-   Recibe slotIdx y selIdx (indice dentro del array de selecciones del slot)
+   QUITAR ITEM DE LA LISTA DEL SLOT (boton X)
+   ============================================================ */
+function _quitarItemCombo(slotIdx, selIdx) {
+    if (!_comboState) return;
+    _comboState.selecciones[slotIdx].splice(selIdx, 1);
+    _actualizarTotalCombo();
+    _renderizarNavSlots();
+    _renderizarSlotActivo();
+}
+
+/* ============================================================
+   ABRIR MODAL DE PERSONALIZACION PARA UN ITEM YA SELECCIONADO
+   El combo modal NO se cierra. El modal de pers se abre con
+   z-index mayor para quedar encima. Al aplicar, solo guarda la
+   config en memoria (NO agrega nada al ticket todavia).
    ============================================================ */
 function _abrirPersComboItem(slotIdx, selIdx) {
     if (!_comboState) return;
-    const sels = _comboState.selecciones[slotIdx];
-    const sel = sels ? sels[selIdx] : null;
+    var sels = _comboState.selecciones[slotIdx];
+    var sel  = sels ? sels[selIdx] : null;
     if (!sel || !sel.es_personalizable) return;
 
-    // Guardar estado del subflujo antes de cerrar el modal
-    _comboSubflujoPendiente = { slotIdx, selIdx, _lenAntes: detalleFactura.length };
+    // Marcar el subflujo antes de abrir el modal de pers
+    _comboSubflujoPendiente = {
+        slotIdx:   slotIdx,
+        selIdx:    selIdx,
+        _lenAntes: detalleFactura.length   // para revertir si el handler original agrega algo
+    };
 
-    // Ocultar modal de combo PRIMERO para que la personalizacion quede encima
-    if (_comboModalBS) _comboModalBS.hide();
+    // Abrir el modal de personalizacion (el combo modal NO se cierra)
+    abrirModalSeleccionProducto(
+        [sel.id_catalogo_menu_pos],
+        sel.nombre_catalogo,
+        sel.id_presentacion,
+        sel.personalizacion
+    );
 
-    // Esperar a que el modal de combo termine de cerrarse, luego abrir personalizacion
+    // Elevar z-index del modal de pers para que quede encima del modal de combo
     setTimeout(function () {
-        abrirModalSeleccionProducto(
-            [sel.id_catalogo_menu_pos],
-            sel.nombre_catalogo,
-            sel.id_presentacion,
-            sel.personalizacion
-        );
-    }, 350);
+        var $msp = $('#modalSeleccionProducto');
+        if ($msp.length && $msp.hasClass('show')) {
+            $msp.css('z-index', 1075);
+            // El ultimo backdrop es el del modal de pers
+            $('.modal-backdrop').last().css('z-index', 1070);
+        }
+    }, 200);
 }
 
-/* Edicion de item de combo ya agregado al ticket */
+/* ============================================================
+   HOOK: Capturar "Aplicar" del modal de personalizacion
+   cuando viene de un sub-flujo de combo.
+   - Revierte cualquier item que el handler original haya metido
+     al ticket (el combo modal sigue abierto, no queremos facturas
+     individuales del combo todavia).
+   - Guarda la personalizacion en la seleccion del slot.
+   - Restaura z-indices y re-renderiza el slot.
+   ============================================================ */
+$(document).ready(function () {
+    var $btnGuardarMSP = $('#mpBtnGuardar');
+    if (!$btnGuardarMSP.length) return;
+
+    $btnGuardarMSP.on('click.combo_subflujo', function () {
+        if (!_comboSubflujoPendiente) return; // no es sub-flujo de combo
+
+        // Esperar brevemente a que el handler original termine
+        setTimeout(function () {
+            var pend = _comboSubflujoPendiente;
+            _comboSubflujoPendiente = null;
+
+            // 1. Revertir SIEMPRE cualquier item agregado incorrectamente al ticket
+            while (detalleFactura.length > pend._lenAntes) {
+                detalleFactura.pop();
+            }
+            // Re-renderizar sin los items revertidos
+            actualizarTablaDetalle();
+
+            if (pend._modoEdicionTicket) {
+                // Edicion de hijo ya guardado en el ticket (desde actualizarTablaDetalle)
+                var item = detalleFactura[pend.itemIdx];
+                if (item && item.combo_items && item.combo_items[pend.hijoIdx]) {
+                    item.combo_items[pend.hijoIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador || _persVacia()));
+                    actualizarTablaDetalle();
+                }
+            } else {
+                // Sub-flujo de configuracion de combo: guardar pers en el slot
+                if (_comboState && _comboState.selecciones) {
+                    var sels = _comboState.selecciones[pend.slotIdx];
+                    if (sels && typeof sels[pend.selIdx] !== 'undefined') {
+                        sels[pend.selIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador || _persVacia()));
+                    }
+                }
+            }
+
+            // 2. Restaurar z-indices al estado normal
+            $('#modalSeleccionProducto').css('z-index', '');
+            $('.modal-backdrop').css('z-index', '');
+
+            // 3. Re-renderizar el slot para mostrar el badge "personalizado"
+            _renderizarSlotActivo();
+
+        }, 150);
+    });
+});
+
+/* ============================================================
+   Edicion de item de combo ya agregado al TICKET (desde la tabla)
+   ============================================================ */
 function editarItemCombo(itemIdx, hijoIdx) {
-    const item = detalleFactura[itemIdx];
+    var item = detalleFactura[itemIdx];
     if (!item || !item.combo_items) return;
-    const hijo = item.combo_items[hijoIdx];
+    var hijo = item.combo_items[hijoIdx];
     if (!hijo || !hijo.es_personalizable) return;
 
-    _comboState = {
+    _comboState = { _modoEdicionTicket: true };
+    _comboSubflujoPendiente = {
+        slotIdx:            0,
         _modoEdicionTicket: true,
-        _editItemIdx: itemIdx,
-        _editHijoIdx: hijoIdx
+        itemIdx:            itemIdx,
+        hijoIdx:            hijoIdx,
+        _lenAntes:          detalleFactura.length
     };
-    _comboSubflujoPendiente = { slotIdx: 0, _modoEdicionTicket: true, itemIdx, hijoIdx };
 
     abrirModalSeleccionProducto(
         [hijo.id_catalogo_menu_pos],
@@ -469,57 +571,6 @@ function editarItemCombo(itemIdx, hijoIdx) {
         hijo.personalizacion
     );
 }
-
-/* ============================================================
-   HOOK: Capturar el "Aplicar" del modal de personalizacion
-   cuando viene de un sub-flujo de combo
-   ============================================================ */
-$(document).ready(function () {
-    var $btnGuardarMSP = $('#mpBtnGuardar');
-    if (!$btnGuardarMSP.length) return;
-
-    $btnGuardarMSP.on('click.combo_subflujo', function () {
-        if (!_comboSubflujoPendiente) return;
-
-        setTimeout(function () {
-            if (typeof _mspBorrador === 'undefined') {
-                _comboSubflujoPendiente = null;
-                if (_comboModalBS) _comboModalBS.show();
-                return;
-            }
-
-            var pend = _comboSubflujoPendiente;
-            _comboSubflujoPendiente = null;
-
-            if (pend._modoEdicionTicket) {
-                // Edicion de hijo ya en el ticket
-                var item = detalleFactura[pend.itemIdx];
-                if (item && item.combo_items && item.combo_items[pend.hijoIdx]) {
-                    item.combo_items[pend.hijoIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador));
-                    actualizarTablaDetalle();
-                }
-            } else {
-                // Sub-flujo de configuracion de combo:
-                // Revertir cualquier item que el handler original haya anadido al ticket
-                while (detalleFactura.length > pend._lenAntes) {
-                    detalleFactura.pop();
-                }
-
-                // Guardar personalizacion en la seleccion del slot
-                if (_comboState && _comboState.selecciones) {
-                    var sels = _comboState.selecciones[pend.slotIdx];
-                    if (sels && sels[pend.selIdx]) {
-                        sels[pend.selIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador));
-                    }
-                }
-
-                // Reabrir el modal de combo encima
-                if (_comboModalBS) _comboModalBS.show();
-                _renderizarSlotActivo();
-            }
-        }, 200);
-    });
-});
 
 /* ============================================================
    VALIDAR Y APLICAR COMBO AL TICKET
@@ -531,7 +582,7 @@ function _validarYAplicarCombo() {
     _comboState.slots.forEach(function (slot, idx) {
         var sels = _comboState.selecciones[idx];
         if (slot.min_seleccion > 0 && sels.length < slot.min_seleccion) {
-            incompletos.push(slot.nombre + ' (necesita ' + slot.min_seleccion + ', elegido ' + sels.length + ')');
+            incompletos.push(slot.nombre + ' (necesitas ' + slot.min_seleccion + ', elegiste ' + sels.length + ')');
         }
     });
 
@@ -548,12 +599,11 @@ $('#btnAplicarCombo').on('click', function () {
 });
 
 /* ============================================================
-   AGREGAR COMBO A detalleFactura
+   AGREGAR COMBO COMPLETO A detalleFactura
    ============================================================ */
 function _aplicarCombo() {
     if (!_comboState) return;
 
-    // Flatten: todas las selecciones de todos los slots
     var todasLasSels = _comboState.selecciones.flat();
     var totalUpcharges = todasLasSels.reduce(function (acc, sel) {
         return acc + (parseFloat(sel.upcharge) || 0);
@@ -597,7 +647,6 @@ function _aplicarCombo() {
         puntos_acumulacion:   null,
         puntos_canje:         null,
         personalizacion:      _persVacia(),
-        // Campos exclusivos de combo
         es_combo:             true,
         combo_items:          comboItems
     };
@@ -622,7 +671,7 @@ function _actualizarTotalCombo() {
 }
 
 /* ============================================================
-   HABILITAR / DESHABILITAR BOTON APLICAR
+   HABILITAR / DESHABILITAR BOTON "Agregar al Pedido"
    ============================================================ */
 function _actualizarBtnAplicar() {
     if (!_comboState) return;

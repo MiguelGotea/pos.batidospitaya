@@ -3927,12 +3927,23 @@
     width: 100%;
 }
 
+/* ── Card "agotado" (slot lleno, no se puede agregar mas) ── */
+.combo-item-card.agotado {
+    opacity: .45;
+    cursor: not-allowed;
+}
+.combo-item-card.agotado:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: #e5e7eb;
+}
+
 /* ── Lista de items seleccionados en el slot (multi-seleccion) ── */
 .combo-sel-lista {
     background: #f8fffe;
     border: 1px solid #d1ece9;
     border-radius: 8px;
-    padding: .4rem .6rem;
+    padding: .35rem .6rem;
     margin-top: .5rem;
 }
 .combo-sel-item {
@@ -3943,16 +3954,21 @@
 .combo-sel-item:last-child {
     border-bottom: none !important;
 }
-.combo-sel-item .btn-outline-secondary {
+.combo-sel-pers-btn {
     font-size: .72rem;
     padding: 1px 7px;
     border-color: #0E544C;
     color: #0E544C;
     white-space: nowrap;
 }
-.combo-sel-item .btn-outline-secondary:hover {
+.combo-sel-pers-btn:hover {
     background: #0E544C;
     color: #fff;
+}
+.combo-sel-quitar-btn {
+    font-size: .72rem;
+    padding: 1px 6px;
+    line-height: 1;
 }
 
 /* ── Modal Combo scrollbar ── */
