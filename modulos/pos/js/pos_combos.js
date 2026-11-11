@@ -384,24 +384,25 @@ function _renderizarSlotActivo() {
 
     html += '</div>'; // combo-slot-cuerpo
 
-    // Botones de navegacion
-    var hayAnterior  = slotIdx > 0;
-    var haySiguiente = slotIdx < _comboState.slots.length - 1;
-    html += '<div class="combo-slot-nav-botones px-3 pb-3 d-flex justify-content-between">' +
-        '<button type="button" class="btn btn-outline-secondary btn-sm"' +
-        (hayAnterior ? '' : ' disabled') +
-        ' onclick="_cambiarSlotActivo(' + (slotIdx - 1) + ')">' +
-        '<i class="bi bi-chevron-left me-1"></i>Anterior</button>';
+    // Botones de navegacion (solo si hay mas de 1 slot)
+    if (_comboState.slots.length > 1) {
+        var hayAnterior  = slotIdx > 0;
+        var haySiguiente = slotIdx < _comboState.slots.length - 1;
+        html += '<div class="combo-slot-nav-botones px-3 pb-3 d-flex justify-content-between">' +
+            '<button type="button" class="btn btn-outline-secondary btn-sm"' +
+            (hayAnterior ? '' : ' disabled') +
+            ' onclick="_cambiarSlotActivo(' + (slotIdx - 1) + ')">' +
+            '<i class="bi bi-chevron-left me-1"></i>Anterior</button>';
 
-    if (haySiguiente) {
-        html += '<button type="button" class="btn btn-primary btn-sm"' +
-            ' onclick="_cambiarSlotActivo(' + (slotIdx + 1) + ')">' +
-            'Siguiente<i class="bi bi-chevron-right ms-1"></i></button>';
-    } else {
-        html += '<button type="button" class="btn btn-success btn-sm" onclick="_validarYAplicarCombo()">' +
-            '<i class="bi bi-check2-circle me-1"></i>Listo</button>';
+        if (haySiguiente) {
+            html += '<button type="button" class="btn btn-primary btn-sm"' +
+                ' onclick="_cambiarSlotActivo(' + (slotIdx + 1) + ')">' +
+                'Siguiente<i class="bi bi-chevron-right ms-1"></i></button>';
+        } else {
+            html += '<span></span>';
+        }
+        html += '</div>';
     }
-    html += '</div>';
 
     $('#comboCuerpo').html(html);
     _actualizarBtnAplicar();
@@ -729,10 +730,11 @@ function _actualizarTotalCombo() {
    ============================================================ */
 function _actualizarBtnAplicar() {
     if (!_comboState) return;
+    var esUltimoSlot = _comboState.slotActivoIdx === (_comboState.slots.length - 1);
     var todoCompleto = _comboState.slots.every(function (slot, idx) {
         return slot.min_seleccion === 0 || _comboState.selecciones[idx].length >= slot.min_seleccion;
     });
-    $('#btnAplicarCombo').prop('disabled', !todoCompleto);
+    $('#btnAplicarCombo').prop('disabled', !(esUltimoSlot && todoCompleto));
 }
 
 /* ============================================================
