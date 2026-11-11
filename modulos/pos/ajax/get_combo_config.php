@@ -3,42 +3,9 @@
  * get_combo_config.php
  * Devuelve la configuración completa de un combo: slots y los productos
  * elegibles en cada slot, resolviendo los 4 tipos de fuente.
+ * El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
  *
- * GET ?id_catalogo_menu_pos=X
- *
- * Respuesta:
- * {
- *   "success": true,
- *   "combo": {
- *     "id_catalogo": 45,
- *     "nombre": "Combo Saludable",
- *     "observaciones": "...",
- *     "precio_venta": 150.00,
- *     "slots": [
- *       {
- *         "id": 1,
- *         "nombre": "Elige tu batido",
- *         "descripcion": null,
- *         "min_seleccion": 1,
- *         "max_seleccion": 1,
- *         "orden": 1,
- *         "items": [
- *           {
- *             "id_slot_item": 5,
- *             "id_presentacion": 201,
- *             "id_catalogo_menu_pos": 12,
- *             "nombre_catalogo": "Batido Verde",
- *             "tamano_producto": "16oz",
- *             "es_personalizable": 1,
- *             "precio_venta": 90.00,
- *             "upcharge": 0.00,
- *             "es_default": 0
- *           }
- *         ]
- *       }
- *     ]
- *   }
- * }
+ * GET ?id_catalogo_menu_pos=X&id_menu=Y
  */
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -72,14 +39,12 @@ try {
             ON psuc.id_menu = :id_menu
            AND psuc.id_catalogo_menu_pos = cmp.id
            AND psuc.cod_sucursal = :sucursal
-           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
         LEFT JOIN pos_menu_precios pglob
             ON pglob.id_menu = :id_menu
            AND pglob.id_catalogo_menu_pos = cmp.id
            AND pglob.cod_sucursal IS NULL
-           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE cmp.id = :id
@@ -105,8 +70,8 @@ try {
     $slots = $stmtSlots->fetchAll(PDO::FETCH_ASSOC);
 
     // ── 3. Para cada slot, resolver sus items elegibles ─────────────────────
-    // SQL base para obtener productos vigentes del catálogo (sin combos)
-    // Reutiliza la misma lógica de precios de get_productos_catalogo.php
+    // SQL base: productos vigentes del catálogo (sin combos).
+    // El menú ya selecciona el tipo de cliente — no se filtra por id_tipo_cliente.
     $sqlBaseProductos = "
         SELECT pp.id                       AS id_presentacion,
                pp.id_catalogo_menu_pos,
@@ -127,14 +92,12 @@ try {
             ON psuc.id_menu = :id_menu
            AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND psuc.cod_sucursal = :sucursal
-           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
         LEFT JOIN pos_menu_precios pglob
             ON pglob.id_menu = :id_menu
            AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND pglob.cod_sucursal IS NULL
-           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE pp.es_vendible = 'SI'
@@ -193,7 +156,6 @@ try {
                             ':tamano'      => $slotItem['tamano_producto']
                         ]);
                     } else {
-                        // tamano_producto NULL → todos los tamaños del subgrupo
                         $stmt = $conn->prepare($sqlBaseProductos . "
                             AND cmp.id_subgrupo = :id_subgrupo
                             ORDER BY cmp.tamano_producto ASC, cmp.nombre ASC, pp.Nombre ASC
@@ -238,19 +200,18 @@ try {
 
             // Enriquecer cada producto resuelto con datos del slot item
             foreach ($productosResueltos as $prod) {
-                // Evitar duplicados: usar id_presentacion como clave
                 $key = $prod['id_presentacion'];
                 if (!isset($productosSlot[$key])) {
                     $productosSlot[$key] = [
-                        'id_slot_item'       => intval($slotItem['id']),
-                        'id_presentacion'    => intval($prod['id_presentacion']),
+                        'id_slot_item'         => intval($slotItem['id']),
+                        'id_presentacion'      => intval($prod['id_presentacion']),
                         'id_catalogo_menu_pos' => intval($prod['id_catalogo_menu_pos']),
-                        'nombre_catalogo'    => $prod['nombre_catalogo'],
-                        'tamano_producto'    => $prod['tamano_producto'],
-                        'es_personalizable'  => intval($prod['es_personalizable']),
-                        'precio_venta'       => floatval($prod['precio_venta']),
-                        'upcharge'           => floatval($slotItem['upcharge']),
-                        'es_default'         => intval($slotItem['es_default']),
+                        'nombre_catalogo'      => $prod['nombre_catalogo'],
+                        'tamano_producto'      => $prod['tamano_producto'],
+                        'es_personalizable'    => intval($prod['es_personalizable']),
+                        'precio_venta'         => floatval($prod['precio_venta']),
+                        'upcharge'             => floatval($slotItem['upcharge']),
+                        'es_default'           => intval($slotItem['es_default']),
                     ];
                 }
             }
@@ -263,11 +224,11 @@ try {
     echo json_encode([
         'success' => true,
         'combo'   => [
-            'id_catalogo'  => intval($combo['id']),
-            'nombre'       => $combo['nombre'],
-            'observaciones'=> $combo['observaciones'],
-            'precio_venta' => floatval($combo['precio_venta']),
-            'slots'        => $slots,
+            'id_catalogo'   => intval($combo['id']),
+            'nombre'        => $combo['nombre'],
+            'observaciones' => $combo['observaciones'],
+            'precio_venta'  => floatval($combo['precio_venta']),
+            'slots'         => $slots,
         ]
     ]);
 
@@ -278,4 +239,3 @@ try {
     ]);
 }
 ?>
-

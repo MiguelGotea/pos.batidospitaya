@@ -1,8 +1,9 @@
-﻿<?php
+<?php
 /**
  * get_productos_catalogo.php
  * Devuelve los productos (producto_presentacion) que pertenecen a un
  * catalogo_menu_pos específico, con precio vigente para la sucursal.
+ * El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
  */
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
@@ -78,18 +79,18 @@ try {
         FROM producto_presentacion pp
         LEFT JOIN unidad_producto up
             ON up.id = pp.id_unidad_producto
+        -- psuc: precio de sucursal específica dentro del menú
         LEFT JOIN pos_menu_precios psuc
             ON psuc.id_menu = ?
            AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND psuc.cod_sucursal = ?
-           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
+        -- pglob: precio global del menú (todas las sucursales)
         LEFT JOIN pos_menu_precios pglob
             ON pglob.id_menu = ?
            AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND pglob.cod_sucursal IS NULL
-           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE pp.id_catalogo_menu_pos IN ($placeholders)
@@ -112,4 +113,3 @@ try {
     ]);
 }
 ?>
-

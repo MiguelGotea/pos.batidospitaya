@@ -1,5 +1,7 @@
-﻿<?php
+<?php
 // facturas_get_productos_elegibles.php
+// Devuelve productos con precio vigente para el menú seleccionado.
+// El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
 require_once '../../../core/auth/auth_pos.php';
 posRequiereColaboradorAjax();
 require_once '../../../core/database/conexion.php';
@@ -28,12 +30,12 @@ try {
                    CASE WHEN pp.Id_receta_producto IS NOT NULL THEN 1 ELSE 0 END AS es_personalizable,
                    COALESCE(psuc.precio, pglob.precio, 0.00) AS precio_venta,
                    pp.id_catalogo_menu_pos,
-                   CASE 
+                   CASE
                        WHEN psuc.precio IS NOT NULL THEN 'sucursal'
                        WHEN pglob.precio IS NOT NULL THEN 'global'
                        ELSE 'sin_precio'
                    END AS origen_precio,
-                   -- Puntos de acumulación vigentes: excepción por presentación tiene prioridad sobre catálogo general
+                   -- Puntos de acumulación vigentes
                    COALESCE(
                        (SELECT puntos FROM pos_ventas_puntos_reglas
                          WHERE tipo_regla = 'acumulacion'
@@ -50,7 +52,7 @@ try {
                            AND (fecha_hasta IS NULL OR fecha_hasta >= CURDATE())
                          ORDER BY fecha_desde DESC LIMIT 1)
                    ) AS puntos_acumulacion,
-                   -- Puntos de canje vigentes: misma lógica de prioridad
+                   -- Puntos de canje vigentes
                    COALESCE(
                        (SELECT puntos FROM pos_ventas_puntos_reglas
                          WHERE tipo_regla = 'canje'
@@ -68,7 +70,7 @@ try {
                          ORDER BY fecha_desde DESC LIMIT 1)
                    ) AS puntos_canje
             FROM producto_presentacion pp
-            LEFT JOIN producto_maestro pm 
+            LEFT JOIN producto_maestro pm
                 ON pp.id_producto_maestro = pm.id
             LEFT JOIN catalogo_menu_pos cmp
                 ON pp.id_catalogo_menu_pos = cmp.id
@@ -76,20 +78,20 @@ try {
                 ON cmp.id_subgrupo = sg.id
             LEFT JOIN grupo_presentacion_producto g
                 ON sg.id_grupo_presentacion_producto = g.id
-            LEFT JOIN unidad_producto up 
+            LEFT JOIN unidad_producto up
                 ON pp.id_unidad_producto = up.id
+            -- psuc: precio de sucursal específica dentro del menú
             LEFT JOIN pos_menu_precios psuc
                 ON psuc.id_menu = :id_menu
                AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
                AND psuc.cod_sucursal = :sucursal
-               AND psuc.id_tipo_cliente IS NULL
                AND psuc.fecha_desde <= CURDATE()
                AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
+            -- pglob: precio global del menú (todas las sucursales)
             LEFT JOIN pos_menu_precios pglob
                 ON pglob.id_menu = :id_menu
                AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
                AND pglob.cod_sucursal IS NULL
-               AND pglob.id_tipo_cliente IS NULL
                AND pglob.fecha_desde <= CURDATE()
                AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
             WHERE pp.es_vendible = 'SI'
