@@ -147,18 +147,9 @@ function posTiendaAutenticada()
 
 /**
  * Retorna true si hay un colaborador activo en sesión (Etapa 2 completada).
- * En DEV_MODE se considera siempre autenticado para facilitar el desarrollo.
  */
 function posColaboradorAutenticado()
 {
-    if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
-        // Auto-poblar sesión de colaborador si no existe
-        if (!isset($_SESSION['pos_colaborador_id'])) {
-            $_SESSION['pos_colaborador_id'] = 0;
-            $_SESSION['pos_colaborador_nombre'] = 'DEV-Colaborador';
-        }
-        return true;
-    }
     return isset($_SESSION['pos_colaborador_id']);
 }
 
@@ -487,6 +478,21 @@ function posRequiereColaboradorAjax()
         exit();
     }
     // Renovar ventana de actividad activa
+    $_SESSION['last_activity'] = time();
+}
+
+/**
+ * Middleware: verifica solo que la tienda esté activa en endpoints AJAX de catálogo/menú.
+ * Usado en endpoints donde el gate es el menú seleccionado desde index.php,
+ * no el colaborador (quien puede o no haber ingresado PIN todavía).
+ */
+function posRequiereMenuAjax()
+{
+    if (!posTiendaAutenticada()) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'Tienda no autenticada.']);
+        exit();
+    }
     $_SESSION['last_activity'] = time();
 }
 

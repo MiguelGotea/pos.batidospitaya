@@ -3,10 +3,10 @@
  * get_productos_catalogo.php
  * Devuelve los productos (producto_presentacion) que pertenecen a un
  * catalogo_menu_pos específico, con precio vigente para la sucursal.
- * El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
+ * Gate: tienda autenticada. El menú fue elegido desde index.php.
  */
 require_once '../../../core/auth/auth_pos.php';
-posRequiereColaboradorAjax();
+posRequiereMenuAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json; charset=utf-8');
 

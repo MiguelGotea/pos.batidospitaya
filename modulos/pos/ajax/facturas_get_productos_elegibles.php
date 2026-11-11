@@ -1,9 +1,9 @@
 <?php
 // facturas_get_productos_elegibles.php
 // Devuelve productos con precio vigente para el menú seleccionado.
-// El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
+// Gate: tienda autenticada. El menú fue elegido desde index.php.
 require_once '../../../core/auth/auth_pos.php';
-posRequiereColaboradorAjax();
+posRequiereMenuAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 

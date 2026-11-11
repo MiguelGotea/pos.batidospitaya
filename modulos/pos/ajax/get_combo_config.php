@@ -3,12 +3,12 @@
  * get_combo_config.php
  * Devuelve la configuración completa de un combo: slots y los productos
  * elegibles en cada slot, resolviendo los 4 tipos de fuente.
- * El menú ya define el tipo de cliente; no se filtra por id_tipo_cliente aquí.
+ * Gate: tienda autenticada. El menú fue elegido desde index.php.
  *
  * GET ?id_catalogo_menu_pos=X&id_menu=Y
  */
 require_once '../../../core/auth/auth_pos.php';
-posRequiereColaboradorAjax();
+posRequiereMenuAjax();
 require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json; charset=utf-8');
 
