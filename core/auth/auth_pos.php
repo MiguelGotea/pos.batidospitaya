@@ -147,9 +147,18 @@ function posTiendaAutenticada()
 
 /**
  * Retorna true si hay un colaborador activo en sesión (Etapa 2 completada).
+ * En DEV_MODE se considera siempre autenticado para facilitar el desarrollo.
  */
 function posColaboradorAutenticado()
 {
+    if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
+        // Auto-poblar sesión de colaborador si no existe
+        if (!isset($_SESSION['pos_colaborador_id'])) {
+            $_SESSION['pos_colaborador_id']     = 0;
+            $_SESSION['pos_colaborador_nombre'] = 'DEV-Colaborador';
+        }
+        return true;
+    }
     return isset($_SESSION['pos_colaborador_id']);
 }
 
