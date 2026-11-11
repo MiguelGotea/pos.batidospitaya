@@ -618,12 +618,12 @@ $menuGlobal = [
     [
         'nombre' => 'Sitio Web',
         'icon' => 'fas fa-desktop',
-        'cargos_permitidos' => [16, 49, 15],
+        'cargos_permitidos' => [16, 49, 15, 70, 42, 50],
         'items' => [
             [
                 'nombre' => 'CMS batidospitaya.com',
                 'url' => 'marketing/cms_web.php',
-                'cargos_permitidos' => [16, 49, 15]
+                'cargos_permitidos' => [16, 49, 15, 70, 42, 50]
             ],
         ]
     ],
