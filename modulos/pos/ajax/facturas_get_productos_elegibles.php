@@ -82,14 +82,14 @@ try {
                 ON pp.id_unidad_producto = up.id
             -- psuc: precio de sucursal específica dentro del menú
             LEFT JOIN pos_menu_precios psuc
-                ON psuc.id_menu = :id_menu
+                ON psuc.id_menu = :id_menu1
                AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
                AND psuc.cod_sucursal = :sucursal
                AND psuc.fecha_desde <= CURDATE()
                AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
             -- pglob: precio global del menú (todas las sucursales)
             LEFT JOIN pos_menu_precios pglob
-                ON pglob.id_menu = :id_menu
+                ON pglob.id_menu = :id_menu2
                AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
                AND pglob.cod_sucursal IS NULL
                AND pglob.fecha_desde <= CURDATE()
@@ -100,8 +100,9 @@ try {
               AND (psuc.precio IS NOT NULL OR pglob.precio IS NOT NULL)";
 
     $params = [
-        ':sucursal' => $sucursal,
-        ':id_menu'  => $id_menu
+        ':sucursal'  => $sucursal,
+        ':id_menu1'  => $id_menu,
+        ':id_menu2'  => $id_menu,
     ];
 
     if ($busqueda !== '') {

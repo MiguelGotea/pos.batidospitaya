@@ -36,13 +36,13 @@ try {
         JOIN grupo_presentacion_producto g
             ON g.id = sg.id_grupo_presentacion_producto
         LEFT JOIN pos_menu_precios psuc
-            ON psuc.id_menu = :id_menu
+            ON psuc.id_menu = :id_menu1
            AND psuc.id_catalogo_menu_pos = cmp.id
            AND psuc.cod_sucursal = :sucursal
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
         LEFT JOIN pos_menu_precios pglob
-            ON pglob.id_menu = :id_menu
+            ON pglob.id_menu = :id_menu2
            AND pglob.id_catalogo_menu_pos = cmp.id
            AND pglob.cod_sucursal IS NULL
            AND pglob.fecha_desde <= CURDATE()
@@ -52,7 +52,7 @@ try {
           AND g.es_combo = 1
         LIMIT 1
     ");
-    $stmtCombo->execute([':id' => $idCatalogo, ':sucursal' => $sucursal, ':id_menu' => $id_menu]);
+    $stmtCombo->execute([':id' => $idCatalogo, ':sucursal' => $sucursal, ':id_menu1' => $id_menu, ':id_menu2' => $id_menu]);
     $combo = $stmtCombo->fetch(PDO::FETCH_ASSOC);
 
     if (!$combo) {
@@ -89,13 +89,13 @@ try {
             ON g.id = sg.id_grupo_presentacion_producto
            AND g.es_combo = 0
         LEFT JOIN pos_menu_precios psuc
-            ON psuc.id_menu = :id_menu
+            ON psuc.id_menu = :id_menu1
            AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND psuc.cod_sucursal = :sucursal
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
         LEFT JOIN pos_menu_precios pglob
-            ON pglob.id_menu = :id_menu
+            ON pglob.id_menu = :id_menu2
            AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND pglob.cod_sucursal IS NULL
            AND pglob.fecha_desde <= CURDATE()
@@ -135,7 +135,8 @@ try {
                     ");
                     $stmt->execute([
                         ':sucursal'    => $sucursal,
-                        ':id_menu'     => $id_menu,
+                        ':id_menu1'    => $id_menu,
+                        ':id_menu2'    => $id_menu,
                         ':id_catalogo' => intval($slotItem['id_catalogo'])
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -151,7 +152,8 @@ try {
                         ");
                         $stmt->execute([
                             ':sucursal'    => $sucursal,
-                            ':id_menu'     => $id_menu,
+                            ':id_menu1'    => $id_menu,
+                            ':id_menu2'    => $id_menu,
                             ':id_subgrupo' => intval($slotItem['id_subgrupo']),
                             ':tamano'      => $slotItem['tamano_producto']
                         ]);
@@ -162,7 +164,8 @@ try {
                         ");
                         $stmt->execute([
                             ':sucursal'    => $sucursal,
-                            ':id_menu'     => $id_menu,
+                            ':id_menu1'    => $id_menu,
+                            ':id_menu2'    => $id_menu,
                             ':id_subgrupo' => intval($slotItem['id_subgrupo'])
                         ]);
                     }
@@ -177,7 +180,8 @@ try {
                     ");
                     $stmt->execute([
                         ':sucursal'       => $sucursal,
-                        ':id_menu'        => $id_menu,
+                        ':id_menu1'       => $id_menu,
+                        ':id_menu2'       => $id_menu,
                         ':nombre_familia' => $slotItem['nombre_catalogo_familia']
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -191,7 +195,8 @@ try {
                     ");
                     $stmt->execute([
                         ':sucursal'       => $sucursal,
-                        ':id_menu'        => $id_menu,
+                        ':id_menu1'       => $id_menu,
+                        ':id_menu2'       => $id_menu,
                         ':id_grupo_mayor' => intval($slotItem['id_grupo_mayor'])
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
