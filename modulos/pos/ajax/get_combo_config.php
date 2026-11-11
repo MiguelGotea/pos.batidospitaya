@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * get_combo_config.php
  * Devuelve la configuración completa de un combo: slots y los productos
@@ -52,6 +52,10 @@ try {
     }
 
     $sucursal = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? null);
+    $id_menu = isset($_GET['id_menu']) ? (int)$_GET['id_menu'] : 0;
+    if ($id_menu <= 0) {
+        throw new Exception('ID de menú no proporcionado');
+    }
 
     // ── 1. Validar que el catálogo existe y pertenece a un grupo combo ──────
     $stmtCombo = $conn->prepare("
@@ -64,14 +68,18 @@ try {
             ON sg.id = cmp.id_subgrupo
         JOIN grupo_presentacion_producto g
             ON g.id = sg.id_grupo_presentacion_producto
-        LEFT JOIN pos_ventas_precios_producto psuc
-            ON psuc.id_catalogo_menu_pos = cmp.id
+        LEFT JOIN pos_menu_precios psuc
+            ON psuc.id_menu = :id_menu
+           AND psuc.id_catalogo_menu_pos = cmp.id
            AND psuc.cod_sucursal = :sucursal
+           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
-        LEFT JOIN pos_ventas_precios_producto pglob
-            ON pglob.id_catalogo_menu_pos = cmp.id
+        LEFT JOIN pos_menu_precios pglob
+            ON pglob.id_menu = :id_menu
+           AND pglob.id_catalogo_menu_pos = cmp.id
            AND pglob.cod_sucursal IS NULL
+           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE cmp.id = :id
@@ -79,7 +87,7 @@ try {
           AND g.es_combo = 1
         LIMIT 1
     ");
-    $stmtCombo->execute([':id' => $idCatalogo, ':sucursal' => $sucursal]);
+    $stmtCombo->execute([':id' => $idCatalogo, ':sucursal' => $sucursal, ':id_menu' => $id_menu]);
     $combo = $stmtCombo->fetch(PDO::FETCH_ASSOC);
 
     if (!$combo) {
@@ -115,14 +123,18 @@ try {
         JOIN grupo_presentacion_producto g
             ON g.id = sg.id_grupo_presentacion_producto
            AND g.es_combo = 0
-        LEFT JOIN pos_ventas_precios_producto psuc
-            ON psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+        LEFT JOIN pos_menu_precios psuc
+            ON psuc.id_menu = :id_menu
+           AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND psuc.cod_sucursal = :sucursal
+           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
-        LEFT JOIN pos_ventas_precios_producto pglob
-            ON pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+        LEFT JOIN pos_menu_precios pglob
+            ON pglob.id_menu = :id_menu
+           AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND pglob.cod_sucursal IS NULL
+           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE pp.es_vendible = 'SI'
@@ -160,6 +172,7 @@ try {
                     ");
                     $stmt->execute([
                         ':sucursal'    => $sucursal,
+                        ':id_menu'     => $id_menu,
                         ':id_catalogo' => intval($slotItem['id_catalogo'])
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -174,9 +187,10 @@ try {
                             ORDER BY cmp.nombre ASC, pp.Nombre ASC
                         ");
                         $stmt->execute([
-                            ':sucursal'   => $sucursal,
-                            ':id_subgrupo'=> intval($slotItem['id_subgrupo']),
-                            ':tamano'     => $slotItem['tamano_producto']
+                            ':sucursal'    => $sucursal,
+                            ':id_menu'     => $id_menu,
+                            ':id_subgrupo' => intval($slotItem['id_subgrupo']),
+                            ':tamano'      => $slotItem['tamano_producto']
                         ]);
                     } else {
                         // tamano_producto NULL → todos los tamaños del subgrupo
@@ -186,6 +200,7 @@ try {
                         ");
                         $stmt->execute([
                             ':sucursal'    => $sucursal,
+                            ':id_menu'     => $id_menu,
                             ':id_subgrupo' => intval($slotItem['id_subgrupo'])
                         ]);
                     }
@@ -200,6 +215,7 @@ try {
                     ");
                     $stmt->execute([
                         ':sucursal'       => $sucursal,
+                        ':id_menu'        => $id_menu,
                         ':nombre_familia' => $slotItem['nombre_catalogo_familia']
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -212,8 +228,9 @@ try {
                         ORDER BY sg.nombre ASC, cmp.nombre ASC, pp.Nombre ASC
                     ");
                     $stmt->execute([
-                        ':sucursal'      => $sucursal,
-                        ':id_grupo_mayor'=> intval($slotItem['id_grupo_mayor'])
+                        ':sucursal'       => $sucursal,
+                        ':id_menu'        => $id_menu,
+                        ':id_grupo_mayor' => intval($slotItem['id_grupo_mayor'])
                     ]);
                     $productosResueltos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     break;

@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 try {
     // ---- Datos de cabecera ----
+    $idMenuUsado    = !empty($_POST['id_menu']) ? (int)$_POST['id_menu'] : null;
     $tipoCliente    = isset($_POST['tipo_cliente']) && $_POST['tipo_cliente'] === 'club' ? 'club' : 'general';
     $idClienteClub  = !empty($_POST['id_cliente_club']) ? (int)$_POST['id_cliente_club'] : null;
     $nombreCliente  = isset($_POST['nombre_cliente']) ? trim($_POST['nombre_cliente']) : null;
@@ -160,8 +161,8 @@ try {
 
     // ---- 1. Insertar en pos_ventas_facturas ----
     $sqlHeader = "INSERT INTO pos_ventas_facturas
-                  (cod_sucursal, cod_cajero, tipo_cliente, id_cliente_club, nombre_cliente_general, subtotal, propina, porcentaje_propina, con_propina, total, estado, fecha_hora)
-                  VALUES (:sucursal, :cajero, :tipo, :id_cliente, :nombre_gen, :subtotal, :propina, :porc_prop, :con_prop, :total, 'bloqueada', NOW())";
+                  (cod_sucursal, cod_cajero, tipo_cliente, id_cliente_club, nombre_cliente_general, subtotal, propina, porcentaje_propina, con_propina, total, id_menu_usado, estado, fecha_hora)
+                  VALUES (:sucursal, :cajero, :tipo, :id_cliente, :nombre_gen, :subtotal, :propina, :porc_prop, :con_prop, :total, :id_menu, 'bloqueada', NOW())";
     
     $stmtHeader = $conn->prepare($sqlHeader);
     $stmtHeader->execute([
@@ -174,7 +175,8 @@ try {
         ':propina'    => $propina,
         ':porc_prop'  => $porcentajeProp,
         ':con_prop'   => $conPropina,
-        ':total'      => $totalFacturaCalculado
+        ':total'      => $totalFacturaCalculado,
+        ':id_menu'    => $idMenuUsado
     ]);
     $idFactura = (int)$conn->lastInsertId();
 

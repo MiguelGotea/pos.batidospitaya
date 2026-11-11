@@ -447,7 +447,7 @@ function cargarProductosElegibles() {
             <span class="spinner-border spinner-border-sm me-1"></span> Cargando…
         </p>`);
 
-    $.get('/modulos/pos/ajax/facturas_get_productos_elegibles.php', function (res) {
+    $.get('/modulos/pos/ajax/facturas_get_productos_elegibles.php', { id_menu: POS_MENU_ID }, function (res) {
         if (!res.success || res.data.length === 0) {
             $('#catalogoPanel').html(`
                 <p class="no-productos-msg">
@@ -821,7 +821,7 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo, idPresentacion
     $.ajax({
         url: 'ajax/get_productos_catalogo.php',
         type: 'GET',
-        data: { ids_catalogo: _idsArray.join(',') },
+        data: { ids_catalogo: _idsArray.join(','), id_menu: POS_MENU_ID },
         dataType: 'json',
         success: _procesarProductosCat,
         error: function () {
@@ -1798,7 +1798,8 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         propina: calcularMontoPropina(calcularSubtotalFactura()),
         con_propina: conPropina ? 1 : 0,
         total: totalFactura,
-        cambio_total: cambioTotal || 0
+        cambio_total: cambioTotal || 0,
+        id_menu: POS_MENU_ID
     }, function (res) {
         if (!res.success) {
             alertError(res.message || 'Error al guardar la factura.');
@@ -2072,7 +2073,7 @@ function abrirModalPersonalizacion(idx) {
     $.ajax({
         url: 'ajax/get_productos_catalogo.php',
         type: 'GET',
-        data: { ids_catalogo: _catIdsParaEdicion.join(',') },
+        data: { ids_catalogo: _catIdsParaEdicion.join(','), id_menu: POS_MENU_ID },
         dataType: 'json',
         success: _procesarProductosCatEdicion,
         error: function () {

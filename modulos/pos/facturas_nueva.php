@@ -6,12 +6,47 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 
 $hoy = date('Y-m-d');
 
+// ── Validar id_menu recibido por GET ──────────────────────────────────────────
+// El id_menu lo elige el cajero desde los botones de menú en index.php
+if (!isset($conn)) {
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
+}
+
+$id_menu_actual = isset($_GET['id_menu']) ? (int)$_GET['id_menu'] : 0;
+$menu_actual    = null;
+
+if ($id_menu_actual > 0) {
+    try {
+        $sucursal_sesion = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? null);
+        $_menuStmt = $conn->prepare(
+            "SELECT m.id, m.nombre
+             FROM pos_menu m
+             WHERE m.id = :id
+               AND EXISTS (
+                   SELECT 1 FROM pos_menu_precios p
+                   WHERE p.id_menu = m.id
+                     AND (p.cod_sucursal = :suc OR p.cod_sucursal IS NULL)
+                     AND p.fecha_desde <= CURDATE()
+                     AND (p.fecha_hasta IS NULL OR p.fecha_hasta >= CURDATE())
+               )
+             LIMIT 1"
+        );
+        $_menuStmt->execute([':id' => $id_menu_actual, ':suc' => $sucursal_sesion]);
+        $menu_actual = $_menuStmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $_menuEx) {
+        $menu_actual = null;
+    }
+}
+
+// Si el menú no es válido para esta sucursal, redirigir al index
+if (!$menu_actual) {
+    header('Location: /index.php?menu_invalido=1');
+    exit();
+}
+
 // Cargar tipo de cambio USD vigente desde pos_ventas_tipo_cambio
 $tipoCambioUSD_php = 0;
 try {
-    if (!isset($conn)) {
-        require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
-    }
     $_tcStmt = $conn->prepare(
         "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
     );
@@ -541,8 +576,11 @@ try {
     <script>
         // Tipo de cambio USD/NIO vigente — inyectado desde PHP, no editable por el usuario
         const TIPO_CAMBIO_USD_INICIAL = <?php echo json_encode($tipoCambioUSD_php); ?>;
-        // ID de sucursal del POS -- para evaluar condiciones de promociones
+        // ID de sucursal del POS — para evaluar condiciones de promociones
         const POS_SUCURSAL_ID = <?php echo json_encode($_SESSION['pos_store_sucursal'] ?? $_SESSION['pos_device_sucursal'] ?? ''); ?>;
+        // Menú activo elegido desde index.php — se pasa a todos los endpoints de productos
+        const POS_MENU_ID     = <?php echo json_encode($menu_actual['id']); ?>;
+        const POS_MENU_NOMBRE = <?php echo json_encode($menu_actual['nombre']); ?>;
     </script>
     <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>

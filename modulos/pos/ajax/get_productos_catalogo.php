@@ -24,6 +24,10 @@ try {
     $placeholders = implode(',', array_fill(0, count($idsLimpios), '?'));
 
     $sucursal = $_SESSION['pos_store_sucursal'] ?? ($_SESSION['pos_device_sucursal'] ?? null);
+    $id_menu = isset($_GET['id_menu']) ? (int)$_GET['id_menu'] : 0;
+    if ($id_menu <= 0) {
+        throw new Exception('ID de menú no proporcionado');
+    }
 
     $stmt = $conn->prepare("
         SELECT pp.id,
@@ -74,14 +78,18 @@ try {
         FROM producto_presentacion pp
         LEFT JOIN unidad_producto up
             ON up.id = pp.id_unidad_producto
-        LEFT JOIN pos_ventas_precios_producto psuc
-            ON psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+        LEFT JOIN pos_menu_precios psuc
+            ON psuc.id_menu = ?
+           AND psuc.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND psuc.cod_sucursal = ?
+           AND psuc.id_tipo_cliente IS NULL
            AND psuc.fecha_desde <= CURDATE()
            AND (psuc.fecha_hasta IS NULL OR psuc.fecha_hasta >= CURDATE())
-        LEFT JOIN pos_ventas_precios_producto pglob
-            ON pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
+        LEFT JOIN pos_menu_precios pglob
+            ON pglob.id_menu = ?
+           AND pglob.id_catalogo_menu_pos = pp.id_catalogo_menu_pos
            AND pglob.cod_sucursal IS NULL
+           AND pglob.id_tipo_cliente IS NULL
            AND pglob.fecha_desde <= CURDATE()
            AND (pglob.fecha_hasta IS NULL OR pglob.fecha_hasta >= CURDATE())
         WHERE pp.id_catalogo_menu_pos IN ($placeholders)
@@ -90,7 +98,7 @@ try {
           AND (psuc.precio IS NOT NULL OR pglob.precio IS NOT NULL)
         ORDER BY pp.Nombre ASC
     ");
-    $stmt->execute(array_merge([$sucursal], array_values($idsLimpios)));
+    $stmt->execute(array_merge([$id_menu, $sucursal, $id_menu], array_values($idsLimpios)));
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([

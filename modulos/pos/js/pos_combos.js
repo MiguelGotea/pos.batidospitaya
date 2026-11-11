@@ -212,7 +212,7 @@ function abrirModalCombo(idCatalogo, nombreCombo) {
     }
     _comboModalBS.show();
 
-    $.getJSON('/modulos/pos/ajax/get_combo_config.php', { id_catalogo_menu_pos: idCatalogo })
+    $.getJSON('/modulos/pos/ajax/get_combo_config.php', { id_catalogo_menu_pos: idCatalogo, id_menu: POS_MENU_ID })
         .done(function (res) {
             if (!res.success) {
                 $('#comboCuerpo').html('<div class="alert alert-danger m-3">' + escHtml(res.message || 'Error al cargar el combo.') + '</div>');
