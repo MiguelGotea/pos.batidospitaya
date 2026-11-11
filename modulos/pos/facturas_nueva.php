@@ -12,8 +12,8 @@ if (!isset($conn)) {
     require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 }
 
-$id_menu_actual = isset($_GET['id_menu']) ? (int)$_GET['id_menu'] : 0;
-$menu_actual    = null;
+$id_menu_actual = isset($_GET['id_menu']) ? (int) $_GET['id_menu'] : 0;
+$menu_actual = null;
 
 if ($id_menu_actual > 0) {
     try {
@@ -289,7 +289,8 @@ try {
                                                 <th>PRODUCTO</th>
                                                 <th style="width:105px;" class="text-center">CANT.</th>
                                                 <th style="width:100px;" class="text-end">PRECIO</th>
-                                                <th id="thCanjeado" style="width:70px; display:none;" class="text-center">CANJEADO</th>
+                                                <th id="thCanjeado" style="width:70px; display:none;"
+                                                    class="text-center">CANJEADO</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tablaDetalleBody">
@@ -310,7 +311,8 @@ try {
                             <div class="card-header-factura">
                                 <i class="bi bi-credit-card-2-front-fill"></i>
                                 Método de Pago
-                                <small class="ms-auto text-white-50" style="font-size: .72rem; font-weight: normal;">Toca para agregar</small>
+                                <small class="ms-auto text-white-50"
+                                    style="font-size: .72rem; font-weight: normal;">Toca para agregar</small>
                             </div>
                             <div class="card-body-factura seccion-metodos-pago p-3">
                                 <div class="metodos-pago-grid mb-2">
@@ -358,8 +360,8 @@ try {
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="lbl-desglose mb-0">Propina (2%)</span>
                                             <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
-                                                <input class="form-check-input switch-propina-pitaya"
-                                                    type="checkbox" id="switchPropina">
+                                                <input class="form-check-input switch-propina-pitaya" type="checkbox"
+                                                    id="switchPropina">
                                             </div>
                                         </div>
                                         <span class="val-desglose" id="txtMontoPropina">C$ 0.00</span>
@@ -369,8 +371,8 @@ try {
                                         <span class="val-total-pagar" id="totalFacturaMonto">C$ 0.00</span>
                                     </div>
                                     <!-- Estado de cobertura de pagos -->
-                                    <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2"
-                                        style="display: none;"></div>
+                                    <div id="alertaCoberturaPagos" class="alerta-cobertura mt-2" style="display: none;">
+                                    </div>
                                 </div>
                             </div>
 
@@ -534,10 +536,12 @@ try {
                         </div>
                         <div>
                             <h5 class="modal-title mb-0" id="modalComboLabel">Configurar Combo</h5>
-                            <span class="modal-subtitle-pos" id="modalComboSubtitulo">Elige los productos de cada slot</span>
+                            <span class="modal-subtitle-pos" id="modalComboSubtitulo">Elige los productos de cada
+                                slot</span>
                         </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
 
                 <!-- Navegación de slots -->
@@ -558,7 +562,8 @@ try {
                         <strong id="comboTotalDisplay" class="text-dark" style="font-size:1rem;">C$ 0.00</strong>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn-cancelar-factura px-4"
+                            data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn-guardar-factura px-4" id="btnAplicarCombo">
                             <i class="bi bi-check2-circle me-1"></i> Agregar al Pedido
                         </button>
@@ -578,7 +583,7 @@ try {
         // ID de sucursal del POS — para evaluar condiciones de promociones
         const POS_SUCURSAL_ID = <?php echo json_encode($_SESSION['pos_store_sucursal'] ?? $_SESSION['pos_device_sucursal'] ?? ''); ?>;
         // Menú activo elegido desde index.php — se pasa a todos los endpoints de productos
-        const POS_MENU_ID     = <?php echo json_encode($menu_actual['id']); ?>;
+        const POS_MENU_ID = <?php echo json_encode($menu_actual['id']); ?>;
         const POS_MENU_NOMBRE = <?php echo json_encode($menu_actual['nombre']); ?>;
     </script>
     <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
