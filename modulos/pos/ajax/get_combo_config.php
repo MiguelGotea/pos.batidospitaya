@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * get_combo_config.php
  * Devuelve la configuración completa de un combo: slots y los productos
