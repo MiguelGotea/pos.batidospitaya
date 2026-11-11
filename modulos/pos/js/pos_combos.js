@@ -471,6 +471,10 @@ function _abrirPersComboItem(slotIdx, selIdx) {
         _lenAntes: detalleFactura.length   // para revertir si el handler original agrega algo
     };
 
+    // Elevar z-index del modal de personalización inmediatamente para que quede delante del combo
+    var $mp = $('#modalPersonalizacion');
+    $mp.addClass('modal-sobre-combo').css('z-index', 1075);
+
     // Abrir el modal de personalizacion (el combo modal NO se cierra)
     abrirModalSeleccionProducto(
         [sel.id_catalogo_menu_pos],
@@ -479,13 +483,20 @@ function _abrirPersComboItem(slotIdx, selIdx) {
         sel.personalizacion
     );
 
-    // Elevar z-index del modal de pers para que quede encima del modal de combo
+    // Reforzar z-index del modal y su backdrop para garantizar que quede delante
     setTimeout(function () {
-        var $msp = $('#modalSeleccionProducto');
-        if ($msp.length && $msp.hasClass('show')) {
-            $msp.css('z-index', 1075);
-            // El ultimo backdrop es el del modal de pers
-            $('.modal-backdrop').last().css('z-index', 1070);
+        var $mp = $('#modalPersonalizacion');
+        if ($mp.length) {
+            $mp.addClass('modal-sobre-combo').css('z-index', 1075);
+            $('.modal-backdrop').last().addClass('backdrop-sobre-combo').css('z-index', 1070);
+        }
+    }, 50);
+
+    setTimeout(function () {
+        var $mp = $('#modalPersonalizacion');
+        if ($mp.length) {
+            $mp.addClass('modal-sobre-combo').css('z-index', 1075);
+            $('.modal-backdrop').last().addClass('backdrop-sobre-combo').css('z-index', 1070);
         }
     }, 200);
 }
@@ -500,11 +511,43 @@ function _abrirPersComboItem(slotIdx, selIdx) {
    - Restaura z-indices y re-renderiza el slot.
    ============================================================ */
 $(document).ready(function () {
+    var $mpModal = $('#modalPersonalizacion');
     var $btnGuardarMSP = $('#mpBtnGuardar');
+
+    // Eventos Bootstrap en modalPersonalizacion para apilamiento limpio sobre modalCombo
+    if ($mpModal.length) {
+        $mpModal.on('show.bs.modal shown.bs.modal', function () {
+            if ($('#modalCombo').hasClass('show') || _comboSubflujoPendiente) {
+                $(this).addClass('modal-sobre-combo').css('z-index', 1075);
+                $('.modal-backdrop').last().addClass('backdrop-sobre-combo').css('z-index', 1070);
+            }
+        });
+
+        $mpModal.on('hidden.bs.modal', function () {
+            $(this).removeClass('modal-sobre-combo').css('z-index', '');
+            $('.modal-backdrop').removeClass('backdrop-sobre-combo').css('z-index', '');
+
+            // Si el modal de combo sigue abierto, asegurar scroll y clase modal-open en body
+            if ($('#modalCombo').hasClass('show')) {
+                $('body').addClass('modal-open');
+                $('#modalCombo').css('overflow-y', 'auto');
+            }
+
+            // Si se cerró sin guardar (ej. Cancelar o botón X), liberar subflujo pendiente
+            setTimeout(function () {
+                if (_comboSubflujoPendiente && !_comboSubflujoPendiente._procesandoGuardar) {
+                    _comboSubflujoPendiente = null;
+                }
+            }, 200);
+        });
+    }
+
     if (!$btnGuardarMSP.length) return;
 
     $btnGuardarMSP.on('click.combo_subflujo', function () {
         if (!_comboSubflujoPendiente) return; // no es sub-flujo de combo
+
+        _comboSubflujoPendiente._procesandoGuardar = true;
 
         // Esperar brevemente a que el handler original termine
         setTimeout(function () {
@@ -518,11 +561,16 @@ $(document).ready(function () {
             // Re-renderizar sin los items revertidos
             actualizarTablaDetalle();
 
+            // Obtener personalización configurada (en facturas_nueva.js es _mpDraft)
+            var borrador = (typeof _mpDraft !== 'undefined' && _mpDraft)
+                ? _mpDraft
+                : ((typeof _mspBorrador !== 'undefined' && _mspBorrador) ? _mspBorrador : _persVacia());
+
             if (pend._modoEdicionTicket) {
                 // Edicion de hijo ya guardado en el ticket (desde actualizarTablaDetalle)
                 var item = detalleFactura[pend.itemIdx];
                 if (item && item.combo_items && item.combo_items[pend.hijoIdx]) {
-                    item.combo_items[pend.hijoIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador || _persVacia()));
+                    item.combo_items[pend.hijoIdx].personalizacion = JSON.parse(JSON.stringify(borrador));
                     actualizarTablaDetalle();
                 }
             } else {
@@ -530,14 +578,20 @@ $(document).ready(function () {
                 if (_comboState && _comboState.selecciones) {
                     var sels = _comboState.selecciones[pend.slotIdx];
                     if (sels && typeof sels[pend.selIdx] !== 'undefined') {
-                        sels[pend.selIdx].personalizacion = JSON.parse(JSON.stringify(_mspBorrador || _persVacia()));
+                        sels[pend.selIdx].personalizacion = JSON.parse(JSON.stringify(borrador));
                     }
                 }
             }
 
             // 2. Restaurar z-indices al estado normal
-            $('#modalSeleccionProducto').css('z-index', '');
-            $('.modal-backdrop').css('z-index', '');
+            $('#modalPersonalizacion').removeClass('modal-sobre-combo').css('z-index', '');
+            $('.modal-backdrop').removeClass('backdrop-sobre-combo').css('z-index', '');
+
+            // Si el combo sigue visible, conservar modal-open en body
+            if ($('#modalCombo').hasClass('show')) {
+                $('body').addClass('modal-open');
+                $('#modalCombo').css('overflow-y', 'auto');
+            }
 
             // 3. Re-renderizar el slot para mostrar el badge "personalizado"
             _renderizarSlotActivo();

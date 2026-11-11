@@ -722,7 +722,7 @@ let _mspIdxTicket = -1;     // índice en detalleFactura (si es edición)
 const _catCache = {};
 
 /* ---- Abrir el modal de selección de producto de una clasificación ---- */
-function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
+function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo, idPresentacionPrevia, personalizacionPrevia) {
     // idsCatalogo puede ser un array [1,2,3] o un entero legado
     const _idsArray = Array.isArray(idsCatalogo) ? idsCatalogo : [idsCatalogo];
     _mspIdCatalogo = _idsArray[0];   // conservar primer ID como referencia
@@ -732,17 +732,23 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
     _mspModoEdicion = false;
     _mspIdxTicket = -1;
 
-    // Resetear draft de personalización
+    // Resetear draft de personalización (o cargar personalización previa si existe)
     _mpIdx = -1;
-    _mpDraft = {
-        ingredientes_quitados: [],
-        ingredientes_sustituidos: [],
-        endulzante_id: null,
-        endulzante_nombre: '',
-        extras_agregados: [],
-        monto_extras: 0,
-        notas: ''
-    };
+    if (personalizacionPrevia && (personalizacionPrevia.endulzante_id || (personalizacionPrevia.extras_agregados && personalizacionPrevia.extras_agregados.length) || (personalizacionPrevia.ingredientes_quitados && personalizacionPrevia.ingredientes_quitados.length) || (personalizacionPrevia.notas && personalizacionPrevia.notas.trim()))) {
+        _mpDraft = JSON.parse(JSON.stringify(personalizacionPrevia));
+        _mpDraftOriginal = JSON.parse(JSON.stringify(personalizacionPrevia));
+    } else {
+        _mpDraft = {
+            ingredientes_quitados: [],
+            ingredientes_sustituidos: [],
+            endulzante_id: null,
+            endulzante_nombre: '',
+            extras_agregados: [],
+            monto_extras: 0,
+            notas: ''
+        };
+        _mpDraftOriginal = null;
+    }
 
     // Configurar encabezado del modal
     $('#modalPersonalizacionLabel').text(escHtml(nombreCatalogo));
@@ -769,16 +775,26 @@ function abrirModalSeleccionProducto(idsCatalogo, nombreCatalogo) {
             _catCache[_catKey] = res;
         }
 
-        // Elegir por defecto el producto más caro
+        // Elegir por defecto la presentación previa si coincide, o el producto más caro
         let maxIdx = 0;
-        let maxPrecio = -1;
-        _mspProductos.forEach((p, i) => {
-            const precio = parseFloat(p.precio_venta || 0);
-            if (precio > maxPrecio) {
-                maxPrecio = precio;
-                maxIdx = i;
+        let matched = false;
+        if (idPresentacionPrevia) {
+            const fIdx = _mspProductos.findIndex(p => parseInt(p.id) === parseInt(idPresentacionPrevia));
+            if (fIdx >= 0) {
+                maxIdx = fIdx;
+                matched = true;
             }
-        });
+        }
+        if (!matched) {
+            let maxPrecio = -1;
+            _mspProductos.forEach((p, i) => {
+                const precio = parseFloat(p.precio_venta || 0);
+                if (precio > maxPrecio) {
+                    maxPrecio = precio;
+                    maxIdx = i;
+                }
+            });
+        }
         _mspIdxSelec = maxIdx;
 
         _renderSelectorProductos();
@@ -853,9 +869,9 @@ function _mspSeleccionarProducto(idx) {
     }
     $('#mpAjustePrecio').hide();
 
-    // En modo edición con cambio de variante: fusionar personalización original con la nueva receta.
+    // En modo edición o con personalización previa: fusionar personalización original con la nueva receta.
     // En modo nuevo (desde catálogo): resetear el draft completamente.
-    if (_mspModoEdicion && _mpDraftOriginal) {
+    if ((_mspModoEdicion || _mpDraftOriginal) && _mpDraftOriginal) {
         // La fusión real ocurre en el callback de éxito del AJAX, una vez que tenemos la nueva receta.
         // Por ahora copiamos el draft original como punto de partida para que la UI
         // pueda previsualizar notas, endulzante y extras mientras carga.
@@ -878,8 +894,8 @@ function _mspSeleccionarProducto(idx) {
     // Cargar receta (usa caché igual que antes)
     const idPres = parseInt(p.id);
     if (_mpCache[idPres]) {
-        // Si estamos en modo edición, fusionar antes de renderizar
-        if (_mspModoEdicion && _mpDraftOriginal) {
+        // Si estamos en modo edición o con personalización previa, fusionar antes de renderizar
+        if ((_mspModoEdicion || _mpDraftOriginal) && _mpDraftOriginal) {
             _mpDraft = _fusionarPersonalizacion(_mpDraftOriginal, _mpCache[idPres]);
         }
         _mpRenderContenido(_mpCache[idPres]);
@@ -894,8 +910,8 @@ function _mspSeleccionarProducto(idx) {
         success: function (res) {
             if (res.success) {
                 _mpCache[idPres] = res;
-                // En modo edición: fusionar personalización original con la nueva receta
-                if (_mspModoEdicion && _mpDraftOriginal) {
+                // En modo edición o con personalización previa: fusionar personalización original con la nueva receta
+                if ((_mspModoEdicion || _mpDraftOriginal) && _mpDraftOriginal) {
                     _mpDraft = _fusionarPersonalizacion(_mpDraftOriginal, res);
                 }
                 _mpRenderContenido(res);

@@ -3986,3 +3986,21 @@
     background: #cbd5e1;
     border-radius: 4px;
 }
+
+/* ── Modales apilados: Personalización encima del Modal de Combo ── */
+.modal-backdrop ~ .modal-backdrop {
+    z-index: 1065 !important;
+}
+
+#modalPersonalizacion.modal-sobre-combo {
+    z-index: 1075 !important;
+}
+
+.modal-backdrop.backdrop-sobre-combo {
+    z-index: 1070 !important;
+}
+
+.swal2-container {
+    z-index: 2000 !important;
+}
+
