@@ -14,28 +14,31 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
 $hoy = date('Y-m-d');
 
 
-// Obtener la sucursal activa según la lógica de asignación (el más reciente sin fecha de fin o con fecha futura)
-$sucursalId   = null;
-$sucursalNombre = 'Sin Sucursal';
+// Obtener la sucursal activa desde la sesión del dispositivo/tienda (seteada en auth_pos.php)
+$sucursalId     = $_SESSION['pos_store_sucursal']        ?? null;
+$sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sin Sucursal';
 
-try {
-    $stmtS = $conn->prepare("
-        SELECT s.codigo, s.nombre 
-        FROM sucursales s
-        JOIN AsignacionNivelesCargos anc ON s.codigo = anc.Sucursal
-        WHERE anc.CodOperario = ? 
-        AND (anc.Fin IS NULL OR anc.Fin > NOW())
-        ORDER BY anc.Fecha DESC 
-        LIMIT 1
-    ");
-    $stmtS->execute([$_SESSION['usuario_id']]);
-    $sRow = $stmtS->fetch();
-    if ($sRow) {
-        $sucursalId     = $sRow['codigo'];
-        $sucursalNombre = $sRow['nombre'];
+// Si por alguna razón no viene en sesión, intentar desde la BD con el colaborador logueado
+if (!$sucursalId && !empty($_SESSION['pos_colaborador_id'])) {
+    try {
+        $stmtS = $conn->prepare("
+            SELECT s.codigo, s.nombre 
+            FROM sucursales s
+            JOIN AsignacionNivelesCargos anc ON s.codigo = anc.Sucursal
+            WHERE anc.CodOperario = ? 
+            AND (anc.Fin IS NULL OR anc.Fin > NOW())
+            ORDER BY anc.Fecha DESC 
+            LIMIT 1
+        ");
+        $stmtS->execute([$_SESSION['pos_colaborador_id']]);
+        $sRow = $stmtS->fetch();
+        if ($sRow) {
+            $sucursalId     = $sRow['codigo'];
+            $sucursalNombre = $sRow['nombre'];
+        }
+    } catch (Exception $e) {
+        // Error en la consulta, se mantiene el valor por defecto
     }
-} catch (Exception $e) {
-    // Error en la consulta, se mantiene el valor por defecto
 }
 
 // Obtener último tipo de cambio

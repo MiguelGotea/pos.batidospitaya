@@ -28,7 +28,7 @@ $(function () {
         const cls    = moneda === 'NIO' ? ''     : 'usd';
         const labelF = moneda === 'NIO'
             ? (denom < 1 ? denom.toFixed(2) : denom.toFixed(2).replace('.00',''))
-            : '$' + denom;
+            : denom;
 
         return `
         <tr data-moneda="${moneda}" data-denom="${denom}">
