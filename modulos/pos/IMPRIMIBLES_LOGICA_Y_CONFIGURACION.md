@@ -2,7 +2,7 @@
 ## Lógica de Negocio, Configuración y Referencia Técnica
 
 > **Módulo:** `modulos/pos/facturas_nueva.php` + `facturas_nueva.js`  
-> **Última actualización:** Noviembre 2026 (rev. 3 — Nov 13 2026)  
+> **Última actualización:** Noviembre 2026 (rev. 4 — Nov 13 2026)  
 > **Autor técnico:** Sistema Pitaya Web
 
 ---
@@ -26,6 +26,7 @@
 8. [Notas Técnicas para Futuros Cambios](#8-notas-técnicas-para-futuros-cambios)
 9. [Cambios Visuales — Rev. 2 (Nov 2, 2026)](#9-cambios-visuales--rev-2-nov-2-2026)
 10. [Cambios de Comportamiento — Rev. 3 (Nov 13, 2026)](#10-cambios-de-comportamiento--rev-3-nov-13-2026)
+11. [Motor de Impresión Consolidada — Rev. 4 (Nov 13, 2026)](#11-motor-de-impresión-consolidada--rev-4-nov-13-2026)
 
 ---
 
@@ -347,19 +348,19 @@ Incluye todos los productos de la orden que:
 
 ```mermaid
 flowchart TD
-    A[Cajero llena la factura] --> B[Click en 'Guardar e Imprimir']
-    B --> C{Modal de Confirmación\nSweetAlert2}
+    A[Cajero llena la factura] --> B["Click en 'Guardar e Imprimir'"]
+    B --> C{"Modal de Confirmación\nSweetAlert2"}
     C -- Cancelar --> A
     C -- Confirmar --> D[POST a facturas_guardar.php]
     D --> E{¿Guardado exitoso?}
     E -- Error --> F[Mostrar error al cajero]
-    E -- Éxito --> G[GET facturas_get_imprimibles.php?id_factura=X]
+    E -- Éxito --> G["POST facturas_get_imprimibles.php\n?id_factura=X"]
     G --> H[JSON con factura + comandas]
-    H --> I[Iframe 1: Factura Cliente\nwindow.print → espera 550ms]
-    I --> J[Iframe 2: Comanda Estación 1\nwindow.print → espera 550ms]
-    J --> K[Iframe N: Comanda Estación N\nwindow.print → espera 550ms]
-    K --> L[Callback onTerminado dispara redirect]
-    L --> M[Navega a ventas_historial.php]
+    H --> I["_consolidarTickets()\nUn único HTML con page-break entre tickets"]
+    I --> J["_imprimirHtml()\niframe oculto → window.print()"]
+    J --> K[UN solo diálogo de impresión\nFactura pág.1 · Comanda pág.2+]
+    K --> L[afterprint dispara al cerrar el diálogo]
+    L --> M[onTerminado → redirect a ventas_historial.php]
 ```
 
 ### Detalle de cada paso:
@@ -367,21 +368,27 @@ flowchart TD
 | Paso | Descripción |
 |------|-------------|
 | **1. Llenado** | Cajero ingresa productos, cantidad, personalizaciones y cliente |
-| **2. Botón** | "Guardar e Imprimir" (renombrado desde "Guardar Factura") |
+| **2. Botón** | "Guardar e Imprimir" |
 | **3. Confirmación** | Modal SweetAlert2: título "¿Guardar e Imprimir?", texto de advertencia sobre bloqueo, botón Sí (verde) / No (gris) |
 | **4. Guardado** | POST a `facturas_guardar.php` → registra en `pos_ventas_facturas` y `pos_ventas_factura_lineas` |
-| **5. Datos** | GET a `facturas_get_imprimibles.php?id_factura=X` → devuelve JSON estructurado |
-| **6. Impresión** | JS inyecta cada documento en un iframe oculto y llama `window.print()` secuencialmente con 550ms de espera entre cada uno. Una bandera `yaImprimio` por iframe evita doble disparo cuando tanto `onload` como el fallback de 1200ms se activan. |
-| **7. Corte** | Cada trabajo independiente en el spooler provoca corte automático de papel (requiere configuración del driver) |
-| **8. Redirect** | Cuando el último documento termina de procesarse, el callback `onTerminado` navega automáticamente a `ventas_historial.php` |
-| **9. Historial** | El cajero queda en la página de historial de ventas, lista para ver la venta recién guardada |
+| **5. Datos** | POST a `facturas_get_imprimibles.php?id_factura=X` → devuelve JSON con factura + comandas |
+| **6. Consolidación** | `_consolidarTickets()` combina todos los HTMLs en un único documento con `page-break-after: always` entre tickets |
+| **7. Impresión** | `_imprimirHtml()` inyecta el documento consolidado en un iframe y llama `window.print()` **una sola vez** |
+| **8. Diálogo único** | El cajero ve UN solo diálogo (pág. 1 = factura, pág. 2+ = comandas). Confirma una sola vez. |
+| **9. Corte** | El driver de la impresora realiza el corte al final del trabajo (o por página si está configurado) |
+| **10. Redirect** | El evento `afterprint` dispara al cerrar el diálogo → callback `onTerminado` → navega a `ventas_historial.php` |
+| **11. Historial** | El cajero queda en el historial de ventas, listo para ver la venta recién guardada |
 
-### Detección de modo de impresión:
+### Comportamiento según entorno:
 
-El módulo `pos_impresion_termica.js` llama a `window.print()` directamente dentro de cada iframe:
+| Entorno | `window.print()` | `afterprint` | Resultado |
+|---------|-----------------|--------------|-----------|
+| **Desktop + kiosk-printing** | No bloqueante, silencioso | Dispara al instante | Imprime sin diálogo → redirect inmediato |
+| **Desktop sin kiosk-printing** | Bloqueante (espera al usuario) | Dispara al cerrar diálogo | Diálogo → usuario confirma → redirect |
+| **Tablet Android (Samsung Tab A9)** | No bloqueante | Dispara al instante o al cerrar | Un diálogo con todas las páginas → usuario confirma → redirect |
 
-- **Con `--kiosk-printing`**: imprime inmediatamente a la impresora predeterminada, sin diálogos.
-- **Sin `--kiosk-printing`**: muestra el diálogo estándar del navegador. El cajero puede seleccionar la impresora manualmente. El flujo no se rompe, pero requiere un paso adicional por cada documento.
+> [!NOTE]
+> En versiones anteriores se usaban iframes independientes por cada ticket (secuencial). Esto fallaba en Android porque `window.print()` es no-bloqueante y `afterprint` puede disparar antes de que el usuario interactúe. El enfoque consolidado (un solo documento, un solo diálogo) resuelve el problema en todos los entornos.
 
 ---
 
@@ -941,35 +948,21 @@ const ejecutarImpresion = () => {
 
 ---
 
-### 10.2 Corrección: comanda no se imprimía al presionar "Imprimir"
+### 10.2 Corrección: comanda no se imprimía al presionar "Imprimir" — intentos previos
 
-**Problema detectado:** Al usar el POS sin `--kiosk-printing` (con diálogo del navegador), el redirect a `ventas_historial.php` se ejecutaba 800 ms después de llamar `lanzarImpresionCompleta`, **antes** de que el usuario terminara de confirmar el primer diálogo de impresión (factura). Cuando el usuario cerraba ese diálogo, la página ya había navegado y los iframes de las comandas pendientes se destruían sin imprimirse.
+**Problema detectado:** Al usar el POS sin `--kiosk-printing` (con diálogo del navegador), el redirect a `ventas_historial.php` se ejecutaba antes de que el usuario terminara de confirmar todos los diálogos de impresión.
 
-**Solución aplicada:** `lanzarImpresionCompleta` ahora acepta un callback opcional `onTerminado` que se invoca solo cuando el **último documento** de la secuencia ha sido procesado. El redirect se mueve a ese callback.
+Se intentaron varias soluciones intermedias que fallaron en Android (Samsung Galaxy Tab A9):
 
-```javascript
-// pos_impresion_termica.js
-function lanzarImpresionCompleta(payload, onTerminado) { ... }
+| Intento | Por qué falló en Android Chrome |
+|---|---|
+| `setTimeout(800ms)` hardcoded tras `lanzarImpresionCompleta` | Redirect antes de que el usuario termine con el primer diálogo |
+| Callback `onTerminado` al final de `imprimirSecuencial` | `afterprint` dispara **inmediatamente** al llamar `print()` en Android, no al cerrar el diálogo |
+| `afterprint` + fallback 60 s por iframe | Mismo problema: `afterprint` inmediato → 600ms → redirect mientras comanda aún visible |
 
-function imprimirSecuencial(documentos, indice, onTerminado) {
-    if (indice >= documentos.length) {
-        if (typeof onTerminado === 'function') onTerminado(); // ← aquí se redirige
-        return;
-    }
-    // ...
-    imprimirSecuencial(documentos, indice + 1, onTerminado); // propagado recursivamente
-}
-```
+**Causa raíz en Android Chrome:** `window.print()` es **no-bloqueante** y el evento `afterprint` se dispara antes de que el usuario interactúe con el diálogo. Ningún enfoque secuencial por iframes funciona de forma confiable.
 
-```javascript
-// facturas_nueva.js
-lanzarImpresionCompleta(impData, function () {
-    window.location.href = '/modulos/pos/ventas_historial.php';
-});
-```
-
-> [!IMPORTANT]
-> El redirect ocurre **después** del último `IMPRESION_DELAY_MS` post-impresión. Con `--kiosk-printing` (sin diálogos) el redirect es casi inmediato. Sin kiosk printing, el redirect ocurre solo cuando el usuario cierra el último diálogo de impresión y el delay de 550 ms expira.
+**Solución definitiva:** ver §11.
 
 ---
 
@@ -1003,3 +996,106 @@ lanzarImpresionCompleta(impData, function () {
 // Después
 ['id' => 'ventas', 'url' => '/modulos/pos/ventas_historial.php', 'sub' => []]
 ```
+
+
+---
+
+## 11. Motor de Impresión Consolidada — Rev. 4 (Nov 13, 2026)
+
+### 11.1 Contexto: por qué el enfoque secuencial falló en Android
+
+El sistema usaba iframes independientes, uno por ticket, llamando `window.print()` en cada uno de forma secuencial. Este diseño funcionaba correctamente en desktop Chrome/Edge pero presentaba un problema fundamental en **Android Chrome (Samsung Galaxy Tab A9 SM-X110)**:
+
+| Supuesto | Desktop Chrome | Android Chrome |
+|---|---|---|
+| `window.print()` bloquea JS | ✅ Sí | ❌ No (retorna de inmediato) |
+| `afterprint` dispara al cerrar diálogo | ✅ Sí | ❌ No (dispara al llamar `print()`) |
+| Iframes secuenciales funcionan | ✅ Sí | ❌ No |
+
+**Consecuencia:** En Android, `afterprint` disparaba inmediatamente al llamar `print()`. El sistema avanzaba al siguiente iframe antes de que el usuario interactuara con el diálogo actual. La comanda nunca llegaba a imprimirse, y el redirect ocurría mientras el cajero aún veía el diálogo de la factura.
+
+---
+
+### 11.2 Solución: documento HTML consolidado
+
+En lugar de múltiples iframes y múltiples llamadas a `print()`, todos los tickets se consolidan en **un único documento HTML** con saltos de página CSS entre ellos. Se hace **una sola llamada** a `window.print()`.
+
+```
+Antes (secuencial — roto en Android):
+  iframe0 → print(factura)   → afterprint → iframe1 → print(comanda) → afterprint → redirect
+
+Después (consolidado — funciona en todos los entornos):
+  _consolidarTickets([factura, comanda]) → un iframe → print() → UN diálogo → afterprint → redirect
+```
+
+**Funciones nuevas en `pos_impresion_termica.js`:**
+
+#### `_consolidarTickets(htmlDocs)`
+
+Recibe un array de strings HTML (uno por ticket) y devuelve un único documento HTML con todos los tickets separados por `page-break-after: always`.
+
+```javascript
+function _consolidarTickets(htmlDocs) {
+    // Extrae CSS del primer ticket (todos comparten los mismos estilos inline)
+    const headContent = htmlDocs[0].match(/<head[^>]*>([\s\S]*?)<\/head>/i)[1];
+
+    const secciones = htmlDocs.map((html, idx) => {
+        const contenido = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)[1].trim();
+        const esUltimo  = idx === htmlDocs.length - 1;
+        const estiloSalto = esUltimo ? '' : ' style="page-break-after:always;break-after:page;"';
+        return `<section class="ticket-seccion"${estiloSalto}>${contenido}</section>`;
+    });
+
+    return `<!DOCTYPE html><html lang="es"><head>${headContent}...</head>
+<body>${secciones.join('\n')}</body></html>`;
+}
+```
+
+#### `_imprimirHtml(html, onTerminado)`
+
+Inyecta el HTML consolidado en un iframe oculto, llama `window.print()` una sola vez, y espera el evento `afterprint` para invocar `onTerminado` (que ejecuta el redirect).
+
+```javascript
+function _imprimirHtml(html, onTerminado) {
+    // iframe 1×1 px, invisible
+    // lanzarPrint() → suscribirse a afterprint → print() → finalizar() → onTerminado()
+    // Fallback 60 s si afterprint nunca dispara
+}
+```
+
+---
+
+### 11.3 Comportamiento del corte de papel
+
+Con el enfoque consolidado, **todos los tickets viajan en un único trabajo de impresión**. El comportamiento del corte entre factura y comanda depende de la configuración del driver:
+
+| Configuración del driver | Resultado |
+|---|---|
+| **Corte solo al final del trabajo** *(default)* | Un corte después del último ticket |
+| **Corte en cada salto de página** | Un corte entre factura y cada comanda |
+
+Para activar corte por página en la mayoría de drivers ESC/POS:
+1. Panel de control → Dispositivos e Impresoras → Click derecho en la térmica → Preferencias de impresión
+2. Buscar opción **"Cut per page"**, **"Page cut"** o **"Auto cut between pages"** y activarla.
+
+> [!NOTE]
+> En instalaciones con `--kiosk-printing` en desktop, el comportamiento es idéntico: un trabajo consolidado → corte según configuración del driver. No es necesario ningún ajuste adicional en el código.
+
+---
+
+### 11.4 Resumen de funciones del módulo (estado actual)
+
+| Función | Propósito |
+|---|---|
+| `lanzarImpresionCompleta(payload, onTerminado)` | Punto de entrada público. Genera HTML de cada ticket, consolida, imprime. |
+| `_consolidarTickets(htmlDocs[])` | Combina N documentos HTML en uno con page-breaks. |
+| `_imprimirHtml(html, onTerminado)` | Inyecta en iframe, llama `print()`, espera `afterprint`, llama callback. |
+| `renderizarFacturaCliente(factura)` | Genera HTML completo del ticket de factura al cliente. |
+| `renderizarComandaEstacion(comanda, factura)` | Genera HTML completo de un ticket de comanda de estación. |
+| `plantillaBase(contenido)` | Envuelve contenido en documento HTML con estilos inline. |
+| `decimalAFraccion(numero)` | Convierte decimales a fracciones legibles (`0.5` → `1/2`). |
+| `formatoFechaHora(fechaHora)` | Formatea fecha/hora del servidor al formato del ticket. |
+| `formatoMoneda(n)` | Formatea número como `C$ X,XXX`. |
+
+> [!IMPORTANT]
+> La función `imprimirSecuencial` fue **eliminada** en Rev. 4. Ya no existe en el código. Todo el flujo pasa por `_consolidarTickets` + `_imprimirHtml`.
