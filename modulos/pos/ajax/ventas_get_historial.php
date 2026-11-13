@@ -27,15 +27,15 @@ try {
         $params[':cliente']  = '%' . trim($filtros['cliente']) . '%';
     }
 
-    // Filtro: tipo_cliente (lista: por nombre del menú usado)
+    // Filtro: tipo_cliente (lista: por nombre de pos_tipos_cliente derivado del menú usado)
     if (isset($filtros['tipo_cliente']) && is_array($filtros['tipo_cliente']) && count($filtros['tipo_cliente']) > 0) {
         $phs = [];
         foreach ($filtros['tipo_cliente'] as $i => $val) {
             $key = ':tc_' . $i;
-            $phs[]        = $key;
+            $phs[]       = $key;
             $params[$key] = $val;
         }
-        $where[] = 'm_usado.nombre IN (' . implode(',', $phs) . ')';
+        $where[] = 'tc_menu.nombre IN (' . implode(',', $phs) . ')';
     }
 
     // Filtro: estado (lista: bloqueada / anulada)
@@ -82,7 +82,7 @@ try {
         'fecha'       => 'v.fecha_hora',
         'fecha_hora'  => 'v.fecha_hora',
         'cliente'     => "COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido))",
-        'tipo_cliente' => 'm_usado.nombre',
+        'tipo_cliente' => 'tc_menu.nombre',
         'total'       => 'v.total',
         'estado'      => 'v.estado',
         'cajero'      => "CONCAT(o.Nombre, ' ', o.Apellido)",
@@ -97,10 +97,15 @@ try {
     // JOIN base
     $joins = "LEFT JOIN clientesclub c ON v.id_cliente_club = c.membresia
               LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario
-              LEFT JOIN pos_menu m_usado ON m_usado.id = v.id_menu_usado";
+              LEFT JOIN pos_menu_precios mp_menu
+                     ON mp_menu.id_menu = v.id_menu_usado
+                    AND (mp_menu.cod_sucursal = v.cod_sucursal OR mp_menu.cod_sucursal IS NULL)
+                    AND mp_menu.fecha_desde <= CURDATE()
+                    AND (mp_menu.fecha_hasta IS NULL OR mp_menu.fecha_hasta >= CURDATE())
+              LEFT JOIN pos_tipos_cliente tc_menu ON tc_menu.id = mp_menu.id_tipo_cliente";
 
     // COUNT
-    $sqlCount = "SELECT COUNT(*) AS total
+    $sqlCount = "SELECT COUNT(DISTINCT v.id) AS total
                  FROM pos_ventas_facturas v
                  $joins
                  $whereClause";
@@ -124,7 +129,7 @@ try {
                        ELSE COALESCE(v.nombre_cliente_general, '—')
                    END AS cliente,
                    CONCAT(o.Nombre, ' ', o.Apellido) AS cajero,
-                   COALESCE(m_usado.nombre, '—') AS tipo_nombre,
+                   COALESCE(tc_menu.nombre, '—') AS tipo_nombre,
                    (
                        SELECT GROUP_CONCAT(DISTINCT p.metodo ORDER BY p.metodo SEPARATOR ', ')
                        FROM pos_ventas_factura_pagos p
@@ -133,6 +138,7 @@ try {
             FROM pos_ventas_facturas v
             $joins
             $whereClause
+            GROUP BY v.id
             $orderClause
             LIMIT :offset, :limit";
 
