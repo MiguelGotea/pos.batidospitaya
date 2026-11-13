@@ -60,25 +60,20 @@ try {
             <div class="container-fluid p-3">
 
                 <!-- Barra superior: botones de menú dinámicos -->
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <a href="/index.php" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-arrow-left"></i> Inicio
-                    </a>
-                    <div class="d-flex flex-wrap gap-2">
-                        <?php foreach ($menus_disponibles as $menu): ?>
-                            <a href="facturas_nueva.php?id_menu=<?= (int)$menu['id'] ?>"
-                               class="btn btn-success d-inline-flex align-items-center gap-2"
-                               title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
-                                <i class="bi bi-plus-circle"></i>
-                                <?= htmlspecialchars($menu['nombre']) ?>
-                            </a>
-                        <?php endforeach; ?>
-                        <?php if (empty($menus_disponibles)): ?>
-                            <span class="text-muted small" style="align-self:center;">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Sin menús activos
-                            </span>
-                        <?php endif; ?>
-                    </div>
+                <div class="pos-actions mb-3" style="justify-content:flex-end;">
+                    <?php foreach ($menus_disponibles as $menu): ?>
+                        <a href="facturas_nueva.php?id_menu=<?= (int)$menu['id'] ?>"
+                           class="pos-action-btn primary"
+                           title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
+                            <i class="fa fa-cash-register"></i>
+                            <?= htmlspecialchars($menu['nombre']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                    <?php if (empty($menus_disponibles)): ?>
+                        <span class="text-muted small" style="align-self:center;">
+                            <i class="fa fa-triangle-exclamation me-1"></i>Sin menús activos
+                        </span>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Tabla -->
