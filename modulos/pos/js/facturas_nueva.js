@@ -1815,11 +1815,11 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
             cart_data: detalleStr,
         }, function (impData) {
             if (impData.success) {
-                lanzarImpresionCompleta(impData);
-                // Redirigir al historial una vez lanzada la impresión
-                setTimeout(() => {
+                // Lanzar impresión secuencial; redirigir al historial recién
+                // cuando el ÚLTIMO documento haya sido procesado (no antes).
+                lanzarImpresionCompleta(impData, function () {
                     window.location.href = '/modulos/pos/ventas_historial.php';
-                }, 800);
+                });
             } else {
                 Swal.fire({
                     title: '¡Venta guardada!',

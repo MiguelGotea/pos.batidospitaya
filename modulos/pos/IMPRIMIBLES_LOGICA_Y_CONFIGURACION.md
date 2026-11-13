@@ -2,7 +2,7 @@
 ## Lógica de Negocio, Configuración y Referencia Técnica
 
 > **Módulo:** `modulos/pos/facturas_nueva.php` + `facturas_nueva.js`  
-> **Última actualización:** Noviembre 2026 (rev. 2 — Nov 2 2026)  
+> **Última actualización:** Noviembre 2026 (rev. 3 — Nov 13 2026)  
 > **Autor técnico:** Sistema Pitaya Web
 
 ---
@@ -24,6 +24,8 @@
    - 6.5 [Comportamiento sin Kiosk Printing](#65-comportamiento-sin-kiosk-printing)
 7. [Estructura del JSON de Imprimibles](#7-estructura-del-json-de-imprimibles)
 8. [Notas Técnicas para Futuros Cambios](#8-notas-técnicas-para-futuros-cambios)
+9. [Cambios Visuales — Rev. 2 (Nov 2, 2026)](#9-cambios-visuales--rev-2-nov-2-2026)
+10. [Cambios de Comportamiento — Rev. 3 (Nov 13, 2026)](#10-cambios-de-comportamiento--rev-3-nov-13-2026)
 
 ---
 
@@ -353,11 +355,11 @@ flowchart TD
     E -- Error --> F[Mostrar error al cajero]
     E -- Éxito --> G[GET facturas_get_imprimibles.php?id_factura=X]
     G --> H[JSON con factura + comandas]
-    H --> I[Iframe 1: Factura Cliente\nwindow.print → espera 500ms]
-    I --> J[Iframe 2: Comanda Estación 1\nwindow.print → espera 500ms]
-    J --> K[Iframe N: Comanda Estación N\nwindow.print → espera 500ms]
-    K --> L[Estado de factura = BLOQUEADA en BD]
-    L --> M[Reset del formulario\nListo para siguiente venta]
+    H --> I[Iframe 1: Factura Cliente\nwindow.print → espera 550ms]
+    I --> J[Iframe 2: Comanda Estación 1\nwindow.print → espera 550ms]
+    J --> K[Iframe N: Comanda Estación N\nwindow.print → espera 550ms]
+    K --> L[Callback onTerminado dispara redirect]
+    L --> M[Navega a ventas_historial.php]
 ```
 
 ### Detalle de cada paso:
@@ -369,10 +371,10 @@ flowchart TD
 | **3. Confirmación** | Modal SweetAlert2: título "¿Guardar e Imprimir?", texto de advertencia sobre bloqueo, botón Sí (verde) / No (gris) |
 | **4. Guardado** | POST a `facturas_guardar.php` → registra en `pos_ventas_facturas` y `pos_ventas_factura_lineas` |
 | **5. Datos** | GET a `facturas_get_imprimibles.php?id_factura=X` → devuelve JSON estructurado |
-| **6. Impresión** | JS inyecta cada documento en un iframe oculto y llama `window.print()` secuencialmente con 500ms de espera entre cada uno |
+| **6. Impresión** | JS inyecta cada documento en un iframe oculto y llama `window.print()` secuencialmente con 550ms de espera entre cada uno. Una bandera `yaImprimio` por iframe evita doble disparo cuando tanto `onload` como el fallback de 1200ms se activan. |
 | **7. Corte** | Cada trabajo independiente en el spooler provoca corte automático de papel (requiere configuración del driver) |
-| **8. Bloqueo** | La factura queda en estado `bloqueada` — no puede editarse |
-| **9. Reset** | Formulario se limpia para nueva venta |
+| **8. Redirect** | Cuando el último documento termina de procesarse, el callback `onTerminado` navega automáticamente a `ventas_historial.php` |
+| **9. Historial** | El cajero queda en la página de historial de ventas, lista para ver la venta recién guardada |
 
 ### Detección de modo de impresión:
 
@@ -914,3 +916,90 @@ body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
 | **Fracciones** | Solo aplican a cantidades de ingredientes en comanda. Los totales y precios en factura siguen mostrando decimales con 2 cifras. |
 | **Checklist** | El caracter `☐` (U+2610) es Unicode estándar; si la impresora no lo renderiza, reemplazar por `-` o `[ ]` en la constante del JS. |
 | **Separadores de grupo** | Si un ingrediente cambia de tipo dentro de una sustitución (fila tachada + fila nueva), el separador se emite al inicio del bloque del nuevo tipo, no entre las dos filas de sustitución. |
+
+---
+
+## 10. Cambios de Comportamiento — Rev. 3 (Nov 13, 2026)
+
+### 10.1 Corrección: impresión doble/cuádruple en computadoras con `onload` activo
+
+**Problema detectado:** En algunas máquinas, tanto el evento `onload` del iframe como el `setTimeout` de fallback (1200 ms) se disparaban, provocando que `ejecutarImpresion` se llamara dos veces por documento:
+- 1 factura × 2 disparos = **2 impresiones de factura**
+- 2 comandas × 2 disparos = **4 impresiones de comanda**
+
+**Solución aplicada:** Se agregó la bandera `yaImprimio` en el closure de cada iframe dentro de `imprimirSecuencial`. El primer disparador (sea `onload` o el fallback) imprime y activa la bandera; el segundo queda bloqueado sin efecto.
+
+```javascript
+let yaImprimio = false;
+
+const ejecutarImpresion = () => {
+    if (yaImprimio) return;   // ← segundo disparo bloqueado
+    yaImprimio = true;
+    // ... lógica de impresión
+};
+```
+
+---
+
+### 10.2 Corrección: comanda no se imprimía al presionar "Imprimir"
+
+**Problema detectado:** Al usar el POS sin `--kiosk-printing` (con diálogo del navegador), el redirect a `ventas_historial.php` se ejecutaba 800 ms después de llamar `lanzarImpresionCompleta`, **antes** de que el usuario terminara de confirmar el primer diálogo de impresión (factura). Cuando el usuario cerraba ese diálogo, la página ya había navegado y los iframes de las comandas pendientes se destruían sin imprimirse.
+
+**Solución aplicada:** `lanzarImpresionCompleta` ahora acepta un callback opcional `onTerminado` que se invoca solo cuando el **último documento** de la secuencia ha sido procesado. El redirect se mueve a ese callback.
+
+```javascript
+// pos_impresion_termica.js
+function lanzarImpresionCompleta(payload, onTerminado) { ... }
+
+function imprimirSecuencial(documentos, indice, onTerminado) {
+    if (indice >= documentos.length) {
+        if (typeof onTerminado === 'function') onTerminado(); // ← aquí se redirige
+        return;
+    }
+    // ...
+    imprimirSecuencial(documentos, indice + 1, onTerminado); // propagado recursivamente
+}
+```
+
+```javascript
+// facturas_nueva.js
+lanzarImpresionCompleta(impData, function () {
+    window.location.href = '/modulos/pos/ventas_historial.php';
+});
+```
+
+> [!IMPORTANT]
+> El redirect ocurre **después** del último `IMPRESION_DELAY_MS` post-impresión. Con `--kiosk-printing` (sin diálogos) el redirect es casi inmediato. Sin kiosk printing, el redirect ocurre solo cuando el usuario cierra el último diálogo de impresión y el delay de 550 ms expira.
+
+---
+
+### 10.3 Flujo post-impresión: redirect a historial de ventas
+
+**Antes:** tras imprimir, el formulario de nueva venta se reseteaba y el cajero permanecía en la misma página (`facturas_nueva.php`).
+
+**Después:** al terminar toda la secuencia de impresión, el sistema navega automáticamente a `ventas_historial.php`.
+
+**Para crear una nueva venta** desde el historial, el cajero usa el botón de menú variable disponible en esa página (o el ícono "Ventas" del sidebar, que ahora apunta directamente al historial).
+
+---
+
+### 10.4 Sidebar: "Ventas" ahora es enlace directo (sin submenú)
+
+**Antes:** el ítem "Ventas" en el sidebar era un grupo con submenú acordeón que desplegaba:
+- Nueva Venta → `/modulos/pos/facturas_nueva.php`
+- Historial Ventas → `/modulos/pos/ventas_historial.php`
+
+**Después:** el ítem "Ventas" es un enlace directo a `/modulos/pos/ventas_historial.php`, sin submenú. El acceso a nueva venta se realiza desde el historial (botón de menú variable), eliminando la navegación redundante.
+
+**Archivo afectado:** `core/layout/pos_sidebar.php`
+
+```php
+// Antes
+['id' => 'ventas', 'url' => '#', 'sub' => [
+    ['titulo' => 'Nueva Venta',      'url' => '/modulos/pos/facturas_nueva.php'],
+    ['titulo' => 'Historial Ventas', 'url' => '/modulos/pos/ventas_historial.php'],
+]]
+
+// Después
+['id' => 'ventas', 'url' => '/modulos/pos/ventas_historial.php', 'sub' => []]
+```

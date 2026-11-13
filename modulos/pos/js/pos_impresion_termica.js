@@ -16,7 +16,7 @@ const IMPRESION_LOGO_URL        = '/assets/img/logo_pitaya.png';
    FUNCIÓN PRINCIPAL: lanzarImpresionCompleta
    Recibe el payload del servidor y orquesta la impresión secuencial.
    ══════════════════════════════════════════════════════════════════════════════ */
-function lanzarImpresionCompleta(payload) {
+function lanzarImpresionCompleta(payload, onTerminado) {
     const { factura, comandas } = payload;
 
     // Construir lista de documentos HTML a imprimir en orden:
@@ -36,8 +36,8 @@ function lanzarImpresionCompleta(payload) {
         });
     });
 
-    // Imprimir secuencialmente con retardo entre cada uno
-    imprimirSecuencial(documentos, 0);
+    // Imprimir secuencialmente; al terminar el último documento invocar onTerminado
+    imprimirSecuencial(documentos, 0, onTerminado);
 }
 
 /* ── Impresión secuencial vía iframe oculto ──────────────────────────────────────
@@ -46,8 +46,12 @@ function lanzarImpresionCompleta(payload) {
    ya que el iframe vive dentro de la misma página.
    Funciona tanto en modo normal (diálogo Ctrl+P) como kiosk (--kiosk-printing).
    ──────────────────────────────────────────────────────────────────────────────── */
-function imprimirSecuencial(documentos, indice) {
-    if (indice >= documentos.length) return;
+function imprimirSecuencial(documentos, indice, onTerminado) {
+    if (indice >= documentos.length) {
+        // Todos los documentos procesados → notificar al llamador
+        if (typeof onTerminado === 'function') onTerminado();
+        return;
+    }
 
     const doc = documentos[indice];
 
@@ -73,7 +77,7 @@ function imprimirSecuencial(documentos, indice) {
         // Esperar un poco, luego limpiar el iframe y pasar al siguiente documento
         setTimeout(() => {
             try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
-            imprimirSecuencial(documentos, indice + 1);
+            imprimirSecuencial(documentos, indice + 1, onTerminado);
         }, IMPRESION_DELAY_MS);
     };
 
