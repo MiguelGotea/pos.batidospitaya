@@ -106,13 +106,13 @@ function plantillaBase(contenido) {
 /* ── Reset ── */
 * { box-sizing: border-box; }
 @media print {
-  @page { size: 80mm auto; margin: 2mm 2mm; }
-  html, body { width: 76mm; margin: 0; padding: 0; background: #fff; }
+  @page { size: 80mm auto; margin: 0mm 1mm; }
+  html, body { width: 78mm; margin: 0; padding: 0; background: #fff; }
 }
 /* ── Base del ticket ── */
 /* Punto 10: fuente más legible desde lejos — Arial/sans-serif con Courier como fallback */
 body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9pt; line-height: 1.4; color: #000; background: #fff; margin: 0; padding: 0; }
-.ticket-wrapper { width: 76mm; margin: 0 auto; padding: 0; }
+.ticket-wrapper { width: 78mm; margin: 0 auto; padding: 0 1mm; }
 /* ── Cabecera factura ── */
 /* Punto 1: logo reducido 10% → de 55mm a ~49.5mm ≈ 50mm */
 .ticket-logo { display: block; max-width: 50mm; height: auto; margin: 0 auto 2mm auto; }
@@ -125,9 +125,9 @@ body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9
 .ticket-tabla { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
 .ticket-tabla th { font-weight: bold; font-size: 8pt; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 1mm; text-align: left; }
 .ticket-tabla td { padding: 0.5mm 0; vertical-align: top; }
-.ticket-tabla th.col-num, .ticket-tabla td.col-num { text-align: center; width: 8mm; }
+.ticket-tabla th.col-num, .ticket-tabla td.col-num { text-align: center; width: 7mm; }
 .ticket-tabla th.col-pu, .ticket-tabla td.col-pu,
-.ticket-tabla th.col-pt, .ticket-tabla td.col-pt { text-align: right; width: 16mm; }
+.ticket-tabla th.col-pt, .ticket-tabla td.col-pt { text-align: right; width: 18mm; }
 .ticket-prod-nombre { font-weight: bold; font-size: 8.5pt; }
 .ticket-pers-lista { list-style: none; margin: 0.5mm 0 0 2mm; padding: 0; font-size: 7.5pt; color: #333; }
 .ticket-pers-lista li::before { content: '- '; }
@@ -168,7 +168,7 @@ body { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 9
 /* Punto 5: espacio entre filas de ingredientes */
 .comanda-ingredientes td { padding: 0.4mm 0; vertical-align: middle; }
 .comanda-ingredientes th.col-tipo, .comanda-ingredientes td.col-tipo { width: 6mm; font-weight: bold; text-align: center; }
-.comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 11mm; text-align: right; }
+.comanda-ingredientes th.col-cant, .comanda-ingredientes td.col-cant { width: 14mm; text-align: right; }
 /* Punto 6: separador de grupo de tipo — fila vacía con altura visible para marcar cambio de tipo */
 .comanda-grupo-sep td { padding: 0; height: 0; border: none; }
 .comanda-grupo-sep-linea { border-top: 0.5px dashed #bbb; margin: 1.5mm 0 0.5mm 0; }
