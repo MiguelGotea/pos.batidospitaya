@@ -3,6 +3,31 @@ require_once '../../core/auth/auth_pos.php';
 posRequiereColaborador();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_sidebar.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
+
+// ── Cargar menús disponibles para esta tienda ──────────────────────────
+$menus_disponibles = [];
+$sucursal_hist = $_SESSION['pos_store_sucursal'] ?? null;
+try {
+    if (!isset($conn)) {
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
+    }
+    $_mStmt = $conn->prepare(
+        "SELECT m.id, m.nombre,
+                GROUP_CONCAT(DISTINCT tc.nombre ORDER BY tc.nombre SEPARATOR ', ') AS tipos_cliente
+         FROM pos_menu m
+         JOIN pos_menu_precios p ON p.id_menu = m.id
+         LEFT JOIN pos_tipos_cliente tc ON tc.id = p.id_tipo_cliente
+         WHERE (p.cod_sucursal = :suc OR p.cod_sucursal IS NULL)
+           AND p.fecha_desde <= CURDATE()
+           AND (p.fecha_hasta IS NULL OR p.fecha_hasta >= CURDATE())
+         GROUP BY m.id, m.nombre
+         ORDER BY m.nombre ASC"
+    );
+    $_mStmt->execute([':suc' => $sucursal_hist]);
+    $menus_disponibles = $_mStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $_mEx) {
+    $menus_disponibles = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -34,11 +59,26 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
         <div class="pos-content">
             <div class="container-fluid p-3">
 
-                <!-- Barra superior -->
-                <div class="d-flex justify-content-end align-items-center mb-3 flex-wrap gap-2">
-                    <a href="facturas_nueva.php" class="btn btn-success d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i> Nueva Venta
+                <!-- Barra superior: botones de menú dinámicos -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <a href="/index.php" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-left"></i> Inicio
                     </a>
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($menus_disponibles as $menu): ?>
+                            <a href="facturas_nueva.php?id_menu=<?= (int)$menu['id'] ?>"
+                               class="btn btn-success d-inline-flex align-items-center gap-2"
+                               title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
+                                <i class="bi bi-plus-circle"></i>
+                                <?= htmlspecialchars($menu['nombre']) ?>
+                            </a>
+                        <?php endforeach; ?>
+                        <?php if (empty($menus_disponibles)): ?>
+                            <span class="text-muted small" style="align-self:center;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Sin menús activos
+                            </span>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <!-- Tabla -->

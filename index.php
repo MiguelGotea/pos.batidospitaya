@@ -222,29 +222,6 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <?php endif; ?>
 
     <?php if ($hayColaborador):
-        // ── Cargar menús disponibles para esta tienda ──────────────────────────
-        $menus_disponibles = [];
-        try {
-            if (!isset($conn)) {
-                require_once $_SERVER['DOCUMENT_ROOT'] . '/core/database/conexion.php';
-            }
-            $_mStmt = $conn->prepare(
-                "SELECT m.id, m.nombre,
-                        GROUP_CONCAT(DISTINCT tc.nombre ORDER BY tc.nombre SEPARATOR ', ') AS tipos_cliente
-                 FROM pos_menu m
-                 JOIN pos_menu_precios p ON p.id_menu = m.id
-                 LEFT JOIN pos_tipos_cliente tc ON tc.id = p.id_tipo_cliente
-                 WHERE (p.cod_sucursal = :suc OR p.cod_sucursal IS NULL)
-                   AND p.fecha_desde <= CURDATE()
-                   AND (p.fecha_hasta IS NULL OR p.fecha_hasta >= CURDATE())
-                 GROUP BY m.id, m.nombre
-                 ORDER BY m.nombre ASC"
-            );
-            $_mStmt->execute([':suc' => $sucursal]);
-            $menus_disponibles = $_mStmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $_mEx) {
-            $menus_disponibles = [];
-        }
     ?>
         <!-- Renderizar Menú Lateral -->
         <?= renderPOSSidebar('inicio') ?>
@@ -260,39 +237,16 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <p>Estás operando en la sucursal <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
                         Selecciona el tipo de pedido para comenzar.</p>
 
-                    <?php if (!empty($menus_disponibles)): ?>
-                        <div class="pos-actions" id="menuButtons">
-                            <?php foreach ($menus_disponibles as $menu): ?>
-                                <a href="/modulos/pos/facturas_nueva.php?id_menu=<?= (int)$menu['id'] ?>"
-                                   class="pos-action-btn primary"
-                                   title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
-                                    <i class="fa fa-cash-register"></i>
-                                    <?= htmlspecialchars($menu['nombre']) ?>
-                                </a>
-                            <?php endforeach; ?>
-                            <a href="/modulos/pos/ventas_historial.php" class="pos-action-btn">
-                                <i class="fa fa-clock-rotate-left"></i> Historial
-                            </a>
-                        </div>
-                    <?php else: ?>
-                        <div class="pos-actions">
-                            <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:20px 32px;color:#856404;font-size:.95rem;">
-                                <i class="fa fa-triangle-exclamation" style="margin-right:8px;"></i>
-                                <strong>No hay menús activos para esta tienda.</strong><br>
-                                <small>Configura un menú desde el panel ERP → POS → Menús.</small>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                    <div class="pos-actions" id="menuButtons">
+                        <a href="/modulos/pos/ventas_historial.php" class="pos-action-btn primary">
+                            <i class="fa fa-clock-rotate-left"></i> Historial de Ventas
+                        </a>
+                    </div>
 
                     <div class="pos-actions" style="margin-top:12px;">
                         <a href="/modulos/inicial/" class="pos-action-btn"><i class="fa fa-vault"></i> Caja Inicial</a>
                     </div>
 
-                    <?php if (isset($_GET['menu_invalido'])): ?>
-                        <div style="margin-top:16px;background:#f8d7da;border:1px solid #f5c2c7;border-radius:10px;padding:12px 20px;color:#842029;font-size:.88rem;">
-                            <i class="fa fa-circle-exclamation"></i> El menú seleccionado no está disponible para esta tienda. Elige uno de los botones de arriba.
-                        </div>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
