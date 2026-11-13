@@ -1816,7 +1816,10 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
         }, function (impData) {
             if (impData.success) {
                 lanzarImpresionCompleta(impData);
-                _resetFormulario($btn);
+                // Redirigir al historial una vez lanzada la impresión
+                setTimeout(() => {
+                    window.location.href = '/modulos/pos/ventas_historial.php';
+                }, 800);
             } else {
                 Swal.fire({
                     title: '¡Venta guardada!',
@@ -1825,7 +1828,7 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
                     icon: 'warning',
                     confirmButtonText: 'Continuar',
                     confirmButtonColor: '#0E544C',
-                }).then(() => _resetFormulario($btn));
+                }).then(() => { window.location.href = '/modulos/pos/ventas_historial.php'; });
             }
         }, 'json').fail(function () {
             Swal.fire({
@@ -1834,8 +1837,7 @@ function _ejecutarGuardadoEImpresion(isClub, idClienteClub, nombreCliente, numer
                 icon: 'warning',
                 confirmButtonText: 'Continuar',
                 confirmButtonColor: '#0E544C',
-            });
-            _resetFormulario($btn);
+            }).then(() => { window.location.href = '/modulos/pos/ventas_historial.php'; });
         });
 
     }, 'json').fail(function () {

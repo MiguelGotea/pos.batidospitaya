@@ -19,11 +19,8 @@ function renderPOSSidebar($activeModule = 'inicio')
             'id'    => 'ventas',
             'titulo' => 'Ventas',
             'icon'  => 'fas fa-cash-register',
-            'url'   => '#',
-            'sub'   => [
-                ['titulo' => 'Nueva Venta',      'url' => '/modulos/pos/facturas_nueva.php'],
-                ['titulo' => 'Historial Ventas', 'url' => '/modulos/pos/ventas_historial.php'],
-            ]
+            'url'   => '/modulos/pos/ventas_historial.php',
+            'sub'   => []
         ],
         [
             'id'    => 'compras',
