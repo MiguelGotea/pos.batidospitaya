@@ -213,8 +213,8 @@ function esc(str) {
 }
 
 function formatoMoneda(n) {
-    const num = parseFloat(n) || 0;
-    return 'C$ ' + num.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const num = Math.round(parseFloat(n) || 0);
+    return 'C$ ' + num.toLocaleString('es-NI', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 /* ── Conversión de decimales a fracciones (punto 9) ────────────────────────── */
