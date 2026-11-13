@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /**
  * POS Sidebar Component
@@ -41,7 +41,8 @@ function renderPOSSidebar($activeModule = 'inicio')
             'icon'  => 'fas fa-vault',
             'url'   => '#',
             'sub'   => [
-                ['titulo' => 'Caja Inicial', 'url' => '/modulos/inicial/'],
+                ['titulo' => 'Caja Inicial',    'url' => '/modulos/inicial/'],
+                ['titulo' => 'Aligeramientos',  'url' => '/modulos/aligeramiento/'],
             ]
         ],
         [
