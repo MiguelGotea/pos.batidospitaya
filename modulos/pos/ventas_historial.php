@@ -31,6 +31,7 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,11 +44,51 @@ try {
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
     <style>
-        .badge-bloqueada { background:#e2e8f0; color:#475569; font-size:.75rem; padding:3px 10px; border-radius:20px; font-weight:600; }
-        .badge-anulada   { background:#fee2e2; color:#b91c1c; font-size:.75rem; padding:3px 10px; border-radius:20px; font-weight:600; }
-        .badge-club      { background:#d1fae5; color:#065f46; font-size:.72rem; padding:2px 8px;  border-radius:20px; font-weight:600; }
-        .badge-general   { background:#eff6ff; color:#1d4ed8; font-size:.72rem; padding:2px 8px;  border-radius:20px; font-weight:600; }
-        .metodo-tag      { display:inline-block; background:#f1f5f9; color:#475569; border-radius:4px; padding:1px 7px; font-size:.75rem; margin:1px; }
+        .badge-bloqueada {
+            background: #e2e8f0;
+            color: #475569;
+            font-size: .75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-anulada {
+            background: #fee2e2;
+            color: #b91c1c;
+            font-size: .75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-club {
+            background: #d1fae5;
+            color: #065f46;
+            font-size: .72rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-general {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: .72rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .metodo-tag {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #475569;
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-size: .75rem;
+            margin: 1px;
+        }
 
         .pos-actions {
             display: flex;
@@ -55,6 +96,7 @@ try {
             gap: 16px;
             flex-wrap: wrap;
         }
+
         .pos-action-btn {
             padding: 14px 28px;
             border-radius: 13px;
@@ -71,21 +113,25 @@ try {
             align-items: center;
             gap: 8px;
         }
+
         .pos-action-btn:hover {
             background: var(--surface-hover);
             border-color: #51B8AC;
         }
+
         .pos-action-btn.primary {
             background: #51B8AC;
             color: #06110f;
             border-color: #51B8AC;
         }
+
         .pos-action-btn.primary:hover {
             background: var(--pitaya-dark-teal);
             color: #fff;
         }
     </style>
 </head>
+
 <body>
     <?= renderPOSSidebar('ventas') ?>
 
@@ -98,9 +144,8 @@ try {
                 <!-- Barra superior: botones de menú dinámicos -->
                 <div class="pos-actions mb-3" style="justify-content:flex-end;">
                     <?php foreach ($menus_disponibles as $menu): ?>
-                        <a href="facturas_nueva.php?id_menu=<?= (int)$menu['id'] ?>"
-                           class="pos-action-btn primary"
-                           title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
+                        <a href="facturas_nueva.php?id_menu=<?= (int) $menu['id'] ?>" class="pos-action-btn primary"
+                            title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
                             <i class="fa fa-cash-register"></i>
                             <?= htmlspecialchars($menu['nombre']) ?>
                         </a>
@@ -118,12 +163,15 @@ try {
                         <thead>
                             <tr>
                                 <th data-column="id" data-type="text">
-                                    # Venta
+                                    Ticket
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
-                                <th data-column="fecha_hora" data-type="daterange">
-                                    Fecha / Hora
+                                <th data-column="fecha" data-type="daterange">
+                                    Fecha
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="hora" data-type="text">
+                                    Hora
                                 </th>
                                 <th data-column="cliente" data-type="text">
                                     Cliente
@@ -134,7 +182,7 @@ try {
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th class="text-end" data-column="total" data-type="number">
-                                    Total (C$)
+                                    Total
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
                                 <th data-column="metodos_pago" data-type="text">
@@ -153,7 +201,7 @@ try {
                         </thead>
                         <tbody id="tablaVentasBody">
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">
+                                <td colspan="10" class="text-center text-muted py-4">
                                     <div class="spinner-border spinner-border-sm me-2"></div>
                                     Cargando…
                                 </td>
@@ -166,7 +214,8 @@ try {
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
                     <div class="d-flex align-items-center gap-2">
                         <label class="mb-0" style="font-size:.85rem;">Mostrar:</label>
-                        <select class="form-select form-select-sm" id="registrosPorPagina" style="width:auto;" onchange="cambiarRegistrosPorPagina()">
+                        <select class="form-select form-select-sm" id="registrosPorPagina" style="width:auto;"
+                            onchange="cambiarRegistrosPorPagina()">
                             <option value="25" selected>25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
@@ -187,7 +236,8 @@ try {
                     <h5 class="modal-title" id="modalDetalleLabel">
                         <i class="bi bi-receipt me-2"></i>Detalle de Venta
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="margin-left:auto;"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        style="margin-left:auto;"></button>
                 </div>
 
                 <div class="modal-body p-0">
@@ -211,7 +261,9 @@ try {
                                 </tr>
                             </thead>
                             <tbody id="tablaDetalleModal">
-                                <tr><td colspan="5" class="text-center text-muted">Cargando…</td></tr>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Cargando…</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -239,5 +291,5 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/ventas_historial.js?v=<?php echo time(); ?>"></script>
 </body>
-</html>
 
+</html>

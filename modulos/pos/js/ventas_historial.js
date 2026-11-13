@@ -43,7 +43,7 @@ $(document).ready(function () {
 /* ---- Carga de datos ---- */
 function cargarDatos() {
     $('#tablaVentasBody').html(`
-        <tr><td colspan="9" class="text-center text-muted py-4">
+        <tr><td colspan="10" class="text-center text-muted py-4">
             <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
         </td></tr>`);
 
@@ -64,11 +64,11 @@ function cargarDatos() {
                 renderizarPaginacion(totalRegistros);
                 actualizarIndicadoresFiltros();
             } else {
-                $('#tablaVentasBody').html(`<tr><td colspan="9" class="text-center text-danger">${escHtml(res.message || 'Error al cargar')}</td></tr>`);
+                $('#tablaVentasBody').html(`<tr><td colspan="10" class="text-center text-danger">${escHtml(res.message || 'Error al cargar')}</td></tr>`);
             }
         },
         error: function () {
-            $('#tablaVentasBody').html('<tr><td colspan="9" class="text-center text-danger">Error de conexión al cargar los datos.</td></tr>');
+            $('#tablaVentasBody').html('<tr><td colspan="10" class="text-center text-danger">Error de conexión al cargar los datos.</td></tr>');
         }
     });
 }
@@ -77,7 +77,7 @@ function cargarDatos() {
 function renderizarTabla(ventas) {
     if (!ventas || ventas.length === 0) {
         $('#tablaVentasBody').html(`
-            <tr><td colspan="9" class="text-center text-muted py-4">
+            <tr><td colspan="10" class="text-center text-muted py-4">
                 <i class="bi bi-inbox me-2"></i>No se encontraron registros.
             </td></tr>`);
         return;
@@ -89,21 +89,20 @@ function renderizarTabla(ventas) {
             ? '<span class="badge-bloqueada">Bloqueada</span>'
             : '<span class="badge-anulada">Anulada</span>';
 
-        const badgeTipo = v.tipo_cliente === 'club'
-            ? '<span class="badge-club"><i class="bi bi-star-fill me-1"></i>Club</span>'
-            : '<span class="badge-general">General</span>';
-
         const metodos = (v.metodos_pago || '').split(',')
             .filter(m => m.trim() !== '')
             .map(m => `<span class="metodo-tag">${escHtml(m.trim())}</span>`)
             .join('');
 
+        const { fecha, hora } = separarFechaHora(v.fecha_hora);
+
         html += `
         <tr>
-            <td><strong>#${escHtml(String(v.id))}</strong></td>
-            <td style="font-size:.82rem;">${formatearFechaHora(v.fecha_hora)}</td>
+            <td><strong>${escHtml(String(v.id))}</strong></td>
+            <td style="font-size:.82rem; white-space:nowrap;">${fecha}</td>
+            <td style="font-size:.82rem; white-space:nowrap;">${hora}</td>
             <td>${escHtml(v.cliente || '—')}</td>
-            <td>${badgeTipo}</td>
+            <td>${escHtml(v.tipo_nombre || '—')}</td>
             <td class="text-end fw-bold" style="font-variant-numeric:tabular-nums;">${formatearMonto(v.total)}</td>
             <td>${metodos || '—'}</td>
             <td>${badgeEstado}</td>
@@ -137,24 +136,25 @@ function verDetalle(id) {
 
         const v = res.venta;
 
-        // Tipo cliente badge
-        const badgeTipo = v.tipo_cliente === 'club'
-            ? '<span class="badge-club"><i class="bi bi-star-fill me-1"></i>Club Pitaya</span>'
-            : '<span class="badge-general">General</span>';
-
         // Estado badge
         const badgeEstado = v.estado === 'bloqueada'
             ? '<span class="badge-bloqueada">Bloqueada</span>'
             : '<span class="badge-anulada">Anulada</span>';
 
+        const { fecha, hora } = separarFechaHora(v.fecha_hora);
+
         $('#infoCabeceraModal').html(`
             <div class="col-sm-4">
-                <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;"># Venta</small>
-                <span class="fw-bold">#${escHtml(String(v.id))}</span>
+                <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Ticket</small>
+                <span class="fw-bold">${escHtml(String(v.id))}</span>
             </div>
-            <div class="col-sm-4">
-                <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Fecha / Hora</small>
-                <span style="font-size:.875rem;">${formatearFechaHora(v.fecha_hora)}</span>
+            <div class="col-sm-2">
+                <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Fecha</small>
+                <span style="font-size:.875rem;">${fecha}</span>
+            </div>
+            <div class="col-sm-2">
+                <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Hora</small>
+                <span style="font-size:.875rem;">${hora}</span>
             </div>
             <div class="col-sm-4">
                 <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Cliente</small>
@@ -162,7 +162,7 @@ function verDetalle(id) {
             </div>
             <div class="col-sm-4 mt-1">
                 <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Tipo</small>
-                ${badgeTipo}
+                <span>${escHtml(v.tipo_nombre || '—')}</span>
             </div>
             <div class="col-sm-4 mt-1">
                 <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Cajero</small>
@@ -177,6 +177,7 @@ function verDetalle(id) {
                 <small class="text-muted d-block fw-bold text-uppercase" style="font-size:.72rem;">Propina (${v.porcentaje_propina}%)</small>
                 <span style="font-size:.875rem;">${formatearMonto(v.propina)}</span>
             </div>` : ''}`);
+
 
         // Detalle líneas
         if (!res.lineas || res.lineas.length === 0) {
@@ -220,7 +221,7 @@ function verDetalle(id) {
         }
 
         $('#totalModal').html(`<strong>Total:</strong> ${formatearMonto(v.total)}`);
-        $('#modalDetalleLabel').html(`<i class="bi bi-receipt me-2"></i>Venta #${escHtml(String(v.id))}`);
+        $('#modalDetalleLabel').html(`<i class="bi bi-receipt me-2"></i>Ticket ${escHtml(String(v.id))}`);
 
     }, 'json').fail(function () {
         Swal.fire('Error', 'No se pudo cargar el detalle.', 'error');
@@ -518,13 +519,27 @@ function cambiarPagina(pagina) {
 /* ---- Helpers ---- */
 function formatearMonto(v) {
     const n = parseFloat(v) || 0;
-    return 'C$ ' + n.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return n.toLocaleString('es-NI', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function separarFechaHora(str) {
+    if (!str) return { fecha: '—', hora: '—' };
+    const dt = new Date(str);
+    if (isNaN(dt)) return { fecha: '—', hora: '—' };
+    const dia  = String(dt.getDate()).padStart(2, '0');
+    const mes  = MESES_CORTOS[dt.getMonth()];
+    const anio = String(dt.getFullYear()).slice(-2);
+    const fecha = `${dia}-${mes}-${anio}`;
+    const hora  = dt.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    return { fecha, hora };
 }
 
 function formatearFechaHora(str) {
-    if (!str) return '—';
-    const dt = new Date(str);
-    return dt.toLocaleDateString('es-NI') + ' ' + dt.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    const { fecha, hora } = separarFechaHora(str);
+    if (fecha === '—') return '—';
+    return `${fecha} ${hora}`;
 }
 
 function escHtml(str) {

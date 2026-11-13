@@ -16,10 +16,18 @@ try {
             ['valor' => 'anulada',   'texto' => 'Anulada'],
         ];
     } elseif ($columna === 'tipo_cliente') {
-        $opciones = [
-            ['valor' => 'general', 'texto' => 'General'],
-            ['valor' => 'club',    'texto' => 'Club Pitaya'],
-        ];
+        // Tipos de cliente reales derivados del menú usado en las ventas
+        $stmtTc = $conn->query(
+            "SELECT DISTINCT tc.nombre AS valor, tc.nombre AS texto
+             FROM pos_ventas_facturas v
+             JOIN pos_menu_precios mp ON mp.id_menu = v.id_menu_usado
+                  AND (mp.cod_sucursal = v.cod_sucursal OR mp.cod_sucursal IS NULL)
+                  AND mp.fecha_desde <= CURDATE()
+                  AND (mp.fecha_hasta IS NULL OR mp.fecha_hasta >= CURDATE())
+             JOIN pos_tipos_cliente tc ON tc.id = mp.id_tipo_cliente
+             ORDER BY tc.nombre ASC"
+        );
+        $opciones = $stmtTc->fetchAll(PDO::FETCH_ASSOC);
     } else {
         throw new Exception("Columna de filtro no soportada: $columna");
     }

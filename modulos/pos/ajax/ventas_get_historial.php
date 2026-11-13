@@ -27,7 +27,7 @@ try {
         $params[':cliente']  = '%' . trim($filtros['cliente']) . '%';
     }
 
-    // Filtro: tipo_cliente (lista: club / general)
+    // Filtro: tipo_cliente (lista: por nombre de pos_tipos_cliente derivado del menú usado)
     if (isset($filtros['tipo_cliente']) && is_array($filtros['tipo_cliente']) && count($filtros['tipo_cliente']) > 0) {
         $phs = [];
         foreach ($filtros['tipo_cliente'] as $i => $val) {
@@ -35,7 +35,7 @@ try {
             $phs[]       = $key;
             $params[$key] = $val;
         }
-        $where[] = 'v.tipo_cliente IN (' . implode(',', $phs) . ')';
+        $where[] = 'tc_menu.nombre IN (' . implode(',', $phs) . ')';
     }
 
     // Filtro: estado (lista: bloqueada / anulada)
@@ -61,15 +61,16 @@ try {
         $params[':total']   = '%' . trim($filtros['total']) . '%';
     }
 
-    // Filtro: fecha_hora (rango de fechas)
-    if (isset($filtros['fecha_hora']) && is_array($filtros['fecha_hora'])) {
-        if (!empty($filtros['fecha_hora']['desde'])) {
-            $where[]                   = 'DATE(v.fecha_hora) >= :fh_desde';
-            $params[':fh_desde']       = $filtros['fecha_hora']['desde'];
+    // Filtro: fecha (rango de fechas) — acepta tanto 'fecha' como 'fecha_hora' por retrocompatibilidad
+    $filtroFecha = $filtros['fecha'] ?? $filtros['fecha_hora'] ?? null;
+    if (isset($filtroFecha) && is_array($filtroFecha)) {
+        if (!empty($filtroFecha['desde'])) {
+            $where[]             = 'DATE(v.fecha_hora) >= :fh_desde';
+            $params[':fh_desde'] = $filtroFecha['desde'];
         }
-        if (!empty($filtros['fecha_hora']['hasta'])) {
-            $where[]                   = 'DATE(v.fecha_hora) <= :fh_hasta';
-            $params[':fh_hasta']       = $filtros['fecha_hora']['hasta'];
+        if (!empty($filtroFecha['hasta'])) {
+            $where[]             = 'DATE(v.fecha_hora) <= :fh_hasta';
+            $params[':fh_hasta'] = $filtroFecha['hasta'];
         }
     }
 
@@ -78,9 +79,10 @@ try {
     // Columnas válidas para ordenar
     $columnasValidas = [
         'id'          => 'v.id',
+        'fecha'       => 'v.fecha_hora',
         'fecha_hora'  => 'v.fecha_hora',
         'cliente'     => "COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido))",
-        'tipo_cliente' => 'v.tipo_cliente',
+        'tipo_cliente' => 'tc_menu.nombre',
         'total'       => 'v.total',
         'estado'      => 'v.estado',
         'cajero'      => "CONCAT(o.Nombre, ' ', o.Apellido)",
@@ -94,10 +96,16 @@ try {
 
     // JOIN base
     $joins = "LEFT JOIN clientesclub c ON v.id_cliente_club = c.membresia
-              LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario";
+              LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario
+              LEFT JOIN pos_menu_precios mp_menu
+                     ON mp_menu.id_menu = v.id_menu_usado
+                    AND (mp_menu.cod_sucursal = v.cod_sucursal OR mp_menu.cod_sucursal IS NULL)
+                    AND mp_menu.fecha_desde <= CURDATE()
+                    AND (mp_menu.fecha_hasta IS NULL OR mp_menu.fecha_hasta >= CURDATE())
+              LEFT JOIN pos_tipos_cliente tc_menu ON tc_menu.id = mp_menu.id_tipo_cliente";
 
     // COUNT
-    $sqlCount = "SELECT COUNT(*) AS total
+    $sqlCount = "SELECT COUNT(DISTINCT v.id) AS total
                  FROM pos_ventas_facturas v
                  $joins
                  $whereClause";
@@ -110,11 +118,18 @@ try {
     $sql = "SELECT v.id,
                    v.fecha_hora,
                    v.tipo_cliente,
+                   v.id_cliente_club,
+                   v.nombre_cliente_general,
                    v.total,
                    v.estado,
                    v.cod_sucursal,
-                   COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido)) AS cliente,
+                   CASE
+                       WHEN v.id_cliente_club IS NOT NULL AND v.id_cliente_club != ''
+                           THEN CONCAT('(', v.id_cliente_club, ') ', COALESCE(c.nombre, ''), ' ', COALESCE(c.apellido, ''))
+                       ELSE COALESCE(v.nombre_cliente_general, '—')
+                   END AS cliente,
                    CONCAT(o.Nombre, ' ', o.Apellido) AS cajero,
+                   COALESCE(tc_menu.nombre, '—') AS tipo_nombre,
                    (
                        SELECT GROUP_CONCAT(DISTINCT p.metodo ORDER BY p.metodo SEPARATOR ', ')
                        FROM pos_ventas_factura_pagos p
@@ -123,6 +138,7 @@ try {
             FROM pos_ventas_facturas v
             $joins
             $whereClause
+            GROUP BY v.id
             $orderClause
             LIMIT :offset, :limit";
 

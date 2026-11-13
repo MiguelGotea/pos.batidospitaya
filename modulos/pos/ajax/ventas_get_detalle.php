@@ -13,12 +13,24 @@ try {
     $stmtV = $conn->prepare(
         "SELECT v.id, v.fecha_hora, v.tipo_cliente, v.total, v.subtotal,
                 v.propina, v.porcentaje_propina, v.con_propina, v.estado, v.cod_sucursal,
-                COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido)) AS cliente,
-                CONCAT(o.Nombre, ' ', o.Apellido) AS cajero
+                CASE
+                    WHEN v.id_cliente_club IS NOT NULL AND v.id_cliente_club != ''
+                        THEN CONCAT('(', v.id_cliente_club, ') ', COALESCE(c.nombre, ''), ' ', COALESCE(c.apellido, ''))
+                    ELSE COALESCE(v.nombre_cliente_general, '—')
+                END AS cliente,
+                CONCAT(o.Nombre, ' ', o.Apellido) AS cajero,
+                COALESCE(tc_menu.nombre, '—') AS tipo_nombre
          FROM pos_ventas_facturas v
          LEFT JOIN clientesclub c ON v.id_cliente_club = c.membresia
          LEFT JOIN Operarios o ON v.cod_cajero = o.CodOperario
-         WHERE v.id = :id"
+         LEFT JOIN pos_menu_precios mp_menu
+                ON mp_menu.id_menu = v.id_menu_usado
+               AND (mp_menu.cod_sucursal = v.cod_sucursal OR mp_menu.cod_sucursal IS NULL)
+               AND mp_menu.fecha_desde <= CURDATE()
+               AND (mp_menu.fecha_hasta IS NULL OR mp_menu.fecha_hasta >= CURDATE())
+         LEFT JOIN pos_tipos_cliente tc_menu ON tc_menu.id = mp_menu.id_tipo_cliente
+         WHERE v.id = :id
+         GROUP BY v.id"
     );
     $stmtV->execute([':id' => $id]);
     $venta = $stmtV->fetch(PDO::FETCH_ASSOC);
