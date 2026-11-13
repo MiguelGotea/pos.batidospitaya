@@ -48,6 +48,42 @@ try {
         .badge-club      { background:#d1fae5; color:#065f46; font-size:.72rem; padding:2px 8px;  border-radius:20px; font-weight:600; }
         .badge-general   { background:#eff6ff; color:#1d4ed8; font-size:.72rem; padding:2px 8px;  border-radius:20px; font-weight:600; }
         .metodo-tag      { display:inline-block; background:#f1f5f9; color:#475569; border-radius:4px; padding:1px 7px; font-size:.75rem; margin:1px; }
+
+        .pos-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .pos-action-btn {
+            padding: 14px 28px;
+            border-radius: 13px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pos-action-btn:hover {
+            background: var(--surface-hover);
+            border-color: #51B8AC;
+        }
+        .pos-action-btn.primary {
+            background: #51B8AC;
+            color: #06110f;
+            border-color: #51B8AC;
+        }
+        .pos-action-btn.primary:hover {
+            background: var(--pitaya-dark-teal);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
