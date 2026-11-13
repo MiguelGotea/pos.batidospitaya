@@ -16,16 +16,13 @@ try {
             ['valor' => 'anulada',   'texto' => 'Anulada'],
         ];
     } elseif ($columna === 'tipo_cliente') {
-        // Tipos de cliente reales derivados del menú usado en las ventas
+        // Menús reales que han sido usados en ventas (cada menú = un tipo de cliente/canal)
         $stmtTc = $conn->query(
-            "SELECT DISTINCT tc.nombre AS valor, tc.nombre AS texto
+            "SELECT DISTINCT m.nombre AS valor, m.nombre AS texto
              FROM pos_ventas_facturas v
-             JOIN pos_menu_precios mp ON mp.id_menu = v.id_menu_usado
-                  AND (mp.cod_sucursal = v.cod_sucursal OR mp.cod_sucursal IS NULL)
-                  AND mp.fecha_desde <= CURDATE()
-                  AND (mp.fecha_hasta IS NULL OR mp.fecha_hasta >= CURDATE())
-             JOIN pos_tipos_cliente tc ON tc.id = mp.id_tipo_cliente
-             ORDER BY tc.nombre ASC"
+             JOIN pos_menu m ON m.id = v.id_menu_usado
+             WHERE v.id_menu_usado IS NOT NULL
+             ORDER BY m.nombre ASC"
         );
         $opciones = $stmtTc->fetchAll(PDO::FETCH_ASSOC);
     } else {
