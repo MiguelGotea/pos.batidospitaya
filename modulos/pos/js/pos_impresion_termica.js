@@ -8,93 +8,114 @@
 
 // ── Constantes configurables ─────────────────────────────────────────────────
 const IMPRESION_WIFI_PASSWORD   = 'tubatidofavorito';
-const IMPRESION_DELAY_MS        = 550;  // ms entre documentos para el spooler
+const IMPRESION_DELAY_MS        = 600;  // ms tras afterprint antes de redirigir
 const IMPRESION_CSS_URL         = '/modulos/pos/css/ticket_termico_80mm.css';
 const IMPRESION_LOGO_URL        = '/assets/img/logo_pitaya.png';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    FUNCIÓN PRINCIPAL: lanzarImpresionCompleta
-   Recibe el payload del servidor y orquesta la impresión secuencial.
+   Recibe el payload del servidor, genera el HTML de cada ticket y los imprime
+   todos en UN SOLO diálogo de impresión (documento consolidado con saltos de
+   página CSS). Esto es necesario en Android/tablet donde window.print() es
+   no-bloqueante y afterprint dispara antes de que el usuario interactúe.
    ══════════════════════════════════════════════════════════════════════════════ */
 function lanzarImpresionCompleta(payload, onTerminado) {
     const { factura, comandas } = payload;
 
-    // Construir lista de documentos HTML a imprimir en orden:
-    // 1ro la factura del cliente, luego cada comanda de estación
-    const documentos = [];
-
-    documentos.push({
-        tipo: 'factura',
-        html: renderizarFacturaCliente(factura),
-    });
-
+    // Generar HTML individual de cada ticket
+    const tickets = [];
+    tickets.push(renderizarFacturaCliente(factura));
     (comandas || []).forEach(comanda => {
-        documentos.push({
-            tipo: 'comanda',
-            nombre: comanda.nombre_grupo,
-            html: renderizarComandaEstacion(comanda, factura),
-        });
+        tickets.push(renderizarComandaEstacion(comanda, factura));
     });
 
-    // Imprimir secuencialmente; al terminar el último documento invocar onTerminado
-    imprimirSecuencial(documentos, 0, onTerminado);
-}
-
-/* ── Impresión secuencial vía iframe oculto ──────────────────────────────────────
-   Usa un <iframe> invisible inyectado en el DOM en lugar de window.open().
-   Ventaja: NO requiere permiso de ventanas emergentes (popup) del navegador,
-   ya que el iframe vive dentro de la misma página.
-   Funciona tanto en modo normal (diálogo Ctrl+P) como kiosk (--kiosk-printing).
-
-   SECUENCIACIÓN:
-   • Se escucha el evento "afterprint" del iframe para saber cuándo el diálogo
-     de impresión fue cerrado por el usuario (ya sea confirmando o cancelando).
-     Esto funciona aunque window.print() sea no-bloqueante (ej. Android Chrome).
-   • Un fallback de 60 s cubre el caso extremo donde "afterprint" no se dispara.
-   ──────────────────────────────────────────────────────────────────────────────── */
-function imprimirSecuencial(documentos, indice, onTerminado) {
-    if (indice >= documentos.length) {
-        // Todos los documentos procesados → notificar al llamador
+    if (tickets.length === 0) {
         if (typeof onTerminado === 'function') onTerminado();
         return;
     }
 
-    const doc = documentos[indice];
+    // Consolidar todos los tickets en un único documento HTML con saltos de
+    // página entre ellos. El driver de la impresora puede ejecutar el corte
+    // automático en cada salto de página si así está configurado.
+    const htmlConsolidado = _consolidarTickets(tickets);
+    _imprimirHtml(htmlConsolidado, onTerminado);
+}
 
-    // Crear iframe oculto y adjuntarlo al DOM
+/* ── Consolida un array de documentos HTML en uno solo ───────────────────────
+   Extrae el CSS del primer documento (todos comparten los mismos estilos) y
+   concatena el <body> de cada ticket separado por page-break-after: always.  */
+function _consolidarTickets(htmlDocs) {
+    // Extraer el bloque <head> del primer ticket (CSS idéntico en todos)
+    const headMatch = htmlDocs[0].match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    const headContent = headMatch ? headMatch[1] : '';
+
+    // Construir las secciones del cuerpo con saltos de página entre tickets
+    const secciones = htmlDocs.map((html, idx) => {
+        const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        const contenido = bodyMatch ? bodyMatch[1].trim() : '';
+        const esUltimo  = (idx === htmlDocs.length - 1);
+
+        // El último ticket no lleva salto de página después
+        const estiloSalto = esUltimo
+            ? ''
+            : ' style="page-break-after:always;break-after:page;margin-bottom:0;"';
+
+        return `<section class="ticket-seccion"${estiloSalto}>${contenido}</section>`;
+    });
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+${headContent}
+<style>
+/* Estilos de consolidación — no afectan el contenido individual de cada ticket */
+.ticket-seccion { display: block; }
+@media print {
+  .ticket-seccion { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body style="margin:0;padding:0;">
+${secciones.join('\n')}
+</body>
+</html>`;
+}
+
+/* ── Inyecta el HTML en un iframe oculto y llama window.print() ──────────────
+   Funciona en kiosk-printing (desktop, sin diálogo) y en modo normal
+   (tablet/móvil, con diálogo del navegador). El callback onTerminado se
+   invoca cuando el diálogo se cierra (afterprint) o tras el fallback de 60 s. */
+function _imprimirHtml(html, onTerminado) {
     const iframe = document.createElement('iframe');
+    // 1×1 px con opacity:0 — suficiente para que el navegador renderice el contenido
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;opacity:0;pointer-events:none;';
     document.body.appendChild(iframe);
 
-    // ── Bandera 1: evita doble disparo de ejecutarImpresion (onload + fallback)
-    let yaImprimio = false;
-    // ── Bandera 2: evita avanzar más de una vez al siguiente documento
-    let yaSiguio   = false;
+    let lanzado    = false; // evita doble disparo de print (onload + fallback)
+    let finalizado = false; // evita doble llamada a onTerminado
 
-    /* Avanza al siguiente documento.
-       Se llama desde el listener de "afterprint" o, si éste no dispara, desde el
-       fallback de 60 s. La bandera yaSiguio garantiza que solo corra una vez. */
-    const avanzar = () => {
-        if (yaSiguio) return;
-        yaSiguio = true;
-        try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
-        // Pequeño respiro para el spooler antes del siguiente documento
-        setTimeout(() => imprimirSecuencial(documentos, indice + 1, onTerminado), IMPRESION_DELAY_MS);
+    const finalizar = () => {
+        if (finalizado) return;
+        finalizado = true;
+        try { document.body.removeChild(iframe); } catch (e) { /* ignorar */ }
+        setTimeout(() => {
+            if (typeof onTerminado === 'function') onTerminado();
+        }, IMPRESION_DELAY_MS);
     };
 
-    const ejecutarImpresion = () => {
-        if (yaImprimio) return;
-        yaImprimio = true;
+    const lanzarPrint = () => {
+        if (lanzado) return;
+        lanzado = true;
 
-        // Escuchar "afterprint": se dispara cuando el diálogo de impresión
-        // se cierra (el usuario imprime o cancela), sin importar si print()
-        // es bloqueante (desktop) o no bloqueante (Android Chrome).
+        // afterprint dispara cuando el diálogo se cierra (o inmediatamente en
+        // kiosk-printing). En Android Chrome puede disparar antes de que el
+        // usuario interactúe, pero con un único documento consolidado eso no
+        // importa — ya todo está en un solo trabajo de impresión.
         let afterprintFired = false;
         try {
             iframe.contentWindow.addEventListener('afterprint', () => {
                 afterprintFired = true;
-                // Breve pausa para que el spooler reciba el trabajo antes de avanzar
-                setTimeout(avanzar, IMPRESION_DELAY_MS);
+                finalizar();
             }, { once: true });
         } catch (eAP) {
             console.warn('[POS] No se pudo suscribir a afterprint:', eAP);
@@ -104,40 +125,37 @@ function imprimirSecuencial(documentos, indice, onTerminado) {
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
         } catch (e) {
-            console.warn('[POS] Error al imprimir documento ' + indice + ' (' + doc.tipo + ')', e);
-            avanzar(); // si print() falla del todo, avanzar de todas formas
+            console.warn('[POS] Error al llamar print():', e);
+            finalizar();
             return;
         }
 
-        // Fallback de seguridad: si "afterprint" nunca se dispara
-        // (caso raro en algunos entornos), avanzar tras 60 s.
-        // Con kiosk-printing, afterprint dispara de inmediato, así que yaSiguio
-        // ya estará activa antes de que este timer llegue a ejecutarse.
+        // Fallback: si afterprint nunca se dispara (caso raro), avanzar tras 60 s
         setTimeout(() => {
             if (!afterprintFired) {
-                console.warn('[POS] afterprint no disparó para documento ' + indice + '; avanzando por fallback.');
-                avanzar();
+                console.warn('[POS] afterprint no disparó; finalizando por fallback (60 s).');
+                finalizar();
             }
         }, 60000);
     };
 
-    // Escribir el HTML dentro del iframe
-    iframe.onload = () => setTimeout(ejecutarImpresion, 350);
+    // Disparar impresión al cargar el iframe
+    iframe.onload = () => setTimeout(lanzarPrint, 400);
 
     try {
         iframe.contentDocument.open();
-        iframe.contentDocument.write(doc.html);
+        iframe.contentDocument.write(html);
         iframe.contentDocument.close();
     } catch (e) {
-        // Fallback por políticas de same-origin en algunos entornos
-        const blob = new Blob([doc.html], { type: 'text/html' });
+        // Fallback same-origin: usar Blob URL
+        const blob = new Blob([html], { type: 'text/html' });
         iframe.src = URL.createObjectURL(blob);
     }
 
-    // Fallback: si onload no se dispara (a veces ocurre con document.write),
-    // ejecutarImpresion se activa a los 1500 ms; si ya lo hizo onload, la bandera lo frena.
-    setTimeout(ejecutarImpresion, 1500);
+    // Fallback: si onload no dispara (ocurre con document.write en algunos entornos)
+    setTimeout(lanzarPrint, 1800);
 }
+
 
 /* ══════════════════════════════════════════════════════════════════════════════
    RENDERIZADORES HTML
