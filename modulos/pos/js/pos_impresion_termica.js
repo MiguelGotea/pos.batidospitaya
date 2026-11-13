@@ -14,11 +14,25 @@ const IMPRESION_LOGO_URL        = '/assets/img/logo_pitaya.png';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    FUNCIÓN PRINCIPAL: lanzarImpresionCompleta
-   Recibe el payload del servidor, genera el HTML de cada ticket y los imprime
-   todos en UN SOLO diálogo de impresión (documento consolidado con saltos de
-   página CSS). Esto es necesario en Android/tablet donde window.print() es
-   no-bloqueante y afterprint dispara antes de que el usuario interactúe.
+   Recibe el payload del servidor, genera el HTML de cada ticket y los imprime.
+
+   ESTRATEGIA HÍBRIDA según plataforma:
+   • Android/tablet: documento consolidado en UN solo diálogo de impresión.
+     Necesario porque en Android Chrome window.print() es no-bloqueante y
+     afterprint dispara antes de que el usuario interactúe con el diálogo.
+   • Desktop (Windows/Mac Chrome, Edge, Firefox): impresión secuencial —
+     un iframe por ticket, un diálogo de impresión por ticket. En escritorio
+     window.print() ES bloqueante, por lo que el flujo secuencial funciona
+     perfectamente y el iframe de tamaño real evita la página en blanco que
+     ocurre con el iframe de 1×1 px del modo consolidado.
    ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Detecta si el navegador actual es Android ───────────────────────────────
+   Se usa para elegir la estrategia de impresión adecuada.              */
+function _esAndroid() {
+    return /android/i.test(navigator.userAgent);
+}
+
 function lanzarImpresionCompleta(payload, onTerminado) {
     const { factura, comandas } = payload;
 
@@ -34,11 +48,14 @@ function lanzarImpresionCompleta(payload, onTerminado) {
         return;
     }
 
-    // Consolidar todos los tickets en un único documento HTML con saltos de
-    // página entre ellos. El driver de la impresora puede ejecutar el corte
-    // automático en cada salto de página si así está configurado.
-    const htmlConsolidado = _consolidarTickets(tickets);
-    _imprimirHtml(htmlConsolidado, onTerminado);
+    if (_esAndroid()) {
+        // ── Modo Android: un único documento consolidado, un solo diálogo ──
+        const htmlConsolidado = _consolidarTickets(tickets);
+        _imprimirHtml(htmlConsolidado, onTerminado);
+    } else {
+        // ── Modo Desktop: un iframe por ticket, diálogos secuenciales ──────
+        _imprimirSecuencialDesktop(tickets, 0, onTerminado);
+    }
 }
 
 /* ── Consolida un array de documentos HTML en uno solo ───────────────────────
@@ -154,6 +171,69 @@ function _imprimirHtml(html, onTerminado) {
 
     // Fallback: si onload no dispara (ocurre con document.write en algunos entornos)
     setTimeout(lanzarPrint, 1800);
+}
+
+/* ── Impresión secuencial para Desktop ───────────────────────────────────────
+   Imprime los tickets uno a uno usando iframes independientes. En escritorio,
+   window.print() es BLOQUEANTE: el JS se pausa hasta que el usuario cierra el
+   diálogo, por lo que podemos encadenar los trabajos de forma segura.
+   En Android NO se usa este modo porque print() no es bloqueante allí.
+
+   @param {string[]} htmlTickets  Array de documentos HTML completos
+   @param {number}   indice       Índice actual en htmlTickets
+   @param {Function} onTerminado  Callback al finalizar todos los tickets    */
+function _imprimirSecuencialDesktop(htmlTickets, indice, onTerminado) {
+    if (indice >= htmlTickets.length) {
+        // Todos los tickets fueron enviados al diálogo de impresión
+        if (typeof onTerminado === 'function') onTerminado();
+        return;
+    }
+
+    const html = htmlTickets[indice];
+
+    // iframe a tamaño normal (no 1×1 px) para evitar página en blanco en
+    // Chrome/Edge escritorio. Se posiciona fuera de pantalla pero con
+    // dimensiones reales para que el motor de impresión pueda renderizarlo.
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    let yaImprimio = false;
+
+    const ejecutarImpresion = () => {
+        if (yaImprimio) return;
+        yaImprimio = true;
+
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print(); // Bloqueante en escritorio
+        } catch (e) {
+            console.warn('[POS] Error al llamar print() en ticket', indice, ':', e);
+        }
+
+        // Tras print() bloqueante, el usuario ya cerró el diálogo.
+        // Eliminar el iframe y pasar al siguiente ticket.
+        setTimeout(() => {
+            try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
+            _imprimirSecuencialDesktop(htmlTickets, indice + 1, onTerminado);
+        }, IMPRESION_DELAY_MS);
+    };
+
+    // Disparar impresión cuando el iframe termine de cargar
+    iframe.onload = () => setTimeout(ejecutarImpresion, 350);
+
+    try {
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(html);
+        iframe.contentDocument.close();
+    } catch (e) {
+        // Fallback same-origin: usar Blob URL
+        const blob = new Blob([html], { type: 'text/html' });
+        iframe.src = URL.createObjectURL(blob);
+    }
+
+    // Fallback: si onload no dispara, forzar impresión tras 1500 ms
+    setTimeout(ejecutarImpresion, 1500);
 }
 
 

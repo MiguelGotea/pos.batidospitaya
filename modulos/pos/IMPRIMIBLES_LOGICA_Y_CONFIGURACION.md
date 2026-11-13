@@ -27,6 +27,7 @@
 9. [Cambios Visuales — Rev. 2 (Nov 2, 2026)](#9-cambios-visuales--rev-2-nov-2-2026)
 10. [Cambios de Comportamiento — Rev. 3 (Nov 13, 2026)](#10-cambios-de-comportamiento--rev-3-nov-13-2026)
 11. [Motor de Impresión Consolidada — Rev. 4 (Nov 13, 2026)](#11-motor-de-impresión-consolidada--rev-4-nov-13-2026)
+12. [Estrategia Híbrida de Impresión — Rev. 5 (Nov 13, 2026)](#12-estrategia-híbrida-de-impresión--rev-5-nov-13-2026)
 
 ---
 
@@ -1099,3 +1100,79 @@ Para activar corte por página en la mayoría de drivers ESC/POS:
 
 > [!IMPORTANT]
 > La función `imprimirSecuencial` fue **eliminada** en Rev. 4. Ya no existe en el código. Todo el flujo pasa por `_consolidarTickets` + `_imprimirHtml`.
+
+---
+
+## 12. Estrategia Híbrida de Impresión — Rev. 5 (Nov 13, 2026)
+
+### 12.1 Problema detectado en Rev. 4
+
+El enfoque consolidado de Rev. 4 (un único documento HTML para todos los tickets, impreso via iframe de 1×1 px) funcionaba correctamente en **Android/tablet** pero generaba una **página en blanco** en **Desktop Chrome/Edge** de Windows.
+
+**Causa raíz:** Chrome en escritorio usa el layout del iframe como base del renderizador de impresión. Un iframe de 1×1 px colapsa el layout a cero y el motor de impresión no puede renderizar el contenido. Android maneja la impresión con un framework nativo separado que no tiene esta limitación.
+
+---
+
+### 12.2 Solución: Estrategia Híbrida
+
+Se implementó una detección de plataforma mediante `_esAndroid()` que selecciona la estrategia óptima según el entorno:
+
+```
+navigator.userAgent  →  /android/i  →  true   →  Modo Android (consolidado)
+                                    →  false  →  Modo Desktop (secuencial)
+```
+
+#### Tabla de comportamiento por plataforma
+
+| Entorno | `window.print()` | `afterprint` | Estrategia usada |
+|---|---|---|---|
+| **Desktop Chrome/Edge/Firefox** | Bloqueante (espera al usuario) | Dispara al cerrar el diálogo | `_imprimirSecuencialDesktop` |
+| **Android Chrome (tablet)** | No bloqueante | Dispara inmediatamente al llamar `print()` | `_consolidarTickets` + `_imprimirHtml` |
+
+---
+
+### 12.3 Función `_esAndroid()`
+
+```javascript
+function _esAndroid() {
+    return /android/i.test(navigator.userAgent);
+}
+```
+
+Detecta Android por User-Agent. Simple y suficiente para el caso de uso del POS (dispositivos conocidos y controlados).
+
+---
+
+### 12.4 Función `_imprimirSecuencialDesktop(htmlTickets, indice, onTerminado)`
+
+Reemplaza la antigua `imprimirSecuencial` para escritorio. Diferencias clave respecto al código de Rev. 3:
+
+| Aspecto | Rev. 3 (secuencial antigua) | Rev. 5 (secuencial desktop) |
+|---|---|---|
+| Iframe tamaño | 0×0 px oculto | **80mm × 200mm** (tamaño real off-screen) |
+| Avance al siguiente | `afterprint` (unreliable) | `setTimeout(IMPRESION_DELAY_MS)` tras `print()` bloqueante |
+| Fallback onload | 1200 ms | **1500 ms** |
+| Delay entre tickets | — | `IMPRESION_DELAY_MS` (600 ms) |
+
+El iframe de tamaño real (80mm × 200mm) posicionado fuera de pantalla (`top:-9999px`) garantiza que el motor de renderizado de Chrome pueda procesar el contenido correctamente antes de llamar `print()`.
+
+---
+
+### 12.5 Resumen de funciones del módulo (estado Rev. 5)
+
+| Función | Plataforma | Propósito |
+|---|---|---|
+| `lanzarImpresionCompleta(payload, onTerminado)` | Ambas | Punto de entrada. Detecta plataforma y delega. |
+| `_esAndroid()` | — | Detecta Android por User-Agent. |
+| `_consolidarTickets(htmlDocs[])` | Android | Combina N documentos HTML en uno con page-breaks. |
+| `_imprimirHtml(html, onTerminado)` | Android | Iframe 1×1 px, `print()`, espera `afterprint`, callback. |
+| `_imprimirSecuencialDesktop(tickets, idx, cb)` | Desktop | Iframe 80mm real, `print()` bloqueante, secuencial. |
+| `renderizarFacturaCliente(factura)` | Ambas | Genera HTML del ticket de factura al cliente. |
+| `renderizarComandaEstacion(comanda, factura)` | Ambas | Genera HTML del ticket de comanda de estación. |
+| `plantillaBase(contenido)` | Ambas | Envuelve contenido en HTML con estilos inline. |
+| `decimalAFraccion(numero)` | Ambas | Convierte decimales a fracciones (`0.5` → `1/2`). |
+| `formatoFechaHora(fechaHora)` | Ambas | Formatea fecha/hora al formato del ticket. |
+| `formatoMoneda(n)` | Ambas | Formatea número como `C$ X,XXX`. |
+
+> [!NOTE]
+> `_consolidarTickets` e `_imprimirHtml` se mantienen intactas (siguen siendo usadas en Android). `_imprimirSecuencialDesktop` es nueva en Rev. 5 y sólo se activa en escritorio.
