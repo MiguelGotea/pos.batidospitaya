@@ -7,10 +7,10 @@
 'use strict';
 
 // ── Constantes configurables ─────────────────────────────────────────────────
-const IMPRESION_WIFI_PASSWORD   = 'tubatidofavorito';
-const IMPRESION_DELAY_MS        = 600;  // ms tras afterprint antes de redirigir
-const IMPRESION_CSS_URL         = '/modulos/pos/css/ticket_termico_80mm.css';
-const IMPRESION_LOGO_URL        = '/assets/img/logo_pitaya.png';
+const IMPRESION_WIFI_PASSWORD = 'tubatidofavorito';
+const IMPRESION_DELAY_MS = 600;  // ms tras afterprint antes de redirigir
+const IMPRESION_CSS_URL = '/modulos/pos/css/ticket_termico_80mm.css';
+const IMPRESION_LOGO_URL = '/assets/img/logo_pitaya.png';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    FUNCIÓN PRINCIPAL: lanzarImpresionCompleta
@@ -70,7 +70,7 @@ function _consolidarTickets(htmlDocs) {
     const secciones = htmlDocs.map((html, idx) => {
         const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
         const contenido = bodyMatch ? bodyMatch[1].trim() : '';
-        const esUltimo  = (idx === htmlDocs.length - 1);
+        const esUltimo = (idx === htmlDocs.length - 1);
 
         // El último ticket no lleva salto de página después
         const estiloSalto = esUltimo
@@ -108,7 +108,7 @@ function _imprimirHtml(html, onTerminado) {
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;opacity:0;pointer-events:none;';
     document.body.appendChild(iframe);
 
-    let lanzado    = false; // evita doble disparo de print (onload + fallback)
+    let lanzado = false; // evita doble disparo de print (onload + fallback)
     let finalizado = false; // evita doble llamada a onTerminado
 
     const finalizar = () => {
@@ -355,10 +355,10 @@ ${contenido}
 function esc(str) {
     if (str == null) return '';
     return String(str)
-        .replace(/&/g,  '&amp;')
-        .replace(/</g,  '&lt;')
-        .replace(/>/g,  '&gt;')
-        .replace(/"/g,  '&quot;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function formatoMoneda(n) {
@@ -370,11 +370,11 @@ function formatoMoneda(n) {
 // Fracciones soportadas: 1/2, 1/4, 1/8, 1/3, 1/6
 // Tolerancia para detectar el residuo fraccionario
 const FRACCIONES_SOPORTE = [
-    { num: 1, den: 2, valor: 0.5          },
-    { num: 1, den: 4, valor: 0.25         },
-    { num: 1, den: 8, valor: 0.125        },
-    { num: 1, den: 3, valor: 1/3          },
-    { num: 1, den: 6, valor: 1/6          },
+    { num: 1, den: 2, valor: 0.5 },
+    { num: 1, den: 4, valor: 0.25 },
+    { num: 1, den: 8, valor: 0.125 },
+    { num: 1, den: 3, valor: 1 / 3 },
+    { num: 1, den: 6, valor: 1 / 6 },
 ];
 const FRACCION_TOLERANCIA = 0.015; // tolera hasta ±0.015 de diferencia
 
@@ -382,8 +382,8 @@ function decimalAFraccion(numero) {
     const num = parseFloat(numero);
     if (isNaN(num)) return String(numero);
 
-    const entero   = Math.floor(num);
-    const residuo  = num - entero;
+    const entero = Math.floor(num);
+    const residuo = num - entero;
 
     // Si el residuo es casi 0 → número entero
     if (residuo < FRACCION_TOLERANCIA) {
@@ -392,11 +392,11 @@ function decimalAFraccion(numero) {
 
     // Buscar qué fracción se acerca más al residuo
     let mejorMatch = null;
-    let mejorDif   = Infinity;
+    let mejorDif = Infinity;
     for (const frac of FRACCIONES_SOPORTE) {
         const dif = Math.abs(residuo - frac.valor);
         if (dif < mejorDif) {
-            mejorDif   = dif;
+            mejorDif = dif;
             mejorMatch = frac;
         }
     }
@@ -424,14 +424,14 @@ function formatoFechaHora(fechaHora) {
     const d = new Date(fechaHora);
     if (isNaN(d.getTime())) return fechaHora;
 
-    const dia   = String(d.getDate()).padStart(2, '0');
-    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    const mes   = meses[d.getMonth()];
-    const anio  = String(d.getFullYear()).slice(-2);
+    const dia = String(d.getDate()).padStart(2, '0');
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const mes = meses[d.getMonth()];
+    const anio = String(d.getFullYear()).slice(-2);
 
-    let horas   = d.getHours();
-    const min   = String(d.getMinutes()).padStart(2, '0');
-    const ampm  = horas >= 12 ? 'pm' : 'am';
+    let horas = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ampm = horas >= 12 ? 'pm' : 'am';
     horas = horas % 12 || 12;
     const horaStr = String(horas).padStart(2, '0') + ':' + min + ' ' + ampm;
 
@@ -443,8 +443,8 @@ function formatoFechaHora(fechaHora) {
    ══════════════════════════════════════════════════════════════════════════════ */
 function renderizarFacturaCliente(factura) {
     const { fecha, hora } = formatoFechaHora(factura.fecha_hora);
-    const nombreCliente   = factura.nombre_cliente || 'Cliente';
-    const tienda          = factura.nombre_sucursal || '';
+    const nombreCliente = factura.nombre_cliente || 'Cliente';
+    const tienda = factura.nombre_sucursal || '';
 
     // ── Cabecera ────────────────────────────────────────────────────────────
     let html = `
@@ -549,7 +549,7 @@ function renderizarFacturaCliente(factura) {
    ══════════════════════════════════════════════════════════════════════════════ */
 function renderizarComandaEstacion(comanda, factura) {
     const { fecha, hora } = formatoFechaHora(factura.fecha_hora);
-    const nombreCliente   = factura.nombre_cliente || 'Cliente';
+    const nombreCliente = factura.nombre_cliente || 'Cliente';
 
     // ── Cabecera: puntos 2, 4 ─────────────────────────────────────────────
     // Punto 2: Cliente en una línea, Pedido en otra (grande y resaltado), Fecha/Hora en tercera
@@ -620,14 +620,14 @@ function renderizarComandaEstacion(comanda, factura) {
         // ── Ingredientes de la receta con separadores de grupo (punto 6) ──
         // Agrupamos las filas por tipo para insertar separador entre grupos
         const ingredientes = linea.ingredientes_receta || [];
-        let tipoAnterior   = comanda.lleva_endulzante ? 'E' : null; // tipo del último bloque renderizado
+        let tipoAnterior = comanda.lleva_endulzante ? 'E' : null; // tipo del último bloque renderizado
 
         ingredientes.forEach((ing, idx) => {
             const nombreComponente = ing.nombre_componente || ing.nombre_ingrediente;
-            const tipo             = ing.tipo_comanda || '-';
-            const cantidadNum      = parseFloat(ing.cantidad) || 0;
+            const tipo = ing.tipo_comanda || '-';
+            const cantidadNum = parseFloat(ing.cantidad) || 0;
             // Punto 9: cantidad solo como número/fracción, SIN unidad (la unidad va en el nombre del ingrediente si aplica)
-            const cantStr          = decimalAFraccion(cantidadNum);
+            const cantStr = decimalAFraccion(cantidadNum);
 
             // Punto 6: insertar separador de media línea cuando cambia el tipo
             // (excepto antes del primer ingrediente si ya hubo endulzante del mismo tipo)
@@ -758,7 +758,7 @@ function iniciarGuardadoEImpresion(payloadGuardado, onSuccess, onError) {
         const cartData = payloadGuardado.detalle; // ya es JSON string
         $.get('/modulos/pos/ajax/facturas_get_imprimibles.php', {
             id_factura: idFactura,
-            cart_data:  cartData,
+            cart_data: cartData,
         }, function (payload) {
             if (!payload.success) {
                 onError('Factura guardada pero no se pudieron obtener los datos de impresión.');
