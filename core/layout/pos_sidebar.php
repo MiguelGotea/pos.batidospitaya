@@ -41,9 +41,15 @@ function renderPOSSidebar($activeModule = 'inicio')
             'icon'  => 'fas fa-vault',
             'url'   => '#',
             'sub'   => [
-                ['titulo' => 'Caja Inicial',    'url' => '/modulos/inicial/'],
-                ['titulo' => 'Aligeramientos',  'url' => '/modulos/aligeramiento/'],
+                ['titulo' => 'Caja Inicial', 'url' => '/modulos/inicial/'],
             ]
+        ],
+        [
+            'id'    => 'aligeramiento',
+            'titulo' => 'Aligeramientos',
+            'icon'  => 'fas fa-money-bill-transfer',
+            'url'   => '/modulos/aligeramiento/',
+            'sub'   => []
         ],
         [
             'id'    => 'logout',
