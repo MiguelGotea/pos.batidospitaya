@@ -56,7 +56,13 @@ function imprimirSecuencial(documentos, indice) {
     iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;visibility:hidden;';
     document.body.appendChild(iframe);
 
+    // Bandera para evitar doble disparo: onload + fallback setTimeout pueden coexistir
+    let yaImprimio = false;
+
     const ejecutarImpresion = () => {
+        if (yaImprimio) return;   // ← evita el segundo disparo
+        yaImprimio = true;
+
         try {
             iframe.contentWindow.focus();
             iframe.contentWindow.print(); // SINCRÓNICO en la mayoría de navegadores
@@ -84,7 +90,8 @@ function imprimirSecuencial(documentos, indice) {
         iframe.src = URL.createObjectURL(blob);
     }
 
-    // Fallback: si onload no se dispara (a veces ocurre con document.write)
+    // Fallback: si onload no se dispara (a veces ocurre con document.write),
+    // ejecutarImpresion se activa a los 1200 ms; si ya lo hizo onload, la bandera lo frena.
     setTimeout(ejecutarImpresion, 1200);
 }
 
