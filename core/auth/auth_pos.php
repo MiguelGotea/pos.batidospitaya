@@ -14,8 +14,7 @@
 // ⚠️  MODO DESARROLLO — Cambiar a false en producción
 // ---------------------------------------------------------------------------
 define('POS_DEV_MODE', true);   // true = bypass de cookie activo, false para producción
-define('POS_DEV_SUCURSAL_COD', 5);      // Código de sucursal a simular
-define('POS_DEV_SUCURSAL_NOMBRE', 'Sucursal Test (DEV)'); // Nombre descriptivo
+define('POS_DEV_SUCURSAL_COD', 14);     // Código de sucursal a simular
 // ---------------------------------------------------------------------------
 
 // Gestor centralizado de sesiones (8 horas y corte a Medianoche UTC-6)
@@ -45,20 +44,33 @@ function posVerificarDispositivo()
     if (defined('POS_DEV_MODE') && POS_DEV_MODE === true) {
         // Poblar sesión automáticamente como si el dispositivo fuera válido
         if (!isset($_SESSION['pos_store_sucursal']) || $_SESSION['pos_store_sucursal'] != POS_DEV_SUCURSAL_COD) {
-            $_SESSION['pos_device_sucursal'] = POS_DEV_SUCURSAL_COD;
-            $_SESSION['pos_store_sucursal'] = POS_DEV_SUCURSAL_COD;
-            $_SESSION['pos_store_sucursal_nombre'] = POS_DEV_SUCURSAL_NOMBRE;
-            $_SESSION['pos_store_usuario'] = 'DEV-Terminal';
-            $_SESSION['pos_store_id'] = 0;
-            $_SESSION['usuario_id'] = 0;
-            $_SESSION['usuario_rol'] = 'sucursal';
-            $_SESSION['cargo_cod'] = 27;
+            // Consultar el nombre real de la sucursal desde la BD
+            $devNombre = 'Sucursal ' . POS_DEV_SUCURSAL_COD;
+            try {
+                $stmtDev = $conn->prepare("SELECT nombre FROM sucursales WHERE codigo = ? LIMIT 1");
+                $stmtDev->execute([POS_DEV_SUCURSAL_COD]);
+                $rowDev = $stmtDev->fetch();
+                if ($rowDev) {
+                    $devNombre = $rowDev['nombre'];
+                }
+            } catch (Exception $e) {
+                error_log("POS DEV - Error obteniendo nombre de sucursal: " . $e->getMessage());
+            }
+
+            $_SESSION['pos_device_sucursal']       = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal']         = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal_nombre']  = $devNombre;
+            $_SESSION['pos_store_usuario']          = 'DEV-Terminal';
+            $_SESSION['pos_store_id']               = 0;
+            $_SESSION['usuario_id']                 = 0;
+            $_SESSION['usuario_rol']                = 'sucursal';
+            $_SESSION['cargo_cod']                  = 27;
         }
         return [
-            'status' => true,
-            'msg' => '',
+            'status'          => true,
+            'msg'             => '',
             'sucursal_codigo' => POS_DEV_SUCURSAL_COD,
-            'sucursal_nombre' => POS_DEV_SUCURSAL_NOMBRE,
+            'sucursal_nombre' => $_SESSION['pos_store_sucursal_nombre'] ?? ('Sucursal ' . POS_DEV_SUCURSAL_COD),
         ];
     }
     // ===========================================================

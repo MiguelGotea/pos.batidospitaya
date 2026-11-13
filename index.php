@@ -192,7 +192,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     <i class="fa fa-shield-halved" style="font-size:3rem;color:rgba(224,85,85,0.2);margin-bottom:20px"></i>
                 <?php else: ?>
                     <h2 style="color: var(--pitaya-teal)">Acceso Colaborador</h2>
-                    <p>Ingresa tu clave para operar &bull; Sucursal <strong><?= htmlspecialchars($sucursal) ?></strong></p>
+                    <p>Ingresa tu clave para operar &bull; <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong></p>
 
                     <?php if ($pinError): ?>
                         <div class="pos-alert error show" id="pinAlert" style="margin-bottom:16px;">
