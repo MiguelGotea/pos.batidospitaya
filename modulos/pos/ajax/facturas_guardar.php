@@ -126,6 +126,15 @@ try {
     $subtotalCalculado     = round($subtotal, 2);
     $totalFacturaCalculado = round($subtotalCalculado + $propina, 2);
 
+    // ---- Obtener tipo de cambio USD/NIO desde BD (solo lectura, no del frontend) ----
+    // IMPORTANTE: debe ejecutarse ANTES de validar los pagos para convertir USD → NIO correctamente
+    $stmtTC = $conn->prepare(
+        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
+    );
+    $stmtTC->execute();
+    $tasaUSD = $stmtTC->fetchColumn();
+    $tasaUSD = $tasaUSD ? round((float)$tasaUSD, 4) : null;
+
     // ---- Validar métodos de pago ----
     if (empty($pagos) || !is_array($pagos) || count($pagos) === 0) {
         throw new Exception('Debe registrar al menos un método de pago.');
@@ -148,14 +157,6 @@ try {
     if (round($totalPagos, 2) < $totalFacturaCalculado) {
         throw new Exception("Los pagos registrados (C$ " . number_format($totalPagos, 2) . ") no cubren el total a pagar (C$ " . number_format($totalFacturaCalculado, 2) . ").");
     }
-
-    // ---- Obtener tipo de cambio USD/NIO desde BD (solo lectura, no del frontend) ----
-    $stmtTC = $conn->prepare(
-        "SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1"
-    );
-    $stmtTC->execute();
-    $tasaUSD = $stmtTC->fetchColumn();
-    $tasaUSD = $tasaUSD ? round((float)$tasaUSD, 4) : null;
 
     $conn->beginTransaction();
 
