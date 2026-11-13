@@ -45,6 +45,12 @@ function lanzarImpresionCompleta(payload, onTerminado) {
    Ventaja: NO requiere permiso de ventanas emergentes (popup) del navegador,
    ya que el iframe vive dentro de la misma página.
    Funciona tanto en modo normal (diálogo Ctrl+P) como kiosk (--kiosk-printing).
+
+   SECUENCIACIÓN:
+   • Se escucha el evento "afterprint" del iframe para saber cuándo el diálogo
+     de impresión fue cerrado por el usuario (ya sea confirmando o cancelando).
+     Esto funciona aunque window.print() sea no-bloqueante (ej. Android Chrome).
+   • Un fallback de 60 s cubre el caso extremo donde "afterprint" no se dispara.
    ──────────────────────────────────────────────────────────────────────────────── */
 function imprimirSecuencial(documentos, indice, onTerminado) {
     if (indice >= documentos.length) {
@@ -57,28 +63,62 @@ function imprimirSecuencial(documentos, indice, onTerminado) {
 
     // Crear iframe oculto y adjuntarlo al DOM
     const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;visibility:hidden;';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;opacity:0;pointer-events:none;';
     document.body.appendChild(iframe);
 
-    // Bandera para evitar doble disparo: onload + fallback setTimeout pueden coexistir
+    // ── Bandera 1: evita doble disparo de ejecutarImpresion (onload + fallback)
     let yaImprimio = false;
+    // ── Bandera 2: evita avanzar más de una vez al siguiente documento
+    let yaSiguio   = false;
+
+    /* Avanza al siguiente documento.
+       Se llama desde el listener de "afterprint" o, si éste no dispara, desde el
+       fallback de 60 s. La bandera yaSiguio garantiza que solo corra una vez. */
+    const avanzar = () => {
+        if (yaSiguio) return;
+        yaSiguio = true;
+        try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
+        // Pequeño respiro para el spooler antes del siguiente documento
+        setTimeout(() => imprimirSecuencial(documentos, indice + 1, onTerminado), IMPRESION_DELAY_MS);
+    };
 
     const ejecutarImpresion = () => {
-        if (yaImprimio) return;   // ← evita el segundo disparo
+        if (yaImprimio) return;
         yaImprimio = true;
+
+        // Escuchar "afterprint": se dispara cuando el diálogo de impresión
+        // se cierra (el usuario imprime o cancela), sin importar si print()
+        // es bloqueante (desktop) o no bloqueante (Android Chrome).
+        let afterprintFired = false;
+        try {
+            iframe.contentWindow.addEventListener('afterprint', () => {
+                afterprintFired = true;
+                // Breve pausa para que el spooler reciba el trabajo antes de avanzar
+                setTimeout(avanzar, IMPRESION_DELAY_MS);
+            }, { once: true });
+        } catch (eAP) {
+            console.warn('[POS] No se pudo suscribir a afterprint:', eAP);
+        }
 
         try {
             iframe.contentWindow.focus();
-            iframe.contentWindow.print(); // SINCRÓNICO en la mayoría de navegadores
+            iframe.contentWindow.print();
         } catch (e) {
             console.warn('[POS] Error al imprimir documento ' + indice + ' (' + doc.tipo + ')', e);
+            avanzar(); // si print() falla del todo, avanzar de todas formas
+            return;
         }
 
-        // Esperar un poco, luego limpiar el iframe y pasar al siguiente documento
+        // Fallback de seguridad: si "afterprint" nunca se dispara
+        // (caso raro en algunos entornos), avanzar tras 60 s.
+        // Con kiosk-printing, afterprint dispara de inmediato, así que yaSiguio
+        // ya estará activa antes de que este timer llegue a ejecutarse.
         setTimeout(() => {
-            try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
-            imprimirSecuencial(documentos, indice + 1, onTerminado);
-        }, IMPRESION_DELAY_MS);
+            if (!afterprintFired) {
+                console.warn('[POS] afterprint no disparó para documento ' + indice + '; avanzando por fallback.');
+                avanzar();
+            }
+        }, 60000);
     };
 
     // Escribir el HTML dentro del iframe
@@ -95,8 +135,8 @@ function imprimirSecuencial(documentos, indice, onTerminado) {
     }
 
     // Fallback: si onload no se dispara (a veces ocurre con document.write),
-    // ejecutarImpresion se activa a los 1200 ms; si ya lo hizo onload, la bandera lo frena.
-    setTimeout(ejecutarImpresion, 1200);
+    // ejecutarImpresion se activa a los 1500 ms; si ya lo hizo onload, la bandera lo frena.
+    setTimeout(ejecutarImpresion, 1500);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
