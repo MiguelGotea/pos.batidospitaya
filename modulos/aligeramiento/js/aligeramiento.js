@@ -446,6 +446,7 @@ function buildRow(denom, moneda) {
         <td class="text-center">
             <input type="number" class="ci-input-qty qty-input"
                    min="0" step="1" value="0"
+                   inputmode="numeric" pattern="[0-9]*"
                    data-moneda="${moneda}" data-denom="${denom}"
                    id="qty_${moneda}_${String(denom).replace('.','_')}"
                    autocomplete="off">
@@ -465,8 +466,10 @@ $(function () {
 
     // Recalcular al cambiar cantidades
     $(document).on('input change', '.qty-input', function () {
-        let v = parseInt($(this).val());
-        if (isNaN(v) || v < 0) $(this).val(0);
+        let v = $(this).val().replace(/[^0-9]/g, '');
+        v = v === '' ? 0 : parseInt(v, 10);
+        if (isNaN(v) || v < 0) v = 0;
+        $(this).val(v);
         recalcular();
     });
 
@@ -612,29 +615,10 @@ function guardarAligeramiento() {
                     $('.qty-input').val(0);
                     $('#inputObservacion').val('');
                     recalcular();
-                    // Recargar historial y ofrecer subir foto
+                    // Recargar historial
                     totalRegistros = 0;
                     paginaActual   = 1;
                     cargarHistorial();
-
-                    if (res.aligeramiento_id) {
-                        setTimeout(function () {
-                            Swal.fire({
-                                title: '¿Subir voucher?',
-                                text:  '¿Deseas agregar la foto del aligeramiento ahora?',
-                                icon:  'question',
-                                showCancelButton:   true,
-                                confirmButtonColor: '#51B8AC',
-                                cancelButtonColor:  '#94a3b8',
-                                confirmButtonText:  '<i class="fas fa-camera me-1"></i> Sí, subir foto',
-                                cancelButtonText:   'Después'
-                            }).then(function (r2) {
-                                if (r2.isConfirmed) {
-                                    abrirModalVouchers(res.aligeramiento_id, totalGlobal);
-                                }
-                            });
-                        }, 400);
-                    }
                 });
             } else {
                 Swal.fire('Error', res.mensaje || 'Ocurrió un error.', 'error');

@@ -190,7 +190,10 @@
 .denom-label .denom-tag { background: #E6F4F1; border: 1px solid #B2DFDB; color: var(--pos-dark); border-radius: 5px; padding: .08rem .4rem; font-size: .76rem; font-weight: 800; }
 .denom-label.usd .denom-tag { background: #EFF6FF; border-color: #BFDBFE; color: var(--pos-blue); }
 
-.ci-input-qty { border: 1.5px solid #e2e8f0; border-radius: 7px; padding: .28rem .5rem; font-size: .86rem; width: 80px; text-align: center; transition: border-color .2s, box-shadow .2s; background: #fafafa; }
+/* Quitar flechas arriba/abajo de inputs numéricos */
+.ci-input-qty::-webkit-outer-spin-button,
+.ci-input-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ci-input-qty { -moz-appearance: textfield; border: 1.5px solid #e2e8f0; border-radius: 7px; padding: .28rem .5rem; font-size: .86rem; width: 80px; text-align: center; transition: border-color .2s, box-shadow .2s; background: #fafafa; }
 .ci-input-qty:focus { border-color: var(--pos-teal); box-shadow: 0 0 0 2px rgba(81,184,172,.18); outline: none; background: #fff; }
 .ci-row-total { font-variant-numeric: tabular-nums; font-weight: 600; color: #1e293b; }
 
