@@ -40,69 +40,52 @@ function lanzarImpresionCompleta(payload) {
     imprimirSecuencial(documentos, 0);
 }
 
-/* ── Impresión secuencial vía window.open ───────────────────────────────────────
-   Funciona en DOS modos:
-   - Kiosk (--kiosk-printing): print() va directo sin diálogo, ventana se cierra sola
-   - Normal: print() muestra el diálogo estándar del navegador (Ctrl+P normal)
-   En ambos casos, window.print() es SINCRÓNICO: bloquea hasta que el usuario
-   cierra el diálogo o la impresión termina. Esto garantiza orden correcto.
+/* ── Impresión secuencial vía iframe oculto ──────────────────────────────────────
+   Usa un <iframe> invisible inyectado en el DOM en lugar de window.open().
+   Ventaja: NO requiere permiso de ventanas emergentes (popup) del navegador,
+   ya que el iframe vive dentro de la misma página.
+   Funciona tanto en modo normal (diálogo Ctrl+P) como kiosk (--kiosk-printing).
    ──────────────────────────────────────────────────────────────────────────────── */
 function imprimirSecuencial(documentos, indice) {
     if (indice >= documentos.length) return;
 
     const doc = documentos[indice];
 
-    // Abrir ventana pequeña (en kiosk apenas es visible, en normal es la ventana de contenido)
-    const win = window.open(
-        '',
-        '_blank',
-        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=420,height=600'
-    );
-
-    if (!win) {
-        // El navegador bloqueó el popup (no debería ocurrir porque viene de gesto del usuario)
-        console.warn('[POS] Popup bloqueado para documento ' + indice + ' (' + doc.tipo + ')');
-        // Intentar el siguiente
-        setTimeout(() => imprimirSecuencial(documentos, indice + 1), 300);
-        return;
-    }
-
-    // Escribir HTML en la ventana nueva
-    win.document.open();
-    win.document.write(doc.html);
-    win.document.close();
-
-    let yaImprimio = false;
+    // Crear iframe oculto y adjuntarlo al DOM
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
 
     const ejecutarImpresion = () => {
-        if (yaImprimio) return;
-        yaImprimio = true;
-
         try {
-            win.focus();
-            win.print();  // SINCRÓNICO: bloquea hasta cerrar diálogo o fin de kiosk print
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print(); // SINCRÓNICO en la mayoría de navegadores
         } catch (e) {
-            console.warn('[POS] Error al imprimir documento ' + indice, e);
+            console.warn('[POS] Error al imprimir documento ' + indice + ' (' + doc.tipo + ')', e);
         }
 
-        // Cerrar la ventana del ticket y pasar al siguiente
+        // Esperar un poco, luego limpiar el iframe y pasar al siguiente documento
         setTimeout(() => {
-            try { win.close(); } catch (e2) { /* ignorar */ }
+            try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
             imprimirSecuencial(documentos, indice + 1);
         }, IMPRESION_DELAY_MS);
     };
 
-    // onload ANTES de document.write para capturar el evento correctamente
-    win.onload = () => setTimeout(ejecutarImpresion, 350);
+    // Escribir el HTML dentro del iframe
+    iframe.onload = () => setTimeout(ejecutarImpresion, 350);
 
-    // Escribir HTML en la ventana nueva (dispara el proceso de carga)
-    win.document.open();
-    win.document.write(doc.html);
-    win.document.close();
+    try {
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(doc.html);
+        iframe.contentDocument.close();
+    } catch (e) {
+        // Fallback por políticas de same-origin en algunos entornos
+        const blob = new Blob([doc.html], { type: 'text/html' });
+        iframe.src = URL.createObjectURL(blob);
+    }
 
-    // Fallback: si onload no se dispara (Chrome a veces no lo hace en document.write)
-    // usamos un timeout que activa la impresión directamente
-    setTimeout(ejecutarImpresion, 1000);
+    // Fallback: si onload no se dispara (a veces ocurre con document.write)
+    setTimeout(ejecutarImpresion, 1200);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
