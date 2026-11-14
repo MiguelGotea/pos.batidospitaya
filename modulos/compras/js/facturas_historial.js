@@ -574,16 +574,53 @@ function formatearMonto(v) {
     return 'C$ ' + n.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const MESES_COMPRAS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function parseFechaLocalCompras(str) {
+    if (!str) return null;
+    if (str instanceof Date) return isNaN(str.getTime()) ? null : str;
+    str = String(str).trim();
+    if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
+    const m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+    if (m) {
+        return new Date(
+            parseInt(m[1], 10),
+            parseInt(m[2], 10) - 1,
+            parseInt(m[3], 10),
+            m[4] !== undefined ? parseInt(m[4], 10) : 0,
+            m[5] !== undefined ? parseInt(m[5], 10) : 0,
+            m[6] !== undefined ? parseInt(m[6], 10) : 0
+        );
+    }
+    const d = new Date(str.replace(' ', 'T'));
+    return isNaN(d.getTime()) ? null : d;
+}
+
 function formatearFecha(str) {
     if (!str) return '-';
-    const [y, m, d] = str.split('-');
-    return `${d}/${m}/${y}`;
+    if (typeof window.formatoFechaPOS === 'function') return window.formatoFechaPOS(str);
+    const d = parseFechaLocalCompras(str);
+    if (!d) return str;
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = MESES_COMPRAS[d.getMonth()] || '';
+    const anio = String(d.getFullYear()).slice(-2);
+    return `${dia}-${mes}-${anio}`;
 }
 
 function formatearFechaHora(str) {
     if (!str) return '-';
-    const dt = new Date(str);
-    return dt.toLocaleDateString('es-NI') + ' ' + dt.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    if (typeof window.formatoFechaHoraPOS === 'function') return window.formatoFechaHoraPOS(str);
+    const d = parseFechaLocalCompras(str);
+    if (!d) return str;
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = MESES_COMPRAS[d.getMonth()] || '';
+    const anio = String(d.getFullYear()).slice(-2);
+    let horas = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ampm = horas >= 12 ? 'pm' : 'am';
+    horas = horas % 12 || 12;
+    const horaStr = String(horas).padStart(2, '0') + ':' + min + ' ' + ampm;
+    return `${dia}-${mes}-${anio} ${horaStr}`;
 }
 
 function escHtml(str) {

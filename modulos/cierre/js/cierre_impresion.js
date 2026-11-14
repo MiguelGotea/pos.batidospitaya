@@ -16,14 +16,57 @@
     const fmtNIO = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
     const fmtUSD = n => '$ '  + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-    function fmtDT(dt) {
-        if (!dt) return '—';
-        const d = new Date(dt.replace(' ','T'));
-        return d.toLocaleDateString('es-NI') + ' ' + d.toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'});
+    const MESES_CIERRE = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    function parseLocalDT(str) {
+        if (!str) return null;
+        if (str instanceof Date) return isNaN(str.getTime()) ? null : str;
+        str = String(str).trim();
+        if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
+        const m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+        if (m) {
+            return new Date(
+                parseInt(m[1], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[3], 10),
+                m[4] !== undefined ? parseInt(m[4], 10) : 0,
+                m[5] !== undefined ? parseInt(m[5], 10) : 0,
+                m[6] !== undefined ? parseInt(m[6], 10) : 0
+            );
+        }
+        const d = new Date(str.replace(' ', 'T'));
+        return isNaN(d.getTime()) ? null : d;
     }
+
     function fmtFecha(dt) {
         if (!dt) return '—';
-        return new Date(dt.replace(' ','T')).toLocaleDateString('es-NI');
+        if (typeof window.formatoFechaPOS === 'function') return window.formatoFechaPOS(dt);
+        const d = parseLocalDT(dt);
+        if (!d) return dt;
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = MESES_CIERRE[d.getMonth()] || '';
+        const anio = String(d.getFullYear()).slice(-2);
+        return `${dia}-${mes}-${anio}`;
+    }
+
+    function fmtHora(dt) {
+        if (!dt) return '—';
+        if (typeof window.formatoHoraPOS === 'function') return window.formatoHoraPOS(dt);
+        const d = parseLocalDT(dt);
+        if (!d) return dt;
+        let horas = d.getHours();
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const ampm = horas >= 12 ? 'pm' : 'am';
+        horas = horas % 12 || 12;
+        return String(horas).padStart(2, '0') + ':' + min + ' ' + ampm;
+    }
+
+    function fmtDT(dt) {
+        if (!dt) return '—';
+        if (typeof window.formatoFechaHoraPOS === 'function') return window.formatoFechaHoraPOS(dt);
+        const f = fmtFecha(dt);
+        const h = fmtHora(dt);
+        return `${f} ${h}`;
     }
 
     const sep    = () => '<hr style="border:none;border-top:1px dashed #000;margin:3px 0;">';

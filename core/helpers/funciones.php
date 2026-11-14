@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Formatea una fecha al formato ej: 31-abr-25
+ * Formatea una fecha al formato estándar POS ej: 29-Ago-26
  */
 function formatoFecha($fecha)
 {
-    if (empty($fecha) || $fecha === null) {
+    if (empty($fecha) || $fecha === null || $fecha === '0000-00-00') {
         return '';
     }
 
-    $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    $meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     try {
         $fechaObj = new DateTime($fecha);
@@ -164,23 +164,23 @@ function formatoFechaEspanol($fecha = null)
 }
 
 /**
- * Formatea fecha en español con hora (Migrada desde auditorías)
+ * Formatea fecha en español con hora (estándar ej: 29-Ago-26 06:23 pm)
  */
 function formatFechaEspanol($fecha = 'now')
 {
     $meses = [
-        1 => 'ene',
-        2 => 'feb',
-        3 => 'mar',
-        4 => 'abr',
-        5 => 'may',
-        6 => 'jun',
-        7 => 'jul',
-        8 => 'ago',
-        9 => 'sep',
-        10 => 'oct',
-        11 => 'nov',
-        12 => 'dic'
+        1 => 'Ene',
+        2 => 'Feb',
+        3 => 'Mar',
+        4 => 'Abr',
+        5 => 'May',
+        6 => 'Jun',
+        7 => 'Jul',
+        8 => 'Ago',
+        9 => 'Sep',
+        10 => 'Oct',
+        11 => 'Nov',
+        12 => 'Dic'
     ];
 
     try {
@@ -193,18 +193,13 @@ function formatFechaEspanol($fecha = 'now')
 }
 
 /**
- * Formatea fecha para reportes (Migrada desde auditorías)
+ * Formatea fecha para reportes (estándar ej: 29-Ago-26)
  */
 function formatFechaReporte($fecha)
 {
     if (empty($fecha) || $fecha === '0000-00-00')
         return '';
-    try {
-        $date = new DateTime($fecha);
-        return $date->format('d/m/Y');
-    } catch (Exception $e) {
-        return $fecha;
-    }
+    return formatoFecha($fecha);
 }
 
 /**
@@ -600,7 +595,7 @@ function obtenerSemanaPorNumero($numeroSemana)
 }
 
 /**
- * Formatea una fecha al formato ej: 31-abr-25 (día-mes-año)
+ * Formatea una fecha al formato ej: 29-Ago-26 (día-mes-año)
  * MEJORADA: Maneja valores nulos y formatos inválidos
  */
 function formatoFechaCorta($fecha)
@@ -610,7 +605,7 @@ function formatoFechaCorta($fecha)
         return '';
     }
 
-    $meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    $meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     try {
         // Verificar si la fecha tiene un formato válido
@@ -630,14 +625,38 @@ function formatoFechaCorta($fecha)
 }
 
 /**
- * Formatea una hora al formato 12 horas con AM/PM
+ * Formatea una hora al formato 12 horas estándar ej: 06:23 pm
  */
 function formatoHoraAmPm($hora)
 {
     if (empty($hora) || $hora == '00:00:00') {
         return '-';
     }
-    return date('h:i A', strtotime($hora));
+    return date('h:i a', strtotime($hora));
+}
+
+/**
+ * Formatea una hora al formato estándar ej: 06:23 pm
+ */
+function formatoHora($hora)
+{
+    if (empty($hora) || $hora === '00:00:00') {
+        return '';
+    }
+    return date('h:i a', strtotime($hora));
+}
+
+/**
+ * Formatea fecha y hora al formato estándar ej: 29-Ago-26 06:23 pm
+ */
+function formatoFechaHora($fechaHora)
+{
+    if (empty($fechaHora) || $fechaHora === '00:00:00' || $fechaHora === '0000-00-00 00:00:00') {
+        return '';
+    }
+    $f = formatoFecha($fechaHora);
+    $h = formatoHora($fechaHora);
+    return ($f && $h) ? "$f $h" : ($f ?: $h);
 }
 
 /**

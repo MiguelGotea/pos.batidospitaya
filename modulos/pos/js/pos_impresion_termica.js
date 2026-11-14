@@ -400,8 +400,11 @@ function formatearCantidad(cantidad, unidad) {
 }
 
 function formatoFechaHora(fechaHora) {
+    if (typeof window.separarFechaHoraPOS === 'function') {
+        return window.separarFechaHoraPOS(fechaHora);
+    }
     // fechaHora viene del servidor en formato "YYYY-MM-DD HH:mm:ss" o ISO
-    const d = new Date(fechaHora);
+    const d = (typeof window.parseFechaHoraLocalPOS === 'function') ? window.parseFechaHoraLocalPOS(fechaHora) : new Date(String(fechaHora).replace(' ', 'T'));
     if (isNaN(d.getTime())) return fechaHora;
 
     const dia = String(d.getDate()).padStart(2, '0');

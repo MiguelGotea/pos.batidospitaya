@@ -517,8 +517,12 @@ function cambiarPagina(pagina) {
 // ==================== UTILIDADES ====================
 function formatearFecha(fecha) {
     if (!fecha) return '-';
+    if (typeof window.formatoFechaPOS === 'function') return window.formatoFechaPOS(fecha);
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const d = new Date(fecha);
+    const s = String(fecha).trim();
+    const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    const d = m ? new Date(parseInt(m[1],10), parseInt(m[2],10)-1, parseInt(m[3],10)) : new Date(s.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return fecha;
     const año = String(d.getFullYear()).slice(-2);
     return `${String(d.getDate()).padStart(2, '0')}-${meses[d.getMonth()]}-${año}`;
 }

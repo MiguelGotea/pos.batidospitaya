@@ -387,8 +387,10 @@ function renderTablaPromociones(rows) {
         };
         const resTxt = `<span class="promo-resultado-chip">${r.resultado_valor}${resultadoMap[r.resultado_tipo] || r.resultado_tipo}</span>`;
 
+        const fIni = r.fecha_inicio ? (typeof window.formatoFechaPOS === 'function' ? window.formatoFechaPOS(r.fecha_inicio) : r.fecha_inicio) : '∞';
+        const fFin = r.fecha_fin ? (typeof window.formatoFechaPOS === 'function' ? window.formatoFechaPOS(r.fecha_fin) : r.fecha_fin) : '∞';
         const vigencia = (r.fecha_inicio || r.fecha_fin)
-            ? `${r.fecha_inicio || '∞'} → ${r.fecha_fin || '∞'}`
+            ? `${fIni} → ${fFin}`
             : '<span class="text-muted small">Sin límite</span>';
 
         const perms = window.PROMO_PERMISOS || {};
@@ -1068,7 +1070,12 @@ function actualizarPreview() {
             
             switch(nombre) {
                 case 'dia_semana': descripciones.push(`Día: ${val.dias?.join(', ') || '...'}`); break;
-                case 'horario': descripciones.push(`Hora: ${val.desde}-${val.hasta}`); break;
+                case 'horario': {
+                    const hD = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(val.desde) : val.desde;
+                    const hH = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(val.hasta) : val.hasta;
+                    descripciones.push(`Hora: ${hD} - ${hH}`);
+                    break;
+                }
                 case 'sucursal': descripciones.push(`${val.ids?.length} sucursal(es)`); break;
                 case 'tipo_cliente': descripciones.push(`Cliente: ${val.tipos?.join('/') || '...'}`); break;
                 case 'canal_venta': descripciones.push(`Canal: ${val.canales?.join('/') || '...'}`); break;

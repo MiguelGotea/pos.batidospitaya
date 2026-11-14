@@ -154,7 +154,7 @@ try {
                                 &nbsp;·&nbsp;
                                 <i class="bi bi-person me-1"></i><?php echo htmlspecialchars($colaboradorNombre); ?>
                                 &nbsp;·&nbsp;
-                                <i class="bi bi-calendar3 me-1"></i><?php echo date('d/m/Y'); ?>
+                                <i class="bi bi-calendar3 me-1"></i><?php echo formatoFecha(date('Y-m-d')); ?>
                             </div>
                         </div>
                     </div>

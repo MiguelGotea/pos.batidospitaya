@@ -16,7 +16,7 @@ $urlTardanzas = $modalData['url'] ?? '../operaciones/tardanzas_manual.php';
 if (!function_exists('formatoFecha')) {
     function formatoFecha($fecha)
     {
-        return date('d/m/Y', strtotime($fecha));
+        return formatoFecha($fecha);
     }
 }
 

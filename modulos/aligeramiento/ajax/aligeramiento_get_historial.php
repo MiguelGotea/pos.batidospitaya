@@ -192,11 +192,11 @@ try {
                 $fechaFmt = $row['fecha'];
             }
         }
-        // Formatear hora
+        // Formatear hora (estándar ej: 06:23 pm)
         $horaFmt = '';
-        if ($row['hora']) {
+        if (!empty($row['hora'])) {
             $hObj = DateTime::createFromFormat('H:i:s', $row['hora']);
-            $horaFmt = $hObj ? $hObj->format('H:i') : substr($row['hora'], 0, 5);
+            $horaFmt = $hObj ? $hObj->format('h:i a') : date('h:i a', strtotime($row['hora']));
         }
 
         $resultado[] = [

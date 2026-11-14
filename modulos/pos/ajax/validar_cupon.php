@@ -59,7 +59,7 @@ try {
 
     // 1. Validar fecha de caducidad
     if (!empty($cupon['fecha_caducidad']) && $cupon['fecha_caducidad'] < $hoy) {
-        $fechaVenc = date('d/m/Y', strtotime($cupon['fecha_caducidad']));
+        $fechaVenc = formatoFecha($cupon['fecha_caducidad']);
         throw new Exception("El cupón \"{$codigo}\" caducó el {$fechaVenc}.");
     }
 

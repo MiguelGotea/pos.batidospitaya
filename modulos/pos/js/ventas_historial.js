@@ -525,14 +525,21 @@ function formatearMonto(v) {
 const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 function separarFechaHora(str) {
+    if (typeof window.separarFechaHoraPOS === 'function') {
+        return window.separarFechaHoraPOS(str);
+    }
     if (!str) return { fecha: '—', hora: '—' };
-    const dt = new Date(str);
+    const dt = (typeof window.parseFechaHoraLocalPOS === 'function') ? window.parseFechaHoraLocalPOS(str) : new Date(str.replace(' ', 'T'));
     if (isNaN(dt)) return { fecha: '—', hora: '—' };
     const dia  = String(dt.getDate()).padStart(2, '0');
     const mes  = MESES_CORTOS[dt.getMonth()];
     const anio = String(dt.getFullYear()).slice(-2);
     const fecha = `${dia}-${mes}-${anio}`;
-    const hora  = dt.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    let horas = dt.getHours();
+    const min = String(dt.getMinutes()).padStart(2, '0');
+    const ampm = horas >= 12 ? 'pm' : 'am';
+    horas = horas % 12 || 12;
+    const hora = String(horas).padStart(2, '0') + ':' + min + ' ' + ampm;
     return { fecha, hora };
 }
 

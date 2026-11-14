@@ -12,7 +12,7 @@ $total = $modalData['valor'] ?? 0;
 if (!function_exists('formatoFechaContratos')) {
     function formatoFechaContratos($fecha)
     {
-        return date('d/m/Y', strtotime($fecha));
+        return formatoFecha($fecha);
     }
 }
 ?>

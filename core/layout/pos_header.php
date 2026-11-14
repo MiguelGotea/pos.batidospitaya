@@ -157,6 +157,89 @@ function renderPOSHeader($titulo = '') {
     </header>
 
     <script>
+    (function(w) {
+        // Estandarización de formato de Fechas y Horas en todo el POS Batidos Pitaya
+        // Formato de Fecha: 29-Ago-26
+        // Formato de Hora:  06:23 pm
+        const MESES_POS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        function parseFechaHoraLocal(str) {
+            if (!str) return null;
+            if (str instanceof Date) {
+                return isNaN(str.getTime()) ? null : str;
+            }
+            str = String(str).trim();
+            if (!str || str === '0000-00-00' || str === '0000-00-00 00:00:00') return null;
+
+            // Formato "YYYY-MM-DD" o "YYYY-MM-DD HH:mm:ss"
+            const m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+            if (m) {
+                const anio = parseInt(m[1], 10);
+                const mes = parseInt(m[2], 10) - 1;
+                const dia = parseInt(m[3], 10);
+                const hora = m[4] !== undefined ? parseInt(m[4], 10) : 0;
+                const min = m[5] !== undefined ? parseInt(m[5], 10) : 0;
+                const seg = m[6] !== undefined ? parseInt(m[6], 10) : 0;
+                return new Date(anio, mes, dia, hora, min, seg);
+            }
+
+            // Formato "HH:mm" o "HH:mm:ss"
+            const mH = str.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+            if (mH) {
+                const d = new Date();
+                d.setHours(parseInt(mH[1], 10), parseInt(mH[2], 10), mH[3] ? parseInt(mH[3], 10) : 0, 0);
+                return d;
+            }
+
+            const d = new Date(str.replace(' ', 'T'));
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function formatoFechaPOS(str) {
+            const d = parseFechaHoraLocal(str);
+            if (!d) return str || '';
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = MESES_POS[d.getMonth()] || '';
+            const anio = String(d.getFullYear()).slice(-2);
+            return `${dia}-${mes}-${anio}`;
+        }
+
+        function formatoHoraPOS(str) {
+            const d = parseFechaHoraLocal(str);
+            if (!d) return str || '';
+            let horas = d.getHours();
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const ampm = horas >= 12 ? 'pm' : 'am';
+            horas = horas % 12 || 12;
+            return String(horas).padStart(2, '0') + ':' + min + ' ' + ampm;
+        }
+
+        function formatoFechaHoraPOS(str) {
+            if (!str) return '';
+            const d = parseFechaHoraLocal(str);
+            if (!d) return str;
+            const f = formatoFechaPOS(d);
+            const h = formatoHoraPOS(d);
+            return `${f} ${h}`;
+        }
+
+        function separarFechaHoraPOS(str) {
+            if (!str) return { fecha: '—', hora: '—' };
+            const d = parseFechaHoraLocal(str);
+            if (!d) return { fecha: '—', hora: '—' };
+            return {
+                fecha: formatoFechaPOS(d),
+                hora: formatoHoraPOS(d)
+            };
+        }
+
+        w.parseFechaHoraLocalPOS = parseFechaHoraLocal;
+        w.formatoFechaPOS = formatoFechaPOS;
+        w.formatoHoraPOS = formatoHoraPOS;
+        w.formatoFechaHoraPOS = formatoFechaHoraPOS;
+        w.separarFechaHoraPOS = separarFechaHoraPOS;
+    })(window);
+
     (function() {
         // Heartbeat Keep-Alive del POS: mantiene la sesión del cajero activa en segundo plano
         const PING_INTERVAL_MS = 3 * 60 * 1000; // cada 3 minutos

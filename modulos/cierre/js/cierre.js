@@ -144,6 +144,7 @@ $(function () {
         $('#panelCierre').show();
         const fmtDT = dt => {
             if (!dt) return '—';
+            if (typeof window.formatoFechaHoraPOS === 'function') return window.formatoFechaHoraPOS(dt);
             const d = new Date(dt.replace(' ', 'T'));
             return d.toLocaleDateString('es-NI') + ' ' + d.toLocaleTimeString('es-NI', {hour:'2-digit',minute:'2-digit'});
         };
@@ -171,10 +172,10 @@ $(function () {
                 return;
             }
             const rows = res.facturas.map(f => {
-                const dt = new Date(f.fecha_hora.replace(' ','T'));
+                const horaStr = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(f.fecha_hora) : f.fecha_hora;
                 return `<tr>
                     <td>${f.id}</td>
-                    <td>${dt.toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'})}</td>
+                    <td>${horaStr}</td>
                     <td>${f.cliente || 'General'}</td>
                     <td class="text-end">${fmtNIO(f.total)}</td>
                 </tr>`;
@@ -583,6 +584,7 @@ $(function () {
             const fN = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
             const fT = dt => {
                 if (!dt) return '—';
+                if (typeof window.formatoHoraPOS === 'function') return window.formatoHoraPOS(dt);
                 const d = new Date(dt.replace(' ','T'));
                 return d.toLocaleTimeString('es-NI', {hour:'2-digit', minute:'2-digit'});
             };
@@ -699,9 +701,10 @@ $(function () {
         $('#pasoResultados').hide();
         $('#pasoCerrado').show();
         const c = snapshot.cierre;
+        const horaCierre = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(new Date()) : new Date().toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'});
         $('#txtResumenCierre').html(
             `Turno #${c.numero_turno} · ${c.sucursal} · ${c.cajero}<br>` +
-            `Cerrado a las ${new Date().toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'})}`
+            `Cerrado a las ${horaCierre}`
         );
         $('#btnImprimirCierre').trigger('click');
     }

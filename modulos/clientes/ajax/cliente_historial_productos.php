@@ -136,9 +136,9 @@ try {
         // A) Sucursal
         $sucursal = !empty($row['Sucursal_Nombre']) ? $row['Sucursal_Nombre'] : 'Central';
 
-        // B) Fecha / Hora unificado
-        $fechaFmt = !empty($row['Fecha']) ? date('d/m/Y', strtotime($row['Fecha'])) : '-';
-        $horaFmt = !empty($row['Hora']) ? date('h:i A', strtotime($row['Hora'])) : '';
+        // B) Fecha / Hora unificado (estándar ej: 29-Ago-26 · 06:23 pm)
+        $fechaFmt = !empty($row['Fecha']) ? formatoFecha($row['Fecha']) : '-';
+        $horaFmt = !empty($row['Hora']) ? formatoHoraAmPm($row['Hora']) : '';
         $fechaHora = trim($fechaFmt . ($horaFmt ? ' · ' . $horaFmt : ''));
 
         // C) Producto / Medida unificado

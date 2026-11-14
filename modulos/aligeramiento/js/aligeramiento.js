@@ -713,7 +713,7 @@ function renderVouchers(vouchers, resumen) {
             const montoStr  = v.ia_monto !== null
                 ? sym + ' ' + parseFloat(v.ia_monto).toLocaleString('en-US', { minimumFractionDigits: 2 })
                 : '<span class="text-muted">—</span>';
-            const fechaStr  = v.ia_fecha_hora ? v.ia_fecha_hora.substring(0, 16).replace('T', ' ') : '';
+            const fechaStr  = v.ia_fecha_hora ? (typeof window.formatoFechaHoraPOS === 'function' ? window.formatoFechaHoraPOS(v.ia_fecha_hora) : v.ia_fecha_hora.substring(0, 16).replace('T', ' ')) : '';
             const alertCls  = v.alerta ? 'has-alert' : '';
             const provBadge = v.ia_proveedor ? `<span class="voucher-card-ia-badge">IA: ${v.ia_proveedor}</span>` : '';
             const lugarHtml = v.ia_lugar ? `<div class="voucher-card-lugar" title="${v.ia_lugar}">${v.ia_lugar}</div>` : '';

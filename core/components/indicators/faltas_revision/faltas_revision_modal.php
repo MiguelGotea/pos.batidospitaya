@@ -12,7 +12,7 @@ $total = $modalData['valor'] ?? 0;
 if (!function_exists('formatoFechaFaltasRevision')) {
     function formatoFechaFaltasRevision($fecha)
     {
-        return date('d/m/Y', strtotime($fecha));
+        return formatoFecha($fecha);
     }
 }
 

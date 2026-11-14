@@ -277,7 +277,7 @@ $(function () {
         if (!res.ok || !res.tiene_cierre) return;
         const fmtC = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI',{minimumFractionDigits:2,maximumFractionDigits:2});
         const dt   = res.cerrado_en
-            ? new Date(res.cerrado_en.replace(' ','T')).toLocaleString('es-NI')
+            ? (typeof window.formatoFechaHoraPOS === 'function' ? window.formatoFechaHoraPOS(res.cerrado_en) : res.cerrado_en)
             : '';
         const txt  = `<strong>Último cierre:</strong> ${dt} · Cajero: <strong>${res.cajero}</strong> · 
             Conteo final: <strong>${fmtC(res.total_c)}</strong> · TC del cierre: <strong>C$ ${parseFloat(res.tc_cierre).toFixed(2)}</strong>`;
