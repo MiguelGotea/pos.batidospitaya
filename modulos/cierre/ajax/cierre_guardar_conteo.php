@@ -123,112 +123,112 @@ try {
              WHERE cierre_id = ? AND intento = 0"
         );
         $stmtI0Check->execute([$cierreId]);
-        if ((int)$stmtI0Check->fetchColumn() > 0) {
-            // Ya existe conteo inicial → solo revelar resultado
-            // (usuario refrescó la página, no volver a guardar)
-            $conceptosARecontar = [];
-            goto revelar;
-        }
-        $conceptosARecontar = ['efectivo','cupones','transferencia','tarjeta','pedidosya'];
+        $ya_tiene_conteo_inicial = ((int)$stmtI0Check->fetchColumn() > 0);
+        $conceptosARecontar = $ya_tiene_conteo_inicial
+            ? [] // solo revelar, no volver a guardar
+            : ['efectivo','cupones','transferencia','tarjeta','pedidosya'];
     }
 
-    // ── Guardar conteo en transacción ────────────────────────────────────────
-    $conn->beginTransaction();
-
+    // ── Guardar conteo en transacción (solo si hay conceptos a guardar) ───────
     $ahora = date('Y-m-d H:i:s');
 
-    // Función interna para insertar filas de conteo
-    $stmtIns = $conn->prepare(
-        "INSERT INTO pos_cierres_conteos
-            (cierre_id, concepto, intento, moneda, denominacion, cantidad, monto, cod_usuario, registrado_en)
-         VALUES
-            (:cid, :conc, :int, :mon, :denom, :cant, :monto, :usr, :ts)"
-    );
+    if (!empty($conceptosARecontar)) {
+        $conn->beginTransaction();
 
-    // Efectivo NIO
-    if (in_array('efectivo', $conceptosARecontar) && isset($data['efectivo_nio'])) {
-        foreach ($data['efectivo_nio'] as $fila) {
-            $denom = (float)$fila['denominacion'];
-            $cant  = max(0, (int)$fila['cantidad']);
+        // Preparar INSERT de conteos
+        $stmtIns = $conn->prepare(
+            "INSERT INTO pos_cierres_conteos
+                (cierre_id, concepto, intento, moneda, denominacion, cantidad, monto, cod_usuario, registrado_en)
+             VALUES
+                (:cid, :conc, :int, :mon, :denom, :cant, :monto, :usr, :ts)"
+        );
+
+        // Efectivo NIO
+        if (in_array('efectivo', $conceptosARecontar) && isset($data['efectivo_nio'])) {
+            foreach ($data['efectivo_nio'] as $fila) {
+                $denom = (float)$fila['denominacion'];
+                $cant  = max(0, (int)$fila['cantidad']);
+                $stmtIns->execute([
+                    ':cid'   => $cierreId, ':conc' => 'efectivo', ':int' => $intento,
+                    ':mon'   => 'NIO', ':denom' => $denom, ':cant' => $cant,
+                    ':monto' => round($denom * $cant, 2),
+                    ':usr'   => $codCajero, ':ts' => $ahora,
+                ]);
+            }
+        }
+        // Efectivo USD
+        if (in_array('efectivo', $conceptosARecontar) && isset($data['efectivo_usd'])) {
+            foreach ($data['efectivo_usd'] as $fila) {
+                $denom = (float)$fila['denominacion'];
+                $cant  = max(0, (int)$fila['cantidad']);
+                $stmtIns->execute([
+                    ':cid'   => $cierreId, ':conc' => 'efectivo', ':int' => $intento,
+                    ':mon'   => 'USD', ':denom' => $denom, ':cant' => $cant,
+                    ':monto' => round($denom * $cant, 2),
+                    ':usr'   => $codCajero, ':ts' => $ahora,
+                ]);
+            }
+        }
+
+        // Cupones
+        if (in_array('cupones', $conceptosARecontar)) {
             $stmtIns->execute([
-                ':cid'   => $cierreId, ':conc' => 'efectivo', ':int' => $intento,
-                ':mon'   => 'NIO', ':denom' => $denom, ':cant' => $cant,
-                ':monto' => round($denom * $cant, 2),
-                ':usr'   => $codCajero, ':ts' => $ahora,
+                ':cid' => $cierreId, ':conc' => 'cupones', ':int' => $intento,
+                ':mon' => null, ':denom' => null,
+                ':cant' => max(0, (int)($data['cupones_cantidad'] ?? 0)),
+                ':monto' => round((float)($data['cupones_monto'] ?? 0), 2),
+                ':usr' => $codCajero, ':ts' => $ahora,
             ]);
         }
-    }
-    // Efectivo USD
-    if (in_array('efectivo', $conceptosARecontar) && isset($data['efectivo_usd'])) {
-        foreach ($data['efectivo_usd'] as $fila) {
-            $denom = (float)$fila['denominacion'];
-            $cant  = max(0, (int)$fila['cantidad']);
+
+        // Transferencia
+        if (in_array('transferencia', $conceptosARecontar)) {
             $stmtIns->execute([
-                ':cid'   => $cierreId, ':conc' => 'efectivo', ':int' => $intento,
-                ':mon'   => 'USD', ':denom' => $denom, ':cant' => $cant,
-                ':monto' => round($denom * $cant, 2),
-                ':usr'   => $codCajero, ':ts' => $ahora,
+                ':cid' => $cierreId, ':conc' => 'transferencia', ':int' => $intento,
+                ':mon' => null, ':denom' => null, ':cant' => 0,
+                ':monto' => round((float)($data['transferencia_monto'] ?? 0), 2),
+                ':usr' => $codCajero, ':ts' => $ahora,
             ]);
         }
-    }
 
-    // Cupones
-    if (in_array('cupones', $conceptosARecontar)) {
-        $stmtIns->execute([
-            ':cid' => $cierreId, ':conc' => 'cupones', ':int' => $intento,
-            ':mon' => null, ':denom' => null,
-            ':cant' => max(0, (int)($data['cupones_cantidad'] ?? 0)),
-            ':monto' => round((float)($data['cupones_monto'] ?? 0), 2),
-            ':usr' => $codCajero, ':ts' => $ahora,
-        ]);
-    }
-
-    // Transferencia
-    if (in_array('transferencia', $conceptosARecontar)) {
-        $stmtIns->execute([
-            ':cid' => $cierreId, ':conc' => 'transferencia', ':int' => $intento,
-            ':mon' => null, ':denom' => null, ':cant' => 0,
-            ':monto' => round((float)($data['transferencia_monto'] ?? 0), 2),
-            ':usr' => $codCajero, ':ts' => $ahora,
-        ]);
-    }
-
-    // Tarjeta
-    if (in_array('tarjeta', $conceptosARecontar)) {
-        $stmtIns->execute([
-            ':cid' => $cierreId, ':conc' => 'tarjeta', ':int' => $intento,
-            ':mon' => null, ':denom' => null, ':cant' => 0,
-            ':monto' => round((float)($data['tarjeta_monto'] ?? 0), 2),
-            ':usr' => $codCajero, ':ts' => $ahora,
-        ]);
-    }
-
-    // PedidosYa
-    if (in_array('pedidosya', $conceptosARecontar)) {
-        $stmtIns->execute([
-            ':cid' => $cierreId, ':conc' => 'pedidosya', ':int' => $intento,
-            ':mon' => null, ':denom' => null, ':cant' => 0,
-            ':monto' => round((float)($data['pedidosya_monto'] ?? 0), 2),
-            ':usr' => $codCajero, ':ts' => $ahora,
-        ]);
-    }
-
-    // Actualizar intentos_usados en pos_cierres_concepto (si ya existe la fila)
-    if ($intento > 0) {
-        foreach ($conceptosARecontar as $conc) {
-            $stmtUpd = $conn->prepare(
-                "UPDATE pos_cierres_concepto
-                 SET intentos_usados = intentos_usados + 1
-                 WHERE cierre_id = ? AND concepto = ?"
-            );
-            $stmtUpd->execute([$cierreId, $conc]);
+        // Tarjeta
+        if (in_array('tarjeta', $conceptosARecontar)) {
+            $stmtIns->execute([
+                ':cid' => $cierreId, ':conc' => 'tarjeta', ':int' => $intento,
+                ':mon' => null, ':denom' => null, ':cant' => 0,
+                ':monto' => round((float)($data['tarjeta_monto'] ?? 0), 2),
+                ':usr' => $codCajero, ':ts' => $ahora,
+            ]);
         }
-    }
 
-    $conn->commit();
+        // PedidosYa
+        if (in_array('pedidosya', $conceptosARecontar)) {
+            $stmtIns->execute([
+                ':cid' => $cierreId, ':conc' => 'pedidosya', ':int' => $intento,
+                ':mon' => null, ':denom' => null, ':cant' => 0,
+                ':monto' => round((float)($data['pedidosya_monto'] ?? 0), 2),
+                ':usr' => $codCajero, ':ts' => $ahora,
+            ]);
+        }
+
+        // Actualizar intentos_usados en pos_cierres_concepto (solo para reconteos)
+        if ($intento > 0) {
+            foreach ($conceptosARecontar as $conc) {
+                $stmtUpd = $conn->prepare(
+                    "UPDATE pos_cierres_concepto
+                     SET intentos_usados = intentos_usados + 1
+                     WHERE cierre_id = ? AND concepto = ?"
+                );
+                $stmtUpd->execute([$cierreId, $conc]);
+            }
+        }
+
+        $conn->commit();
+    }
+    // Si $conceptosARecontar está vacío (retomar con conteo 0 ya existente),
+    // se salta directamente aquí para calcular y revelar.
 
     // ── Revelar: calcular esperado y diferencias ──────────────────────────────
-    revelar:
     $tc            = (float)$cierre['tipo_cambio_dia'];
     $corteAnterior = $cierre['corte_anterior'];
     $corteActual   = $cierre['corte_actual'];

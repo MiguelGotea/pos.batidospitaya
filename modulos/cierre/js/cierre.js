@@ -54,9 +54,8 @@ $(function () {
 
     function recalcularEfectivo(prefijo) {
         let totalNIO = 0, totalUSD = 0;
-        $(`[id^="${prefijo}_NIO"].qty-input, .qty-input[data-moneda="NIO"]`).filter(function(){
-            return $(this).attr('id').startsWith(prefijo);
-        }).each(function(){
+        // Seleccionar únicamente los inputs cuyo id empiece con el prefijo dado
+        $(`input.qty-input[id^="${prefijo}_NIO_"]`).each(function(){
             const d = parseFloat($(this).data('denom'));
             const q = parseInt($(this).val()) || 0;
             const sub = d * q;
@@ -64,9 +63,7 @@ $(function () {
             const key = String(d).replace('.','_');
             $(`#${prefijo}_total_NIO_${key}`).text(fmtNIO(sub));
         });
-        $(`[id^="${prefijo}_USD"].qty-input, .qty-input[data-moneda="USD"]`).filter(function(){
-            return $(this).attr('id').startsWith(prefijo);
-        }).each(function(){
+        $(`input.qty-input[id^="${prefijo}_USD_"]`).each(function(){
             const d = parseFloat($(this).data('denom'));
             const q = parseInt($(this).val()) || 0;
             const sub = d * q;
