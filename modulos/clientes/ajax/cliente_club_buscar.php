@@ -65,7 +65,7 @@ try {
             JOIN pos_ventas_facturas pf ON pf.id = pfpc.id_factura
             WHERE pfpc.id_cliente_club = :id_cliente AND pf.estado = 'bloqueada'
         ");
-        $stmtPuntosNuevos->execute([':id_cliente' => $cliente['id_clienteclub']]);
+        $stmtPuntosNuevos->execute([':id_cliente' => $cliente['membresia']]);
         $resNuevo = $stmtPuntosNuevos->fetch(PDO::FETCH_ASSOC);
         if ($resNuevo) {
             $puntosNuevos = floatval($resNuevo['saldo_nuevo'] ?? 0);

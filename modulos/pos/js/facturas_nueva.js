@@ -112,7 +112,7 @@ function setupClienteEvents() {
             actualizarPuntosFactura();
         } else {
             $('#clienteCheckVerificado').show();
-            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#idClienteClub').val(clienteActual.membresia);
             $('#nombreCliente').val(clienteActual.nombre_completo);
             $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
             actualizarPuntosFactura();
@@ -163,7 +163,7 @@ function cambiarTipoCliente(tipo) {
         $('#nombreCliente').prop('readonly', true).val(clienteActual ? clienteActual.nombre_completo : '').attr('placeholder', 'Nombre del cliente...').css('background-color', '#f8fafc');
         if (clienteActual) {
             $('#clienteCheckVerificado').show();
-            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#idClienteClub').val(clienteActual.membresia);
             $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
         } else {
             $('#clienteCheckVerificado').hide();
@@ -211,7 +211,7 @@ function buscarClienteClub(abrirModalTrasBuscar = false) {
         if (res && res.success && res.cliente) {
             clienteActual = res.cliente;
             $('#nombreCliente').val(clienteActual.nombre_completo);
-            $('#idClienteClub').val(clienteActual.id_clienteclub);
+            $('#idClienteClub').val(clienteActual.membresia);
             $('#txtPuntosAnteriores').text(clienteActual.puntos_anteriores);
             $('#clienteCheckVerificado').fadeIn(200);
             actualizarPuntosFactura();

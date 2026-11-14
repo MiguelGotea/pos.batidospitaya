@@ -9,6 +9,7 @@ try {
     // ---- Datos de cabecera ----
     $idMenuUsado    = !empty($_POST['id_menu']) ? (int)$_POST['id_menu'] : null;
     $tipoCliente    = isset($_POST['tipo_cliente']) && $_POST['tipo_cliente'] === 'club' ? 'club' : 'general';
+    // id_cliente_club contiene la MEMBRESÍA del socio (no el id interno id_clienteclub)
     $idClienteClub  = !empty($_POST['id_cliente_club']) ? (int)$_POST['id_cliente_club'] : null;
     $nombreCliente  = isset($_POST['nombre_cliente']) ? trim($_POST['nombre_cliente']) : null;
     $detalle        = isset($_POST['detalle']) ? json_decode($_POST['detalle'], true) : [];
