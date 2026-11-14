@@ -227,17 +227,36 @@ $(function () {
             })
             .done(function (res) {
                 if (res.ok) {
-                    Swal.fire({
-                        title: '¡Guardado!',
-                        html:  `Caja inicial registrada correctamente.<br>
-                                <strong>Total Efectivo: ${fmtNIO(payload.total_efectivo_global)}</strong>`,
-                        icon: 'success',
-                        confirmButtonColor: '#51B8AC'
-                    }).then(() => {
-                        // Limpiar tras guardar
-                        $('.qty-input').val(0);
-                        recalcular();
-                    });
+                    // Alerta de discrepancia de traspaso (no bloqueante)
+                    if (res.flag_discrepancia && res.flag_discrepancia.tiene_discrepancia) {
+                        const dif = res.flag_discrepancia.diferencia_c;
+                        const cifStr = parseFloat(Math.abs(dif)).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        const tipo  = dif > 0 ? 'sobrante' : 'faltante';
+                        Swal.fire({
+                            title: '⚠️ Alerta de discrepancia de traspaso',
+                            html: `La caja inicial difiere del conteo final del último cierre.<br><br>
+                                <b>Diferencia:</b> C$ ${cifStr} (${tipo})<br>
+                                <small class="text-muted">Esta alerta fue registrada para revisión del líder.</small>`,
+                            icon: 'warning',
+                            confirmButtonColor: '#51B8AC',
+                            confirmButtonText: 'Entendido'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: '¡Guardado!',
+                            html:  `Caja inicial registrada correctamente.<br>
+                                    <strong>Total Efectivo: ${fmtNIO(payload.total_efectivo_global)}</strong>`,
+                            icon: 'success',
+                            confirmButtonColor: '#51B8AC'
+                        }).then(() => {
+                            // Limpiar tras guardar
+                            $('.qty-input').val(0);
+                            recalcular();
+                        });
+                    }
+                    // Limpiar en ambos casos
+                    $('.qty-input').val(0);
+                    recalcular();
                 } else {
                     Swal.fire('Error', res.mensaje || 'Ocurrió un error al guardar.', 'error');
                 }

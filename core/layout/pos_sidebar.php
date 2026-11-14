@@ -49,6 +49,13 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub'   => []
         ],
         [
+            'id'    => 'cierre',
+            'titulo' => 'Cierre de Turno',
+            'icon'  => 'fas fa-lock',
+            'url'   => '/modulos/cierre/',
+            'sub'   => []
+        ],
+        [
             'id'    => 'logout',
             'titulo' => 'Cerrar Sesión',
             'icon'  => 'fas fa-sign-out-alt',

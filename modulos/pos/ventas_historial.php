@@ -155,6 +155,11 @@ try {
                             <i class="fa fa-triangle-exclamation me-1"></i>Sin menús activos
                         </span>
                     <?php endif; ?>
+                    <!-- Botón Cierre de Turno -->
+                    <a href="../cierre/" class="pos-action-btn" style="border-color:#0E544C; color:#0E544C;"
+                       title="Iniciar cierre de turno">
+                        <i class="fas fa-lock"></i> Cierre de Turno
+                    </a>
                 </div>
 
                 <!-- Tabla -->

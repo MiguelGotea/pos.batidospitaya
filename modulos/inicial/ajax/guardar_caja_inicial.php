@@ -100,7 +100,68 @@ try {
 
     $conn->commit();
 
-    echo json_encode(['ok' => true, 'caja_inicial_id' => $cajaId]);
+    // ── Verificar discrepancia de traspaso con último cierre ──────────────
+    $flagDiscrepancia = null;
+    try {
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/modulos/cierre/cierre_helpers.php';
+        $conteoFinalCierre = cierre_obtenerConteoFinalUltimoCierre($conn, $sucursalId);
+        if ($conteoFinalCierre) {
+            // Calcular equivalente C$ del conteo final del cierre con el TC actual
+            $stmtUltimoCierre = $conn->prepare(
+                "SELECT ct.id, ct.cod_cajero, ct.nombre_cajero_snap, ct.tipo_cambio_dia
+                 FROM pos_cierres_turno ct
+                 WHERE ct.cod_sucursal = ? AND ct.estado = 'cerrado'
+                 ORDER BY ct.cerrado_en DESC LIMIT 1"
+            );
+            $stmtUltimoCierre->execute([$sucursalId]);
+            $ultimoCierre = $stmtUltimoCierre->fetch(PDO::FETCH_ASSOC);
+
+            $totalCierreC = 0.0;
+            foreach ($conteoFinalCierre as $f) {
+                if ($f['moneda'] === 'NIO') {
+                    $totalCierreC += (float)$f['monto'];
+                } elseif ($f['moneda'] === 'USD') {
+                    $totalCierreC += (float)$f['monto'] * (float)$data['tipo_cambio_usado'];
+                }
+            }
+
+            $totalCajaIniC = (float)$data['total_efectivo_global'];
+            $diferencia    = round($totalCajaIniC - $totalCierreC, 2);
+
+            if (abs($diferencia) > 1) {
+                $stmtFlag = $conn->prepare(
+                    "INSERT INTO pos_cierres_traspaso_flags
+                        (caja_inicial_id, cierre_anterior_id, conteo_caja_inicial_c,
+                         conteo_cierre_anterior_c, diferencia_c, cod_usuario_caja, cod_usuario_cierre, registrado_en)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
+                );
+                $stmtFlag->execute([
+                    $cajaId,
+                    $ultimoCierre ? (int)$ultimoCierre['id'] : null,
+                    $totalCajaIniC,
+                    $totalCierreC,
+                    $diferencia,
+                    $codUsuario,
+                    $ultimoCierre ? (int)$ultimoCierre['cod_cajero'] : null,
+                ]);
+                $flagDiscrepancia = [
+                    'tiene_discrepancia' => true,
+                    'diferencia_c'       => $diferencia,
+                    'conteo_cierre_c'    => $totalCierreC,
+                    'conteo_caja_ini_c'  => $totalCajaIniC,
+                ];
+            }
+        }
+    } catch (Exception $eFl) {
+        error_log('[guardar_caja_inicial:flag] ' . $eFl->getMessage());
+        // No bloquear si falla la detección de discrepancia
+    }
+
+    echo json_encode([
+        'ok'              => true,
+        'caja_inicial_id' => $cajaId,
+        'flag_discrepancia' => $flagDiscrepancia,
+    ]);
 
 } catch (PDOException $e) {
     $conn->rollBack();
