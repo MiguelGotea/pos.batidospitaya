@@ -170,6 +170,54 @@ try {
             margin: 0 2px;
             gap: 0;
         }
+
+        /* ── Vista switch (Por Pedido / Por Producto) ── */
+        .vista-switch {
+            display: inline-flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .vista-pill {
+            padding: 7px 20px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .18s;
+            font-family: inherit;
+        }
+
+        .vista-pill.active {
+            background: #fff;
+            color: #0E544C;
+            box-shadow: 0 1px 4px rgba(0,0,0,.12);
+        }
+
+        .vista-pill:hover:not(.active) {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        /* ── Buscador global ── */
+        .sticky-search-container {
+            margin-bottom: 12px;
+        }
+
+        /* ── Badge combo ── */
+        .badge-combo {
+            background: #fef9c3;
+            color: #854d0e;
+            font-size: .68rem;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -182,28 +230,57 @@ try {
         <div class="pos-content">
             <div class="container-fluid p-3">
 
-                <!-- Barra superior: botones de menú dinámicos -->
-                <div class="pos-actions mb-3" style="justify-content:flex-end;">
-                    <?php foreach ($menus_disponibles as $menu): ?>
-                        <a href="facturas_nueva.php?id_menu=<?= (int) $menu['id'] ?>" class="pos-action-btn primary"
-                            title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
-                            <i class="fa fa-cash-register"></i>
-                            <?= htmlspecialchars($menu['nombre']) ?>
+                <!-- Barra superior: botones de menú dinámicos + switch de vistas -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <!-- Botones de menú y cierre -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($menus_disponibles as $menu): ?>
+                            <a href="facturas_nueva.php?id_menu=<?= (int) $menu['id'] ?>" class="pos-action-btn primary"
+                                title="<?= htmlspecialchars($menu['tipos_cliente'] ?? '') ?>">
+                                <i class="fa fa-cash-register"></i>
+                                <?= htmlspecialchars($menu['nombre']) ?>
+                            </a>
+                        <?php endforeach; ?>
+                        <?php if (empty($menus_disponibles)): ?>
+                            <span class="text-muted small" style="align-self:center;">
+                                <i class="fa fa-triangle-exclamation me-1"></i>Sin menús activos
+                            </span>
+                        <?php endif; ?>
+                        <!-- Botón Cierre de Turno -->
+                        <a href="../cierre/" class="pos-action-btn" style="border-color:#0E544C; color:#0E544C;"
+                           title="Iniciar cierre de turno">
+                            <i class="fas fa-lock"></i> Cierre de Turno
                         </a>
-                    <?php endforeach; ?>
-                    <?php if (empty($menus_disponibles)): ?>
-                        <span class="text-muted small" style="align-self:center;">
-                            <i class="fa fa-triangle-exclamation me-1"></i>Sin menús activos
-                        </span>
-                    <?php endif; ?>
-                    <!-- Botón Cierre de Turno -->
-                    <a href="../cierre/" class="pos-action-btn" style="border-color:#0E544C; color:#0E544C;"
-                       title="Iniciar cierre de turno">
-                        <i class="fas fa-lock"></i> Cierre de Turno
-                    </a>
+                    </div>
+
+                    <!-- Vista switch -->
+                    <div class="vista-switch" id="vistaSwitchHist">
+                        <button class="vista-pill active" id="btnVistaPedido" onclick="cambiarVista('pedido')">
+                            Por Pedido
+                        </button>
+                        <button class="vista-pill" id="btnVistaProducto" onclick="cambiarVista('producto')">
+                            Por Producto
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Tabla -->
+                <!-- Buscador Global (solo visible en vista Por Producto) -->
+                <div class="sticky-search-container" id="contenedorBuscadorGlobal" style="display:none;">
+                    <div class="position-relative">
+                        <i class="bi bi-search position-absolute"
+                           style="left:16px; top:50%; transform:translateY(-50%); z-index:10; color:#6c757d; font-size:16px;"></i>
+                        <input type="text" id="buscarGlobal" class="form-control w-100"
+                               placeholder="Buscar por producto, ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)"
+                               style="padding-left:44px; padding-right:44px; height:46px !important; font-size:14px !important; border-radius:12px !important;">
+                        <div id="buscarGlobalSpinner" class="position-absolute"
+                             style="right:16px; top:50%; transform:translateY(-50%); z-index:10; display:none; color:#6c757d;">
+                            <i class="bi bi-arrow-repeat" style="font-size:16px;"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla Por Pedido -->
+                <div id="container-pedido">
                 <div class="table-responsive">
                     <table class="table table-hover facturas-table" id="tablaVentas">
                         <thead>
@@ -255,6 +332,67 @@ try {
                         </tbody>
                     </table>
                 </div>
+                </div><!-- /container-pedido -->
+
+                <!-- Tabla Por Producto -->
+                <div id="container-producto" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-hover facturas-table" id="tablaProductos">
+                        <thead>
+                            <tr>
+                                <th data-column="nombre_producto" data-type="text" data-vista="producto">
+                                    Producto
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="id" data-type="text" data-vista="producto">
+                                    Ticket
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="fecha" data-type="daterange" data-vista="producto">
+                                    Fecha
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="hora" data-type="text" data-vista="producto">
+                                    Hora
+                                </th>
+                                <th data-column="cliente" data-type="text" data-vista="producto">
+                                    Cliente
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="tipo_cliente" data-type="list" data-vista="producto">
+                                    Tipo
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th class="text-end" data-column="total_linea" data-type="number" data-vista="producto">
+                                    Total Línea
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="metodo_pago" data-type="list" data-vista="producto">
+                                    Método de Pago
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="estado" data-type="list" data-vista="producto">
+                                    Estado
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th data-column="cajero" data-type="text" data-vista="producto">
+                                    Cajero
+                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                </th>
+                                <th style="width:110px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaProductosBody">
+                            <tr>
+                                <td colspan="11" class="text-center text-muted py-4">
+                                    <div class="spinner-border spinner-border-sm me-2"></div>
+                                    Cargando…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                </div><!-- /container-producto -->
 
                 <!-- Paginación + registros por página -->
                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">

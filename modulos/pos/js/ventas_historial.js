@@ -1,8 +1,9 @@
 /* ================================================================
  * ventas_historial.js
- * Historial de ventas del POS — lee pos_ventas_facturas
+ * Historial de ventas del POS — Por Pedido y Por Producto
  * ================================================================ */
 
+// ── Estado global ─────────────────────────────────────────────────────────────
 let paginaActual       = 1;
 let registrosPorPagina = 25;
 let filtrosActivos     = {};
@@ -12,6 +13,10 @@ let totalRegistros     = 0;
 let scrollTopInicial   = 0;
 let windowWidthInicial = $(window).width();
 let modalDetalle       = null;
+
+let vistaActiva          = 'pedido';     // 'pedido' | 'producto'
+let productosCargados    = false;        // si ya se trajo datos de productos al menos una vez
+let debounceTimerBuscar  = null;
 
 $(document).ready(function () {
     modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
@@ -38,10 +43,63 @@ $(document).ready(function () {
             windowWidthInicial = w;
         }
     });
+
+    // Buscador global (vista producto)
+    $('#buscarGlobal').on('input', function () {
+        $('#buscarGlobalSpinner').show();
+        clearTimeout(debounceTimerBuscar);
+        debounceTimerBuscar = setTimeout(function () {
+            paginaActual = 1;
+            cargarDatos();
+            $('#buscarGlobalSpinner').hide();
+        }, 350);
+    });
 });
 
-/* ---- Carga de datos ---- */
+/* ============================================================
+ * CAMBIO DE VISTA
+ * ============================================================ */
+function cambiarVista(vista) {
+    if (vistaActiva === vista) return;
+    vistaActiva = vista;
+
+    // UI de píldoras
+    $('.vista-pill').removeClass('active');
+    if (vista === 'pedido') {
+        $('#btnVistaPedido').addClass('active');
+        $('#container-pedido').show();
+        $('#container-producto').hide();
+        $('#contenedorBuscadorGlobal').hide();
+    } else {
+        $('#btnVistaProducto').addClass('active');
+        $('#container-pedido').hide();
+        $('#container-producto').show();
+        $('#contenedorBuscadorGlobal').show();
+    }
+
+    // Limpiar estado al cambiar de pestaña
+    filtrosActivos = {};
+    ordenActivo    = { columna: null, direccion: 'asc' };
+    paginaActual   = 1;
+    $('#buscarGlobal').val('');
+    cerrarTodosFiltros();
+    actualizarIndicadoresFiltros();
+    cargarDatos();
+}
+
+/* ============================================================
+ * CARGA DE DATOS (dispatch por vista)
+ * ============================================================ */
 function cargarDatos() {
+    if (vistaActiva === 'pedido') {
+        cargarPedidos();
+    } else {
+        cargarProductos();
+    }
+}
+
+/* ---- Vista Por Pedido ---- */
+function cargarPedidos() {
     $('#tablaVentasBody').html(`
         <tr><td colspan="10" class="text-center text-muted py-4">
             <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
@@ -60,7 +118,7 @@ function cargarDatos() {
         success: function (res) {
             if (res.success) {
                 totalRegistros = res.total_registros;
-                renderizarTabla(res.datos || []);
+                renderizarTablaPedidos(res.datos || []);
                 renderizarPaginacion(totalRegistros);
                 actualizarIndicadoresFiltros();
             } else {
@@ -73,8 +131,46 @@ function cargarDatos() {
     });
 }
 
-/* ---- Renderizado de tabla ---- */
-function renderizarTabla(ventas) {
+/* ---- Vista Por Producto ---- */
+function cargarProductos() {
+    $('#tablaProductosBody').html(`
+        <tr><td colspan="11" class="text-center text-muted py-4">
+            <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
+        </td></tr>`);
+
+    $.ajax({
+        url: 'ajax/ventas_get_historial_productos.php',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            pagina: paginaActual,
+            registros_por_pagina: registrosPorPagina,
+            filtros: JSON.stringify(filtrosActivos),
+            orden:   JSON.stringify(ordenActivo),
+            buscar:  $('#buscarGlobal').val().trim()
+        },
+        success: function (res) {
+            if (res.success) {
+                totalRegistros = res.total_registros;
+                renderizarTablaProductos(res.datos || []);
+                renderizarPaginacion(totalRegistros);
+                actualizarIndicadoresFiltros();
+            } else {
+                $('#tablaProductosBody').html(`<tr><td colspan="11" class="text-center text-danger">${escHtml(res.message || 'Error al cargar')}</td></tr>`);
+            }
+        },
+        error: function () {
+            $('#tablaProductosBody').html('<tr><td colspan="11" class="text-center text-danger">Error de conexión al cargar los datos.</td></tr>');
+        }
+    });
+}
+
+/* ============================================================
+ * RENDERIZADO DE TABLAS
+ * ============================================================ */
+
+/* ---- Por Pedido ---- */
+function renderizarTablaPedidos(ventas) {
     if (!ventas || ventas.length === 0) {
         $('#tablaVentasBody').html(`
             <tr><td colspan="10" class="text-center text-muted py-4">
@@ -121,7 +217,65 @@ function renderizarTabla(ventas) {
     $('#tablaVentasBody').html(html);
 }
 
-/* ---- Ver detalle en modal ---- */
+/* ---- Por Producto ---- */
+function renderizarTablaProductos(lineas) {
+    if (!lineas || lineas.length === 0) {
+        $('#tablaProductosBody').html(`
+            <tr><td colspan="11" class="text-center text-muted py-4">
+                <i class="bi bi-inbox me-2"></i>No se encontraron registros.
+            </td></tr>`);
+        return;
+    }
+
+    let html = '';
+    lineas.forEach(l => {
+        const badgeEstado = l.estado === 'bloqueada'
+            ? '<span class="badge-bloqueada">Bloqueada</span>'
+            : '<span class="badge-anulada">Anulada</span>';
+
+        const metodos = (l.metodos_pago || '').split(',')
+            .filter(m => m.trim() !== '')
+            .map(m => `<span class="metodo-tag">${escHtml(m.trim())}</span>`)
+            .join('');
+
+        const { fecha, hora } = separarFechaHora(l.fecha_hora);
+
+        // Es combo si id_producto_presentacion es null (padre de combo)
+        const esCombo  = !l.id_producto_presentacion || l.id_producto_presentacion === '0' || l.id_producto_presentacion === null;
+        const esCanjeTag = parseInt(l.es_canje_puntos) ? ' <span class="badge-club" style="font-size:.68rem;">Canje</span>' : '';
+        const comboTag   = esCombo ? ' <span class="badge-combo">Combo</span>' : '';
+
+        html += `
+        <tr>
+            <td>
+                <strong>${escHtml(l.nombre_producto_snapshot)}${comboTag}${esCanjeTag}</strong>
+            </td>
+            <td><strong>${escHtml(String(l.id_factura))}</strong></td>
+            <td style="font-size:.82rem; white-space:nowrap;">${fecha}</td>
+            <td style="font-size:.82rem; white-space:nowrap;">${hora}</td>
+            <td>${escHtml(l.cliente || '—')}</td>
+            <td>${escHtml(l.tipo_nombre || '—')}</td>
+            <td class="text-end fw-bold" style="font-variant-numeric:tabular-nums;">${formatearMonto(l.precio_linea_total)}</td>
+            <td>${metodos || '—'}</td>
+            <td>${badgeEstado}</td>
+            <td style="font-size:.82rem;">${escHtml(l.cajero || '—')}</td>
+            <td class="text-center" style="white-space:nowrap;">
+                <button class="btn-accion-hist btn-ver-detalle" onclick="verDetalle(${l.id_factura})" title="Ver detalle del pedido">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn-reimprimir-hist btn-accion-hist" onclick="reimprimir(${l.id_factura})" title="Reimprimir factura y comanda">
+                    <i class="bi bi-printer-fill"></i>
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    $('#tablaProductosBody').html(html);
+}
+
+/* ============================================================
+ * VER DETALLE EN MODAL
+ * ============================================================ */
 function verDetalle(id) {
     $('#infoCabeceraModal').html('<div class="col-12 text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Cargando…</div>');
     $('#tablaDetalleModal').html('<tr><td colspan="5" class="text-center text-muted">Cargando…</td></tr>');
@@ -234,7 +388,6 @@ function verDetalle(id) {
 
 /* ============================================================
  * FILTROS / ORDEN / PAGINACIÓN
- * (misma lógica que facturas_historial.js)
  * ============================================================ */
 function toggleFilter(icon) {
     const th      = $(icon).closest('th');
@@ -519,7 +672,9 @@ function cambiarPagina(pagina) {
     cargarDatos();
 }
 
-/* ---- Helpers ---- */
+/* ============================================================
+ * HELPERS
+ * ============================================================ */
 function formatearMonto(v) {
     const n = parseFloat(v) || 0;
     return n.toLocaleString('es-NI', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -557,9 +712,11 @@ function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ---- Reimpresión de factura y comanda ---- */
+/* ============================================================
+ * REIMPRESIÓN
+ * ============================================================ */
 function reimprimir(id) {
-    const $btn = $(`button[onclick="reimprimir(${id})"]`);
+    const $btn = $(`button[onclick="reimprimir(${id})"]`).first();
     const iconOrig = '<i class="bi bi-printer-fill"></i>';
     $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
@@ -588,4 +745,3 @@ function reimprimir(id) {
         });
     });
 }
-

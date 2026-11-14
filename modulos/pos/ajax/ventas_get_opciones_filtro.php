@@ -28,6 +28,14 @@ try {
              ORDER BY tc.nombre ASC"
         );
         $opciones = $stmtTc->fetchAll(PDO::FETCH_ASSOC);
+    } elseif ($columna === 'metodo_pago') {
+        $stmtMp = $conn->query(
+            "SELECT DISTINCT pgf.metodo AS valor, pgf.metodo AS texto
+             FROM pos_ventas_factura_pagos pgf
+             WHERE pgf.monto_cordoba > 0
+             ORDER BY pgf.metodo ASC"
+        );
+        $opciones = $stmtMp->fetchAll(PDO::FETCH_ASSOC);
     } else {
         throw new Exception("Columna de filtro no soportada: $columna");
     }
