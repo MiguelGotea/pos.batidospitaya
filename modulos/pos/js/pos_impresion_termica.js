@@ -104,8 +104,9 @@ ${secciones.join('\n')}
    invoca cuando el diálogo se cierra (afterprint) o tras el fallback de 60 s. */
 function _imprimirHtml(html, onTerminado) {
     const iframe = document.createElement('iframe');
-    // 1×1 px con opacity:0 — suficiente para que el navegador renderice el contenido
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;opacity:0;pointer-events:none;';
+    // Dimensiones reales off-screen: evita página en blanco en Android Chrome y Desktop.
+    // Un iframe de 1×1 px colapsa el layout y el motor de impresión no renderiza nada.
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;visibility:hidden;pointer-events:none;';
     document.body.appendChild(iframe);
 
     let lanzado = false; // evita doble disparo de print (onload + fallback)
