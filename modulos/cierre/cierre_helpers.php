@@ -39,6 +39,8 @@ function cierre_usdACordoba(float $monto_usd, float $tc): int
 
 /**
  * Obtiene el id entero de sucursal a partir del código varchar de sesión.
+ * pos_aligeramientos usa sucursal_id = sucursales.id (int).
+ * pos_ventas_facturas usa cod_sucursal = sucursales.codigo (varchar).
  */
 function cierre_idSucursalDesdeCodigo(PDO $conn, string $codigo): ?int
 {
@@ -112,21 +114,29 @@ function cierre_calcularEsperadoEfectivo(
     $totalAlig = (float)$stmtAlig->fetchColumn();
 
     // 4. Facturas a proveedores: total_factura en C$ (pos_facturas.fecha_hora_regsys)
-    $stmtProv = $conn->prepare(
-        "SELECT COALESCE(SUM(f.total_factura), 0) AS total
-         FROM pos_facturas f
-         WHERE f.registrado_por IN (
-             SELECT DISTINCT cod_cajero FROM pos_ventas_facturas WHERE cod_sucursal = :suc LIMIT 1
-         )
-         AND f.estado = 'activa'
-         AND f.fecha_hora_regsys > :desde
-         AND f.fecha_hora_regsys <= :hasta"
+    // pos_facturas no tiene cod_sucursal. Se relaciona por registrado_por.
+    // Obtenemos todos los cajeros que han operado en esta sucursal (en el histórico).
+    $stmtCajeros = $conn->prepare(
+        "SELECT DISTINCT cod_cajero FROM pos_ventas_facturas WHERE cod_sucursal = :suc"
     );
-    // Nota: pos_facturas no tiene cod_sucursal. Usamos registrado_por filtrado a cajeros de esta sucursal.
-    // Supuesto conservador: todas las compras registradas en el rango por cajeros de esta sucursal.
-    // Si la tabla pos_facturas tiene sucursal en el futuro, actualizar aquí.
-    $stmtProv->execute([':suc' => $cod_sucursal, ':desde' => $corte_anterior, ':hasta' => $corte_actual]);
-    $totalProv = (float)$stmtProv->fetchColumn();
+    $stmtCajeros->execute([':suc' => $cod_sucursal]);
+    $cajeros = array_column($stmtCajeros->fetchAll(PDO::FETCH_ASSOC), 'cod_cajero');
+
+    $totalProv = 0.0;
+    if (!empty($cajeros)) {
+        $placeholders = implode(',', array_fill(0, count($cajeros), '?'));
+        $stmtProv = $conn->prepare(
+            "SELECT COALESCE(SUM(f.total_factura), 0) AS total
+             FROM pos_facturas f
+             WHERE f.registrado_por IN ($placeholders)
+               AND f.estado = 'activa'
+               AND f.fecha_hora_regsys > ?
+               AND f.fecha_hora_regsys <= ?"
+        );
+        $params = array_merge($cajeros, [$corte_anterior, $corte_actual]);
+        $stmtProv->execute($params);
+        $totalProv = (float)$stmtProv->fetchColumn();
+    }
 
     $esperado = round(
         $caja_inicial_equiv_c + $totalNIOConSigno + $totalUSDenC - $totalAlig - $totalProv,

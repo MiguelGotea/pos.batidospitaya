@@ -80,6 +80,12 @@ try {
                 <!-- ====== CABECERA: Fecha + Tipo de Cambio ====== -->
                 <form id="formCajaInicial">
 
+                    <!-- Referencia del último cierre (solo lectura) -->
+                    <div id="refCierreAnterior" style="display:none;" class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3">
+                        <i class="bi bi-info-circle-fill mt-1"></i>
+                        <div id="refCierreTexto" style="font-size:.85rem;"></div>
+                    </div>
+
                     <div class="ci-header-card">
                         <div class="ci-header-field">
                             <label for="inputFecha"><i class="bi bi-calendar3 me-1"></i> Fecha del Conteo</label>

@@ -110,6 +110,7 @@ try {
     }
 
     // Caja inicial del día (para calcular esperado de efectivo)
+    // pos_caja_inicial.sucursal_id es varchar(10) = cod_sucursal de sesión
     $stmtCajaIni = $conn->prepare(
         "SELECT id, total_efectivo_global FROM pos_caja_inicial
          WHERE sucursal_id = ? AND fecha = ?

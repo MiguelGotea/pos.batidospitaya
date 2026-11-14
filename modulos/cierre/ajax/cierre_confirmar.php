@@ -174,20 +174,30 @@ try {
     $aligeramientos = $stmtAlig->fetchAll(PDO::FETCH_ASSOC);
 
     // Pagos a proveedores del rango
-    $stmtProv = $conn->prepare(
-        "SELECT f.numero_factura, f.fecha, f.total_factura, p.nombre AS proveedor, f.notas
-         FROM pos_facturas f
-         JOIN proveedores p ON p.id = f.id_proveedor
-         WHERE f.registrado_por IN (
-             SELECT DISTINCT cod_cajero FROM pos_ventas_facturas WHERE cod_sucursal = :suc LIMIT 100
-         )
-         AND f.estado = 'activa'
-         AND f.fecha_hora_regsys > :desde
-         AND f.fecha_hora_regsys <= :hasta
-         ORDER BY f.fecha_hora_regsys"
+    $stmtCajerosList = $conn->prepare(
+        "SELECT DISTINCT cod_cajero FROM pos_ventas_facturas WHERE cod_sucursal = ?"
     );
-    $stmtProv->execute([':suc' => $codSucursal, ':desde' => $corteAnterior, ':hasta' => $corteActual]);
-    $proveedores = $stmtProv->fetchAll(PDO::FETCH_ASSOC);
+    $stmtCajerosList->execute([$codSucursal]);
+    $cajeroIds = array_column($stmtCajerosList->fetchAll(PDO::FETCH_ASSOC), 'cod_cajero');
+
+    $proveedores = [];
+    if (!empty($cajeroIds)) {
+        $ph = implode(',', array_fill(0, count($cajeroIds), '?'));
+        $stmtProv = $conn->prepare(
+            "SELECT f.numero_factura, f.fecha, f.total_factura,
+                    p.nombre AS proveedor, f.notas
+             FROM pos_facturas f
+             JOIN proveedores p ON p.id = f.id_proveedor
+             WHERE f.registrado_por IN ($ph)
+               AND f.estado = 'activa'
+               AND f.fecha_hora_regsys > ?
+               AND f.fecha_hora_regsys <= ?
+             ORDER BY f.fecha_hora_regsys"
+        );
+        $params = array_merge($cajeroIds, [$corteAnterior, $corteActual]);
+        $stmtProv->execute($params);
+        $proveedores = $stmtProv->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     // Resumen de ventas del rango
     $stmtVentas = $conn->prepare(
