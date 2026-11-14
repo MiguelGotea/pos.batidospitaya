@@ -2,7 +2,7 @@
 ## Lógica de Negocio, Configuración y Referencia Técnica
 
 > **Módulo:** `modulos/pos/facturas_nueva.php` + `facturas_nueva.js`  
-> **Última actualización:** Noviembre 2026 (rev. 4 — Nov 13 2026)  
+> **Última actualización:** Noviembre 2026 (rev. 6 — Nov 14 2026)  
 > **Autor técnico:** Sistema Pitaya Web
 
 ---
@@ -28,6 +28,7 @@
 10. [Cambios de Comportamiento — Rev. 3 (Nov 13, 2026)](#10-cambios-de-comportamiento--rev-3-nov-13-2026)
 11. [Motor de Impresión Consolidada — Rev. 4 (Nov 13, 2026)](#11-motor-de-impresión-consolidada--rev-4-nov-13-2026)
 12. [Estrategia Híbrida de Impresión — Rev. 5 (Nov 13, 2026)](#12-estrategia-híbrida-de-impresión--rev-5-nov-13-2026)
+13. [Motor Sin Iframes — Rev. 6 (Nov 14, 2026) ✅ SOLUCIÓN DEFINITIVA](#13-motor-sin-iframes--rev-6-nov-14-2026--solución-definitiva)
 
 ---
 
@@ -1176,3 +1177,103 @@ El iframe de tamaño real (80mm × 200mm) posicionado fuera de pantalla (`top:-9
 
 > [!NOTE]
 > `_consolidarTickets` e `_imprimirHtml` se mantienen intactas (siguen siendo usadas en Android). `_imprimirSecuencialDesktop` es nueva en Rev. 5 y sólo se activa en escritorio.
+
+---
+
+## 13. Motor Sin Iframes — Rev. 6 (Nov 14, 2026) ✅ SOLUCIÓN DEFINITIVA
+
+> **Estado:** Verificado y funcional en Desktop Chrome (Windows) y Samsung Galaxy Tab A9 (Android Chrome).
+
+---
+
+### 13.1 Problema detectado en Rev. 5
+
+La Rev. 5 implementó iframes de 80mm × 200mm para evitar la página en blanco del iframe de 1×1 px. Sin embargo, **los iframes son inherentemente problemáticos para impresión en Android Chrome**: el motor de impresión del sistema operativo Android no procesa iframes fuera de pantalla correctamente, sin importar su tamaño, visibilidad u opacidad.
+
+**Síntoma:** Diálogo de impresión muestra hoja completamente en blanco tanto en Android como en Desktop dependiendo de la configuración del iframe.
+
+**Causa raíz definitiva:** Ningún ajuste de tamaño/visibilidad del iframe resuelve el problema en Android Chrome, porque el motor de impresión de Android captura el contenido desde el contexto del documento principal — no desde sub-documentos iframe.
+
+---
+
+### 13.2 Solución definitiva: imprimir desde el DOM principal
+
+En lugar de iframes, el nuevo motor **inyecta el contenido del ticket directamente en el DOM de la página principal** y llama `window.print()` en la ventana principal.
+
+**Mecanismo:**
+
+```
+1. Extraer CSS del ticket  →  inyectar en <head> como <style id="__pos_print_style__">
+2. Extraer body del ticket  →  inyectar en <body> como <div id="__pos_print_wrap__">
+3. CSS @media print oculta TODA la página, muestra solo #__pos_print_wrap__
+4. window.print()  →  el diálogo muestra solo el ticket (contenido real)
+5. afterprint dispara  →  limpiar DOM  →  callback onTerminado  →  redirect
+```
+
+**CSS clave inyectado:**
+
+```css
+@media print {
+    body > *:not(#__pos_print_wrap__) { display: none !important; visibility: hidden !important; }
+    #__pos_print_wrap__               { display: block !important; visibility: visible !important; position: static !important; }
+}
+@media screen {
+    #__pos_print_wrap__ { display: none !important; }  /* invisible en pantalla */
+}
+```
+
+Esto garantiza que:
+- En pantalla: el usuario no ve el contenido del ticket (oculto con `display:none`)
+- Al imprimir: solo se imprime el ticket, todo lo demás desaparece
+
+---
+
+### 13.3 Comportamiento por plataforma (Rev. 6)
+
+| Entorno | `window.print()` | `afterprint` | Estrategia |
+|---|---|---|---|
+| **Desktop Chrome/Edge/Firefox** | Bloqueante (espera al usuario) | Dispara al cerrar el diálogo | `_imprimirSecuencialDesktop` → 1 ticket por diálogo |
+| **Android Chrome (tablet)** | No bloqueante | Dispara inmediatamente al llamar `print()` | Consolidado → 1 diálogo con todos los tickets |
+
+En ambos casos, el mecanismo de impresión es **`_imprimirEnPaginaPrincipal`**.
+
+---
+
+### 13.4 Funciones del módulo (estado Rev. 6)
+
+| Función | Plataforma | Propósito |
+|---|---|---|
+| `lanzarImpresionCompleta(payload, onTerminado)` | Ambas | Punto de entrada. Detecta plataforma y delega. |
+| `_esAndroid()` | — | Detecta Android por UA + capacidades táctiles. |
+| `_extraerEstilos(html)` | Ambas | Extrae bloques `<style>` de un documento HTML. |
+| `_extraerCuerpo(html)` | Ambas | Extrae contenido del `<body>` de un documento HTML. |
+| `_consolidarCuerpos(htmlDocs[])` | Android | Une los bodies de N tickets con `page-break-after` entre ellos. |
+| `_consolidarTickets(htmlDocs[])` | — | Mantiene por compatibilidad. |
+| `_imprimirEnPaginaPrincipal(css, body, cb)` | Ambas | **Motor principal.** Inyecta en DOM, `window.print()`, limpia, callback. |
+| `_imprimirSecuencialDesktop(tickets, idx, cb)` | Desktop | Llama `_imprimirEnPaginaPrincipal` por cada ticket en secuencia. |
+| `_imprimirHtml(html, cb)` | — | Obsoleto. Wrapper que delega a `_imprimirEnPaginaPrincipal`. |
+| `renderizarFacturaCliente(factura)` | Ambas | Genera HTML completo del ticket de factura al cliente. |
+| `renderizarComandaEstacion(comanda, factura)` | Ambas | Genera HTML completo de un ticket de comanda de estación. |
+| `plantillaBase(contenido)` | Ambas | Envuelve contenido en HTML con estilos inline. |
+| `decimalAFraccion(numero)` | Ambas | Convierte decimales a fracciones (`0.5` → `1/2`). |
+| `formatoFechaHora(fechaHora)` | Ambas | Formatea fecha/hora al formato del ticket. |
+| `formatoMoneda(n)` | Ambas | Formatea número como `C$ X,XXX`. |
+
+---
+
+### 13.5 Historia de intentos y lecciones aprendidas
+
+| Rev. | Mecanismo | Resultado Desktop | Resultado Android | Problema |
+|---|---|---|---|---|
+| Rev. 1 | Iframes secuenciales + `afterprint` | ✅ | ❌ | `afterprint` dispara inmediato en Android → comanda nunca imprime |
+| Rev. 2 | Iframe + `setTimeout(800ms)` redirect | ✅ | ⚠️ | Redirect antes de que usuario confirme impresión |
+| Rev. 3 | Iframe + callback `onTerminado` | ✅ | ❌ | `afterprint` inmediato en Android |
+| Rev. 4 | Consolidado en 1 iframe 1×1 px | ❌ | ✅ | Iframe 1×1 px colapsa layout en Desktop → blank |
+| Rev. 5 | Híbrido: Android=consolidado, Desktop=iframe 80mm | ✅ | ❌ | Iframe 80mm también blank en Android Chrome |
+| **Rev. 6** | **Híbrido: DOM principal + `window.print()`** | **✅** | **✅** | **Solución definitiva** |
+
+> [!IMPORTANT]
+> **Nunca usar iframes para impresión en este sistema.** Los iframes son el origen de todos los problemas históricos de páginas en blanco. El motor basado en DOM principal (`_imprimirEnPaginaPrincipal`) es la solución correcta y probada.
+
+> [!NOTE]
+> La detección `_esAndroid()` sigue siendo necesaria para elegir entre flujo consolidado (Android) y secuencial (Desktop), ya que `window.print()` tiene comportamiento bloqueante distinto por plataforma.
