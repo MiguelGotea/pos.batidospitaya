@@ -28,9 +28,23 @@ const IMPRESION_LOGO_URL = '/assets/img/logo_pitaya.png';
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Detecta si el navegador actual es Android ───────────────────────────────
-   Se usa para elegir la estrategia de impresión adecuada.              */
+   Se usa para elegir la estrategia de impresión adecuada.
+   Incluye detección por User-Agent Y por capacidades táctiles para cubrir
+   casos donde el UA string está modificado o reducido.                   */
 function _esAndroid() {
-    return /android/i.test(navigator.userAgent);
+    const ua = navigator.userAgent || '';
+    const esAndroidUA  = /android/i.test(ua);
+    const esMobileUA   = /mobile|tablet/i.test(ua);
+    const tieneTactil  = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Android siempre tiene "Android" en el UA. Como segunda comprobación,
+    // si no tiene mouse principal y tiene pantalla táctil, se trata como móvil.
+    const sinMousePrincipal = !window.matchMedia('(pointer:fine)').matches;
+    const resultado = esAndroidUA || (tieneTactil && sinMousePrincipal && !ua.includes('Windows'));
+    console.log('[POS] Detección plataforma → esAndroid:', resultado,
+                '| UA:', ua.substring(0, 120),
+                '| táctil:', tieneTactil,
+                '| sinMouseFino:', sinMousePrincipal);
+    return resultado;
 }
 
 function lanzarImpresionCompleta(payload, onTerminado) {
@@ -104,9 +118,10 @@ ${secciones.join('\n')}
    invoca cuando el diálogo se cierra (afterprint) o tras el fallback de 60 s. */
 function _imprimirHtml(html, onTerminado) {
     const iframe = document.createElement('iframe');
-    // Dimensiones reales off-screen: evita página en blanco en Android Chrome y Desktop.
-    // Un iframe de 1×1 px colapsa el layout y el motor de impresión no renderiza nada.
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;visibility:hidden;pointer-events:none;';
+    // iframe fuera de pantalla con dimensiones reales.
+    // NO usar visibility:hidden — en Android Chrome puede excluir el contenido
+    // del motor de impresión. La posición negativa es suficiente para ocultarlo.
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;pointer-events:none;';
     document.body.appendChild(iframe);
 
     let lanzado = false; // evita doble disparo de print (onload + fallback)
@@ -195,8 +210,9 @@ function _imprimirSecuencialDesktop(htmlTickets, indice, onTerminado) {
     // iframe a tamaño normal (no 1×1 px) para evitar página en blanco en
     // Chrome/Edge escritorio. Se posiciona fuera de pantalla pero con
     // dimensiones reales para que el motor de impresión pueda renderizarlo.
+    // NO usar visibility:hidden — puede causar blank en algunos navegadores.
     const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;visibility:hidden;';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;';
     document.body.appendChild(iframe);
 
     let yaImprimio = false;
