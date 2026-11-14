@@ -251,25 +251,7 @@ $jsConfig = json_encode([
                             <!-- Tabla de resultados por concepto -->
                             <div id="tablaResultados" class="mt-3"></div>
 
-                            <!-- Panel de reconteo (oculto hasta seleccionar) -->
-                            <div id="panelReconteo" style="display:none;" class="mt-4">
-                                <div class="cierre-seccion">
-                                    <div class="cierre-seccion-titulo">
-                                        <i class="bi bi-arrow-repeat"></i> Reconteo
-                                        <span id="lblReconteoConcepto" class="ms-2 badge bg-secondary"></span>
-                                        <span id="lblIntentosRestantes" class="ms-2 small text-muted"></span>
-                                    </div>
-                                    <div id="panelReconteoContenido"></div>
-                                    <div class="mt-3 d-flex gap-2 justify-content-end">
-                                        <button id="btnCancelarReconteo" class="btn btn-outline-secondary">
-                                            Cancelar
-                                        </button>
-                                        <button id="btnGuardarReconteo" class="cierre-btn-primary">
-                                            <i class="bi bi-save2-fill"></i> Guardar Reconteo
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- (El reconteo ahora se gestiona en #modalReconteo) -->
 
                             <!-- Comentarios para fuera de tolerancia -->
                             <div id="panelComentarios" class="mt-4" style="display:none;">
@@ -313,6 +295,48 @@ $jsConfig = json_encode([
 
                 <?php endif; ?>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Modal Reconteo ══════════════════════════════════════════ -->
+    <div class="modal fade" id="modalReconteo" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#51B8AC;color:#fff;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-repeat me-2"></i>Reconteo —
+                        <span id="lblReconteoConcepto" class="ms-1"></span>
+                    </h5>
+                    <span id="lblIntentosRestantes" class="ms-2 small" style="opacity:.8;"></span>
+                </div>
+                <div class="modal-body" id="panelReconteoContenido"></div>
+                <div class="modal-footer">
+                    <button id="btnCancelarReconteo" type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button id="btnGuardarReconteo" type="button" class="cierre-btn-primary">
+                        <i class="bi bi-save2-fill"></i> Guardar Reconteo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Modal Ventas por Concepto ═══════════════════════════════ -->
+    <div class="modal fade" id="modalVentasConcepto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-search me-2"></i>Ventas — <span id="lblVentasConceptoModal"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="bodyVentasConcepto">
+                    <div class="text-center py-4"><div class="spinner-border text-secondary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <strong>Total del turno: <span id="totalVentasConceptoModal">C$ 0.00</span></strong>
+                </div>
             </div>
         </div>
     </div>

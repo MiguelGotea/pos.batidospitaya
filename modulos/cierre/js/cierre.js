@@ -303,7 +303,7 @@ $(function () {
                     <th class="text-end">Contado</th>
                     <th class="text-end">Diferencia</th>
                     <th class="text-center">Estado</th>
-                    <th class="text-center">Acciones</th>
+                    <th class="text-center" title="Recontar o ver detalle de ventas">Acciones</th>
                 </tr>
             </thead><tbody>`;
 
@@ -328,6 +328,12 @@ $(function () {
 
             if (!ok) hayFueraTolerancia = true;
 
+            const lupaBtn = `<button class="btn btn-sm btn-outline-secondary btn-lupa-concepto ms-1"
+                data-concepto="${conc}" data-nombre="${nombres[conc]||conc}"
+                title="Ver detalle de ventas de este concepto">
+                <i class="bi bi-search"></i>
+            </button>`;
+
             html += `<tr class="${cls}">
                 <td>${nombres[conc] || conc}</td>
                 <td class="text-end">${fmtNIO(d.esperado)}${extraCupones}</td>
@@ -335,15 +341,18 @@ $(function () {
                 <td class="text-end ${difCls}">${difStr}</td>
                 <td class="text-center">${badge}</td>
                 <td class="text-center">
-                    ${puedeRecontar
-                        ? `<button class="btn-recontar" data-concepto="${conc}" data-intento="${intentosUsados + 1}"
-                            title="${intentosRestantes} reconteo(s) restantes">
-                            <i class="bi bi-arrow-repeat"></i> Recontar (${intentosRestantes})
-                           </button>`
-                        : (!ok
-                            ? '<span class="text-muted small">Sin reconteos</span>'
-                            : '—')
-                    }
+                    <div class="d-flex gap-1 justify-content-center align-items-center">
+                        ${puedeRecontar
+                            ? `<button class="btn-recontar" data-concepto="${conc}" data-intento="${intentosUsados + 1}"
+                                title="${intentosRestantes} reconteo(s) restantes">
+                                <i class="bi bi-arrow-repeat"></i> Recontar (${intentosRestantes})
+                               </button>`
+                            : (!ok
+                                ? '<span class="text-muted small">Sin reconteos</span>'
+                                : '')
+                        }
+                        ${lupaBtn}
+                    </div>
                 </td>
             </tr>`;
         });
@@ -462,7 +471,9 @@ $(function () {
         }
 
         $('#panelReconteoContenido').html(contenido);
-        $('#panelReconteo').show();
+
+        // Abrir modal (en lugar de panel inline)
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalReconteo')).show();
 
         if (conc === 'efectivo') {
             construirTablasDenoms('rc', '#rcNIOBody', '#rcUSDBody');
@@ -476,16 +487,15 @@ $(function () {
             });
         }
 
-        $('#panelReconteo')[0].scrollIntoView({behavior:'smooth'});
-
         // Actualizar el intento en el botón
         $(this).data('intento', intento);
     });
 
-    $('#btnCancelarReconteo').on('click', function(){
-        $('#panelReconteo').hide();
+    // Limpiar estado al cerrar el modal de reconteo
+    $('#modalReconteo').on('hidden.bs.modal', function(){
         $(document).off('input.rc change.rc');
         conceptoEnReconteo = null;
+        $('#panelReconteoContenido').empty();
     });
 
     $('#btnGuardarReconteo').on('click', function(){
@@ -538,7 +548,7 @@ $(function () {
                 return;
             }
             conceptosData = res.conceptos;
-            $('#panelReconteo').hide();
+            bootstrap.Modal.getInstance(document.getElementById('modalReconteo'))?.hide();
             $(document).off('input.rc change.rc');
             conceptoEnReconteo = null;
             mostrarResultados(conceptosData);
@@ -546,6 +556,83 @@ $(function () {
         }).fail(function(){
             Swal.fire('Error de red', 'No se pudo conectar.', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Reconteo');
+        });
+    });
+
+    /* ─────────────────────────────────────────────────────────────
+       LUPA — VER VENTAS POR CONCEPTO
+       ───────────────────────────────────────────────────────────── */
+    $(document).on('click', '.btn-lupa-concepto', function(){
+        if (!cierreId) return;
+        const conc   = $(this).data('concepto');
+        const nombre = $(this).data('nombre');
+
+        $('#lblVentasConceptoModal').text(nombre);
+        $('#bodyVentasConcepto').html('<div class="text-center py-4"><div class="spinner-border text-secondary"></div></div>');
+        $('#totalVentasConceptoModal').text('C$ 0.00');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVentasConcepto')).show();
+
+        $.get('ajax/cierre_get_ventas_concepto.php', {cierre_id: cierreId, concepto: conc}, function(res){
+            if (!res.ok) {
+                $('#bodyVentasConcepto').html('<div class="alert alert-danger">' + (res.mensaje || 'Error al cargar.') + '</div>');
+                return;
+            }
+
+            const fN = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
+            const fT = dt => {
+                if (!dt) return '—';
+                const d = new Date(dt.replace(' ','T'));
+                return d.toLocaleTimeString('es-NI', {hour:'2-digit', minute:'2-digit'});
+            };
+
+            if (!res.filas || !res.filas.length) {
+                $('#bodyVentasConcepto').html('<p class="text-center text-muted py-3">No hay registros para este concepto en el turno.</p>');
+                $('#totalVentasConceptoModal').text(fN(0));
+                return;
+            }
+
+            const headers = {
+                efectivo:      '<th>#Fact.</th><th>Hora</th><th>Moneda</th><th class="text-end">Orig.</th><th class="text-end">C$</th>',
+                cupones:       '<th>#Fact.</th><th>Hora</th><th>Código</th><th class="text-end">C$</th>',
+                transferencia: '<th>#Fact.</th><th>Hora</th><th>Referencia</th><th class="text-end">C$</th>',
+                tarjeta:       '<th>#Fact.</th><th>Hora</th><th class="text-end">C$</th>',
+                pedidosya:     '<th>#Fact.</th><th>Hora</th><th class="text-end">Total C$</th>',
+            };
+
+            let html = `<table class="table table-sm table-hover">
+                <thead><tr>${headers[conc] || ''}</tr></thead><tbody>`;
+
+            res.filas.forEach(f => {
+                const esCambio = parseFloat(f.monto_cordoba) < 0;
+                html += `<tr class="${esCambio ? 'table-warning' : ''}">`;
+                html += `<td>#${f.factura_id}</td><td>${fT(f.fecha_hora)}</td>`;
+                if (conc === 'efectivo') {
+                    const sym = f.moneda === 'USD' ? '$ ' : 'C$ ';
+                    html += `<td><span class="badge ${f.moneda==='USD' ? 'bg-success' : 'bg-primary'}">${f.moneda}</span></td>`;
+                    html += `<td class="text-end">${sym}${parseFloat(f.monto_original||0).toLocaleString('es-NI',{minimumFractionDigits:2})}</td>`;
+                    html += `<td class="text-end ${esCambio ? 'text-danger fw-bold' : ''}">${fN(f.monto_cordoba)}</td>`;
+                } else if (conc === 'cupones') {
+                    html += `<td><code>${f.codigo_cupon || '—'}</code></td>`;
+                    html += `<td class="text-end">${fN(f.monto_cordoba)}</td>`;
+                } else if (conc === 'transferencia') {
+                    html += `<td class="text-muted small">${f.referencia || '—'}</td>`;
+                    html += `<td class="text-end">${fN(f.monto_cordoba)}</td>`;
+                } else {
+                    // tarjeta y pedidosya
+                    html += `<td class="text-end">${fN(f.monto_cordoba)}</td>`;
+                }
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            if (conc === 'efectivo') {
+                html += '<small class="text-muted"><i class="bi bi-info-circle me-1"></i>Filas amarillas = cambio entregado (monto negativo).</small>';
+            }
+
+            $('#bodyVentasConcepto').html(html);
+            $('#totalVentasConceptoModal').text(fN(res.total));
+        }, 'json').fail(function(){
+            $('#bodyVentasConcepto').html('<div class="alert alert-danger">Error de red al cargar ventas.</div>');
         });
     });
 
