@@ -46,3 +46,4 @@ try {
     error_log('[cierre_get_snapshot] ' . $e->getMessage());
     echo json_encode(['ok' => false, 'mensaje' => 'Error en base de datos.']);
 }
+

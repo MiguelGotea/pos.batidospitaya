@@ -346,3 +346,4 @@ $jsConfig = json_encode([
     <script src="js/cierre_impresion.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
+

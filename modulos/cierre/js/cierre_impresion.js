@@ -233,3 +233,4 @@ table { width: 100%; border-collapse: collapse; }
     window.renderizarTicketCierre = renderizarTicketCierre;
 
 })(window);
+

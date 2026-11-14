@@ -21,3 +21,4 @@ define('CIERRE_TIMEZONE', 'America/Managua');
 // Denominaciones NIO y USD (igual que caja_inicial.js)
 define('CIERRE_DENOMS_NIO', [0.5, 1, 5, 10, 20, 50, 100, 200, 500]);
 define('CIERRE_DENOMS_USD', [1, 5, 10, 20, 50, 100]);
+

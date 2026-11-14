@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * guardar_caja_inicial.php
  * AJAX endpoint â€” Guarda un registro de Caja Inicial en BD

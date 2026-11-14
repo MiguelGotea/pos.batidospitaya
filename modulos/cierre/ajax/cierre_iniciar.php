@@ -173,3 +173,4 @@ try {
     error_log('[cierre_iniciar] ' . $e->getMessage());
     echo json_encode(['ok' => false, 'mensaje' => 'Error al iniciar el cierre. Intente nuevamente.']);
 }
+

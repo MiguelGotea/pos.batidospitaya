@@ -277,3 +277,4 @@ try {
     error_log('[cierre_confirmar] ' . $e->getMessage());
     echo json_encode(['ok' => false, 'mensaje' => 'Error al confirmar el cierre. Intente nuevamente.']);
 }
+

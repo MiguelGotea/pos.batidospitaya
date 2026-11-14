@@ -353,3 +353,4 @@ try {
     error_log('[cierre_guardar_conteo] ' . $e->getMessage());
     echo json_encode(['ok' => false, 'mensaje' => 'Error en base de datos. Intente nuevamente.']);
 }
+

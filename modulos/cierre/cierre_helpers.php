@@ -328,3 +328,4 @@ function cierre_obtenerConteoFinalUltimoCierre(PDO $conn, string $cod_sucursal):
     $stmtF->execute([$cierreId, $maxIntento]);
     return $stmtF->fetchAll(PDO::FETCH_ASSOC);
 }
+
