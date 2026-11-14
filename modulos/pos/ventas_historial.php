@@ -129,6 +129,47 @@ try {
             background: var(--pitaya-dark-teal);
             color: #fff;
         }
+
+        /* Botones de acción en la tabla del historial */
+        .btn-accion-hist {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: .15s;
+            padding: 0;
+            margin: 0 2px;
+        }
+
+        .btn-accion-hist:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .btn-reimprimir-hist:hover {
+            background: #d1fae5;
+            border-color: #51B8AC;
+            color: #0E544C;
+        }
+
+        /* Ajuste del btn-ver-detalle en historial: solo ícono, mismo tamaño */
+        #tablaVentas .btn-ver-detalle {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            font-size: .95rem;
+            border-radius: 7px;
+            margin: 0 2px;
+            gap: 0;
+        }
     </style>
 </head>
 
@@ -201,7 +242,7 @@ try {
                                     Cajero
                                     <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
                                 </th>
-                                <th style="width:80px;">Acciones</th>
+                                <th style="width:110px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaVentasBody">
@@ -294,6 +335,7 @@ try {
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/ventas_historial.js?v=<?php echo time(); ?>"></script>
 </body>
 

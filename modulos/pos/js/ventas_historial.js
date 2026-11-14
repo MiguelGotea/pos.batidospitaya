@@ -107,9 +107,12 @@ function renderizarTabla(ventas) {
             <td>${metodos || '—'}</td>
             <td>${badgeEstado}</td>
             <td style="font-size:.82rem;">${escHtml(v.cajero || '—')}</td>
-            <td class="text-center">
-                <button class="btn-ver-detalle" onclick="verDetalle(${v.id})">
-                    <i class="bi bi-eye"></i> Ver
+            <td class="text-center" style="white-space:nowrap;">
+                <button class="btn-ver-detalle btn-accion-hist" onclick="verDetalle(${v.id})" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn-reimprimir-hist btn-accion-hist" onclick="reimprimir(${v.id})" title="Reimprimir factura y comanda">
+                    <i class="bi bi-printer-fill"></i>
                 </button>
             </td>
         </tr>`;
@@ -552,5 +555,37 @@ function formatearFechaHora(str) {
 function escHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ---- Reimpresión de factura y comanda ---- */
+function reimprimir(id) {
+    const $btn = $(`button[onclick="reimprimir(${id})"]`);
+    const iconOrig = '<i class="bi bi-printer-fill"></i>';
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+    $.get('ajax/facturas_get_imprimibles.php', { id_factura: id }, function (payload) {
+        $btn.prop('disabled', false).html(iconOrig);
+
+        if (!payload.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: payload.message || 'No se pudieron obtener los datos de impresión.',
+                confirmButtonColor: '#0E544C'
+            });
+            return;
+        }
+
+        lanzarImpresionCompleta(payload);
+
+    }, 'json').fail(function () {
+        $btn.prop('disabled', false).html(iconOrig);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor para obtener los datos de impresión.',
+            confirmButtonColor: '#0E544C'
+        });
+    });
 }
 
