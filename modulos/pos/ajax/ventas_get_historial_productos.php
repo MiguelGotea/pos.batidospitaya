@@ -31,7 +31,6 @@ try {
             $pCliente = ':bg_cliente_' . $ti;
             $pCajero  = ':bg_cajero_'  . $ti;
             $pPago    = ':bg_pago_'    . $ti;
-            $pPagoEx  = ':bg_pagoex_'  . $ti;
 
             $params[$pNombre]  = '%' . $token . '%';
             $params[$pTicket]  = '%' . $token . '%';
@@ -39,7 +38,6 @@ try {
             $params[$pCliente] = '%' . $token . '%';
             $params[$pCajero]  = '%' . $token . '%';
             $params[$pPago]    = '%' . $token . '%';
-            $params[$pPagoEx]  = '%' . $token . '%';
 
             $globalParts[] = "(
                 l.nombre_producto_snapshot LIKE $pNombre

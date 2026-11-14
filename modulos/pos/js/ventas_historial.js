@@ -122,7 +122,8 @@ function cargarPedidos() {
             pagina: paginaActual,
             registros_por_pagina: registrosPorPagina,
             filtros: JSON.stringify(filtrosActivos),
-            orden:   JSON.stringify(ordenActivo)
+            orden:   JSON.stringify(ordenActivo),
+            buscar:  $('#buscarGlobal').val().trim()
         },
         success: function (res) {
             if (res.success) {
