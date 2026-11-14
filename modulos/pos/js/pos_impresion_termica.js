@@ -16,44 +16,37 @@ const IMPRESION_LOGO_URL = '/assets/img/logo_pitaya.png';
    FUNCIÓN PRINCIPAL: lanzarImpresionCompleta
    Recibe el payload del servidor, genera el HTML de cada ticket y los imprime.
 
-   ESTRATEGIA HÍBRIDA según plataforma:
-   • Android/tablet: documento consolidado en UN solo diálogo de impresión.
+   ESTRATEGIA HÍBRIDA segun plataforma:
+   - Android/tablet: documento consolidado → UN solo dialogo de impresion.
      Necesario porque en Android Chrome window.print() es no-bloqueante y
-     afterprint dispara antes de que el usuario interactúe con el diálogo.
-   • Desktop (Windows/Mac Chrome, Edge, Firefox): impresión secuencial —
-     un iframe por ticket, un diálogo de impresión por ticket. En escritorio
-     window.print() ES bloqueante, por lo que el flujo secuencial funciona
-     perfectamente y el iframe de tamaño real evita la página en blanco que
-     ocurre con el iframe de 1×1 px del modo consolidado.
+     afterprint dispara antes de que el usuario interactue con el dialogo.
+   - Desktop (Chrome/Edge/Firefox): un ticket por dialogo, secuencialmente.
+     window.print() es BLOQUEANTE en escritorio.
+
+   MECANISMO de impresion: _imprimirEnPaginaPrincipal
+   Inyecta el contenido del ticket en la pagina actual y llama window.print().
+   Evita definitivamente los problemas de iframes en blanco en Android y Desktop.
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* ── Detecta si el navegador actual es Android ───────────────────────────────
-   Se usa para elegir la estrategia de impresión adecuada.
-   Incluye detección por User-Agent Y por capacidades táctiles para cubrir
-   casos donde el UA string está modificado o reducido.                   */
+/* ── Detecta si el navegador es Android/tablet ───────────────────────────────
+   Deteccion por User-Agent + capacidades tactiles para maxima cobertura.  */
 function _esAndroid() {
-    const ua = navigator.userAgent || '';
-    const esAndroidUA  = /android/i.test(ua);
-    const esMobileUA   = /mobile|tablet/i.test(ua);
-    const tieneTactil  = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    // Android siempre tiene "Android" en el UA. Como segunda comprobación,
-    // si no tiene mouse principal y tiene pantalla táctil, se trata como móvil.
-    const sinMousePrincipal = !window.matchMedia('(pointer:fine)').matches;
-    const resultado = esAndroidUA || (tieneTactil && sinMousePrincipal && !ua.includes('Windows'));
-    console.log('[POS] Detección plataforma → esAndroid:', resultado,
-                '| UA:', ua.substring(0, 120),
-                '| táctil:', tieneTactil,
-                '| sinMouseFino:', sinMousePrincipal);
-    return resultado;
+    var ua = navigator.userAgent || '';
+    var esAndroidUA  = /android/i.test(ua);
+    var tieneTactil  = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    var sinMouseFino = !window.matchMedia('(pointer:fine)').matches;
+    var noEsWindows  = ua.indexOf('Windows') === -1;
+    return esAndroidUA || (tieneTactil && sinMouseFino && noEsWindows);
 }
 
 function lanzarImpresionCompleta(payload, onTerminado) {
-    const { factura, comandas } = payload;
+    var factura  = payload.factura;
+    var comandas = payload.comandas || [];
 
     // Generar HTML individual de cada ticket
-    const tickets = [];
+    var tickets = [];
     tickets.push(renderizarFacturaCliente(factura));
-    (comandas || []).forEach(comanda => {
+    comandas.forEach(function(comanda) {
         tickets.push(renderizarComandaEstacion(comanda, factura));
     });
 
@@ -63,196 +56,166 @@ function lanzarImpresionCompleta(payload, onTerminado) {
     }
 
     if (_esAndroid()) {
-        // ── Modo Android: un único documento consolidado, un solo diálogo ──
-        const htmlConsolidado = _consolidarTickets(tickets);
-        _imprimirHtml(htmlConsolidado, onTerminado);
+        // Modo Android: todos los tickets en UN solo documento consolidado
+        var cuerposUnidos = _consolidarCuerpos(tickets);
+        var estilos       = _extraerEstilos(tickets[0]);
+        _imprimirEnPaginaPrincipal(estilos, cuerposUnidos, onTerminado);
     } else {
-        // ── Modo Desktop: un iframe por ticket, diálogos secuenciales ──────
+        // Modo Desktop: un ticket por dialogo, secuencialmente
         _imprimirSecuencialDesktop(tickets, 0, onTerminado);
     }
 }
 
+/* ── Extrae el contenido de todos los bloques <style> de un HTML ─────────── */
+function _extraerEstilos(html) {
+    var bloques = [];
+    var rex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    var m;
+    while ((m = rex.exec(html)) !== null) {
+        bloques.push(m[1]);
+    }
+    return bloques.join('\n');
+}
+
+/* ── Extrae el contenido del <body> de un HTML ───────────────────────────── */
+function _extraerCuerpo(html) {
+    var m = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    return m ? m[1].trim() : '';
+}
+
+/* ── Une los cuerpos de varios tickets con salto de pagina entre ellos ────── */
+function _consolidarCuerpos(htmlDocs) {
+    return htmlDocs.map(function(html, idx) {
+        var contenido = _extraerCuerpo(html);
+        var esUltimo  = (idx === htmlDocs.length - 1);
+        var salto     = esUltimo ? '' : ' style="page-break-after:always;break-after:page;"';
+        return '<section class="pos-ticket-seccion"' + salto + '>' + contenido + '</section>';
+    }).join('\n');
+}
+
 /* ── Consolida un array de documentos HTML en uno solo ───────────────────────
-   Extrae el CSS del primer documento (todos comparten los mismos estilos) y
-   concatena el <body> de cada ticket separado por page-break-after: always.  */
+   Mantiene esta funcion por compatibilidad.                               */
 function _consolidarTickets(htmlDocs) {
-    // Extraer el bloque <head> del primer ticket (CSS idéntico en todos)
-    const headMatch = htmlDocs[0].match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-    const headContent = headMatch ? headMatch[1] : '';
-
-    // Construir las secciones del cuerpo con saltos de página entre tickets
-    const secciones = htmlDocs.map((html, idx) => {
-        const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-        const contenido = bodyMatch ? bodyMatch[1].trim() : '';
-        const esUltimo = (idx === htmlDocs.length - 1);
-
-        // El último ticket no lleva salto de página después
-        const estiloSalto = esUltimo
-            ? ''
-            : ' style="page-break-after:always;break-after:page;margin-bottom:0;"';
-
-        return `<section class="ticket-seccion"${estiloSalto}>${contenido}</section>`;
+    var headMatch   = htmlDocs[0].match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    var headContent = headMatch ? headMatch[1] : '';
+    var secciones   = htmlDocs.map(function(html, idx) {
+        var contenido   = _extraerCuerpo(html);
+        var esUltimo    = (idx === htmlDocs.length - 1);
+        var estiloSalto = esUltimo ? '' : ' style="page-break-after:always;break-after:page;margin-bottom:0;"';
+        return '<section class="ticket-seccion"' + estiloSalto + '>' + contenido + '</section>';
     });
-
-    return `<!DOCTYPE html>
-<html lang="es">
-<head>
-${headContent}
-<style>
-/* Estilos de consolidación — no afectan el contenido individual de cada ticket */
-.ticket-seccion { display: block; }
-@media print {
-  .ticket-seccion { page-break-inside: avoid; }
-}
-</style>
-</head>
-<body style="margin:0;padding:0;">
-${secciones.join('\n')}
-</body>
-</html>`;
+    return '<!DOCTYPE html>\n<html lang="es">\n<head>\n' + headContent + '\n<style>\n' +
+           '.ticket-seccion { display: block; }\n' +
+           '@media print { .ticket-seccion { page-break-inside: avoid; } }\n' +
+           '</style>\n</head>\n<body style="margin:0;padding:0;">\n' +
+           secciones.join('\n') + '\n</body>\n</html>';
 }
 
-/* ── Inyecta el HTML en un iframe oculto y llama window.print() ──────────────
-   Funciona en kiosk-printing (desktop, sin diálogo) y en modo normal
-   (tablet/móvil, con diálogo del navegador). El callback onTerminado se
-   invoca cuando el diálogo se cierra (afterprint) o tras el fallback de 60 s. */
-function _imprimirHtml(html, onTerminado) {
-    const iframe = document.createElement('iframe');
-    // iframe fuera de pantalla con dimensiones reales.
-    // NO usar visibility:hidden — en Android Chrome puede excluir el contenido
-    // del motor de impresión. La posición negativa es suficiente para ocultarlo.
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;pointer-events:none;';
-    document.body.appendChild(iframe);
+/* ══════════════════════════════════════════════════════════════════════════════
+   MOTOR DE IMPRESION — Sin iframes
+   Inyecta el contenido del ticket directamente en el DOM de la pagina principal
+   y llama window.print(). Esto evita los problemas de iframes en blanco que
+   afectan a Android Chrome y a Desktop Chrome con iframes fuera de pantalla.
+   ══════════════════════════════════════════════════════════════════════════════ */
 
-    let lanzado = false; // evita doble disparo de print (onload + fallback)
-    let finalizado = false; // evita doble llamada a onTerminado
+/* ── Imprime inyectando HTML en la pagina principal ──────────────────────────
+   @param {string}   estilosCSS   CSS del ticket (contenido de los bloques <style>)
+   @param {string}   cuerpoPrint  HTML del cuerpo del ticket a imprimir
+   @param {Function} onTerminado  Callback al finalizar la impresion            */
+function _imprimirEnPaginaPrincipal(estilosCSS, cuerpoPrint, onTerminado) {
+    // 1. Inyectar estilos del ticket + reglas @media print en <head>
+    var styleEl = document.createElement('style');
+    styleEl.id = '__pos_print_style__';
+    styleEl.textContent = estilosCSS + '\n' +
+        '@media print {' +
+        '  body > *:not(#__pos_print_wrap__) { display:none !important; visibility:hidden !important; }' +
+        '  #__pos_print_wrap__ { display:block !important; visibility:visible !important; position:static !important; }' +
+        '  .pos-ticket-seccion { page-break-inside:avoid; }' +
+        '}' +
+        '@media screen { #__pos_print_wrap__ { display:none !important; } }';
+    document.head.appendChild(styleEl);
 
-    const finalizar = () => {
+    // 2. Inyectar el cuerpo del ticket en un contenedor directo del body
+    var wrap = document.createElement('div');
+    wrap.id = '__pos_print_wrap__';
+    wrap.innerHTML = cuerpoPrint;
+    document.body.appendChild(wrap);
+
+    // 3. Funciones de limpieza y finalizacion
+    var limpiar = function() {
+        try { document.head.removeChild(styleEl); } catch(e) {}
+        try { document.body.removeChild(wrap);    } catch(e) {}
+    };
+
+    var finalizado = false;
+    var finalizar  = function() {
         if (finalizado) return;
         finalizado = true;
-        try { document.body.removeChild(iframe); } catch (e) { /* ignorar */ }
-        setTimeout(() => {
+        limpiar();
+        setTimeout(function() {
             if (typeof onTerminado === 'function') onTerminado();
         }, IMPRESION_DELAY_MS);
     };
 
-    const lanzarPrint = () => {
-        if (lanzado) return;
-        lanzado = true;
-
-        // afterprint dispara cuando el diálogo se cierra (o inmediatamente en
-        // kiosk-printing). En Android Chrome puede disparar antes de que el
-        // usuario interactúe, pero con un único documento consolidado eso no
-        // importa — ya todo está en un solo trabajo de impresión.
-        let afterprintFired = false;
-        try {
-            iframe.contentWindow.addEventListener('afterprint', () => {
-                afterprintFired = true;
-                finalizar();
-            }, { once: true });
-        } catch (eAP) {
-            console.warn('[POS] No se pudo suscribir a afterprint:', eAP);
-        }
-
-        try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-        } catch (e) {
-            console.warn('[POS] Error al llamar print():', e);
-            finalizar();
-            return;
-        }
-
-        // Fallback: si afterprint nunca se dispara (caso raro), avanzar tras 60 s
-        setTimeout(() => {
-            if (!afterprintFired) {
-                console.warn('[POS] afterprint no disparó; finalizando por fallback (60 s).');
-                finalizar();
-            }
-        }, 60000);
+    // 4. Escuchar afterprint en la ventana principal
+    //    Desktop: dispara al cerrar el dialogo. Android: dispara inmediatamente.
+    var afterprintFired = false;
+    var handlerAP = function() {
+        afterprintFired = true;
+        window.removeEventListener('afterprint', handlerAP);
+        finalizar();
     };
+    window.addEventListener('afterprint', handlerAP);
 
-    // Disparar impresión al cargar el iframe
-    iframe.onload = () => setTimeout(lanzarPrint, 400);
+    // 5. Dar tiempo al DOM para renderizar el contenido inyectado
+    setTimeout(function() {
+        try {
+            window.focus();
+            window.print();
+        } catch(e) {
+            console.warn('[POS] Error en window.print():', e);
+            window.removeEventListener('afterprint', handlerAP);
+            finalizar();
+        }
+    }, 400);
 
-    try {
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(html);
-        iframe.contentDocument.close();
-    } catch (e) {
-        // Fallback same-origin: usar Blob URL
-        const blob = new Blob([html], { type: 'text/html' });
-        iframe.src = URL.createObjectURL(blob);
-    }
-
-    // Fallback: si onload no dispara (ocurre con document.write en algunos entornos)
-    setTimeout(lanzarPrint, 1800);
+    // 6. Fallback: si afterprint nunca dispara (caso raro), limpiar tras 60 s
+    setTimeout(function() {
+        if (!afterprintFired) {
+            console.warn('[POS] afterprint no disparo; finalizando por fallback (60 s).');
+            window.removeEventListener('afterprint', handlerAP);
+            finalizar();
+        }
+    }, 60000);
 }
 
-/* ── Impresión secuencial para Desktop ───────────────────────────────────────
-   Imprime los tickets uno a uno usando iframes independientes. En escritorio,
-   window.print() es BLOQUEANTE: el JS se pausa hasta que el usuario cierra el
-   diálogo, por lo que podemos encadenar los trabajos de forma segura.
-   En Android NO se usa este modo porque print() no es bloqueante allí.
-
-   @param {string[]} htmlTickets  Array de documentos HTML completos
-   @param {number}   indice       Índice actual en htmlTickets
-   @param {Function} onTerminado  Callback al finalizar todos los tickets    */
+/* ── Impresion secuencial para Desktop ───────────────────────────────────────
+   Imprime los tickets uno a uno. En escritorio window.print() es BLOQUEANTE:
+   afterprint se dispara al cerrar el dialogo, luego pasa al siguiente ticket.
+   @param {string[]} htmlTickets  Array de HTML completos de cada ticket
+   @param {number}   indice       Indice actual en el array
+   @param {Function} onTerminado  Callback al finalizar todos los tickets      */
 function _imprimirSecuencialDesktop(htmlTickets, indice, onTerminado) {
     if (indice >= htmlTickets.length) {
-        // Todos los tickets fueron enviados al diálogo de impresión
         if (typeof onTerminado === 'function') onTerminado();
         return;
     }
-
-    const html = htmlTickets[indice];
-
-    // iframe a tamaño normal (no 1×1 px) para evitar página en blanco en
-    // Chrome/Edge escritorio. Se posiciona fuera de pantalla pero con
-    // dimensiones reales para que el motor de impresión pueda renderizarlo.
-    // NO usar visibility:hidden — puede causar blank en algunos navegadores.
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;';
-    document.body.appendChild(iframe);
-
-    let yaImprimio = false;
-
-    const ejecutarImpresion = () => {
-        if (yaImprimio) return;
-        yaImprimio = true;
-
-        try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print(); // Bloqueante en escritorio
-        } catch (e) {
-            console.warn('[POS] Error al llamar print() en ticket', indice, ':', e);
-        }
-
-        // Tras print() bloqueante, el usuario ya cerró el diálogo.
-        // Eliminar el iframe y pasar al siguiente ticket.
-        setTimeout(() => {
-            try { document.body.removeChild(iframe); } catch (e2) { /* ignorar */ }
-            _imprimirSecuencialDesktop(htmlTickets, indice + 1, onTerminado);
-        }, IMPRESION_DELAY_MS);
-    };
-
-    // Disparar impresión cuando el iframe termine de cargar
-    iframe.onload = () => setTimeout(ejecutarImpresion, 350);
-
-    try {
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(html);
-        iframe.contentDocument.close();
-    } catch (e) {
-        // Fallback same-origin: usar Blob URL
-        const blob = new Blob([html], { type: 'text/html' });
-        iframe.src = URL.createObjectURL(blob);
-    }
-
-    // Fallback: si onload no dispara, forzar impresión tras 1500 ms
-    setTimeout(ejecutarImpresion, 1500);
+    var html    = htmlTickets[indice];
+    var estilos = _extraerEstilos(html);
+    var cuerpo  = _extraerCuerpo(html);
+    _imprimirEnPaginaPrincipal(estilos, cuerpo, function() {
+        _imprimirSecuencialDesktop(htmlTickets, indice + 1, onTerminado);
+    });
 }
 
+/* ── [OBSOLETO — mantenido por compatibilidad] ───────────────────────────────
+   _imprimirHtml usaba un iframe oculto. Reemplazado por _imprimirEnPaginaPrincipal
+   que es mas confiable en Android Chrome y Desktop.                        */
+function _imprimirHtml(html, onTerminado) {
+    var estilos = _extraerEstilos(html);
+    var cuerpo  = _extraerCuerpo(html);
+    _imprimirEnPaginaPrincipal(estilos, cuerpo, onTerminado);
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    RENDERIZADORES HTML
