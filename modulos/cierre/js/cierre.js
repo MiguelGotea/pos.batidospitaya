@@ -173,15 +173,15 @@ $(function () {
             const rows = res.facturas.map(f => {
                 const dt = new Date(f.fecha_hora.replace(' ','T'));
                 return `<tr>
-                    <td>#${f.id}</td>
+                    <td>${f.id}</td>
                     <td>${dt.toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'})}</td>
                     <td>${f.cliente || 'General'}</td>
                     <td class="text-end">${fmtNIO(f.total)}</td>
                 </tr>`;
             }).join('');
             $('#modalPedidosYaBody').html(rows
-                ? `<table class="table table-sm"><thead><tr><th>#</th><th>Hora</th><th>Cliente</th><th class="text-end">Total</th></tr></thead><tbody>${rows}</tbody></table>`
-                : '<p class="text-center text-muted py-3">No hay facturas PedidosYa en este turno.</p>'
+                ? `<table class="table table-sm"><thead><tr><th>Ticket</th><th>Hora</th><th>Cliente</th><th class="text-end">Total</th></tr></thead><tbody>${rows}</tbody></table>`
+                : '<p class="text-center text-muted py-3">No hay tickets PedidosYa en este turno.</p>'
             );
             $('#totalEsperadoPY').text(fmtNIO(res.total_esperado));
         }, 'json').fail(function(){
@@ -594,11 +594,11 @@ $(function () {
             }
 
             const headers = {
-                efectivo:      '<th>#Fact.</th><th>Hora</th><th>Moneda</th><th class="text-end">Orig.</th><th class="text-end">C$</th>',
-                cupones:       '<th>#Fact.</th><th>Hora</th><th>Código</th><th class="text-end">C$</th>',
-                transferencia: '<th>#Fact.</th><th>Hora</th><th>Referencia</th><th class="text-end">C$</th>',
-                tarjeta:       '<th>#Fact.</th><th>Hora</th><th class="text-end">C$</th>',
-                pedidosya:     '<th>#Fact.</th><th>Hora</th><th class="text-end">Total C$</th>',
+                efectivo:      '<th>Ticket</th><th>Hora</th><th>Moneda</th><th class="text-end">Orig.</th><th class="text-end">C$</th>',
+                cupones:       '<th>Ticket</th><th>Hora</th><th>Código</th><th class="text-end">C$</th>',
+                transferencia: '<th>Ticket</th><th>Hora</th><th>Referencia</th><th class="text-end">C$</th>',
+                tarjeta:       '<th>Ticket</th><th>Hora</th><th class="text-end">C$</th>',
+                pedidosya:     '<th>Ticket</th><th>Hora</th><th class="text-end">Total C$</th>',
             };
 
             let html = `<table class="table table-sm table-hover">
@@ -607,7 +607,7 @@ $(function () {
             res.filas.forEach(f => {
                 const esCambio = parseFloat(f.monto_cordoba) < 0;
                 html += `<tr class="${esCambio ? 'table-warning' : ''}">`;
-                html += `<td>#${f.factura_id}</td><td>${fT(f.fecha_hora)}</td>`;
+                html += `<td>${f.factura_id}</td><td>${fT(f.fecha_hora)}</td>`;
                 if (conc === 'efectivo') {
                     const sym = f.moneda === 'USD' ? '$ ' : 'C$ ';
                     html += `<td><span class="badge ${f.moneda==='USD' ? 'bg-success' : 'bg-primary'}">${f.moneda}</span></td>`;

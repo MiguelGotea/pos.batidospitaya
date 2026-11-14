@@ -221,7 +221,7 @@ $jsConfig = json_encode([
                                             min="0" step="1" value="0" placeholder="0">
                                         <small class="text-muted">Total que muestra la app/equipo PedidosYa</small>
                                         <button type="button" class="btn btn-link btn-sm p-0 mt-1" id="btnVerFacturasPY">
-                                            <i class="bi bi-list-ul"></i> Ver facturas del turno
+                                            <i class="bi bi-list-ul"></i> Ver tickets del turno
                                         </button>
                                     </div>
                                 </div>
@@ -341,12 +341,12 @@ $jsConfig = json_encode([
         </div>
     </div>
 
-    <!-- Modal PedidosYa Facturas -->
+    <!-- Modal PedidosYa Tickets -->
     <div class="modal fade" id="modalPedidosYa" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header" style="background:#ff6900; color:#fff;">
-                    <h5 class="modal-title"><i class="bi bi-bag-fill me-2"></i>Facturas PedidosYa del Turno</h5>
+                    <h5 class="modal-title"><i class="bi bi-bag-fill me-2"></i>Tickets PedidosYa del Turno</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="modalPedidosYaBody">

@@ -72,7 +72,7 @@ ${sep2()}`;
         /* ── Resumen ventas ── */
         body += titulo('VENTAS DEL TURNO');
         body += `<table style="width:100%;font-size:8.5pt;border-collapse:collapse;">
-  <tr><td>Total facturas</td><td style="text-align:right;">${ventas.total_facturas || 0}</td></tr>
+  <tr><td>Total tickets</td><td style="text-align:right;">${ventas.total_facturas || 0}</td></tr>
   <tr><td>Total C$</td><td style="text-align:right;">${fmtNIO(ventas.suma_total)}</td></tr>
   <tr><td>Caja inicial</td><td style="text-align:right;">${fmtNIO(c.caja_inicial_c)}</td></tr>
 </table>${sep()}`;
@@ -188,7 +188,7 @@ ${sep2()}`;
             body += titulo('PEDIDOSYA');
             body += `<table style="width:100%;font-size:7.5pt;border-collapse:collapse;">`;
             pyList.forEach(f => {
-                body += `<tr><td>#${f.id}</td><td>${fmtDT(f.fecha_hora)}</td><td style="text-align:right;">${fmtNIO(f.total)}</td></tr>`;
+                body += `<tr><td>Ticket ${f.id}</td><td>${fmtDT(f.fecha_hora)}</td><td style="text-align:right;">${fmtNIO(f.total)}</td></tr>`;
             });
             const totPY = pyList.reduce((s,f) => s + parseFloat(f.total), 0);
             body += `<tr style="border-top:1px solid #000;font-weight:bold;">
