@@ -19,22 +19,38 @@ try {
     $params = [];
 
     // ── Búsqueda global (multi-token separado por comas) ──────────────────────
+    // IMPORTANTE: PDO no permite reutilizar el mismo named parameter en un statement.
+    // Generamos un nombre único por campo × token: :bg_{campo}_{indice}
     if ($buscar !== '') {
-        $tokens = array_filter(array_map('trim', explode(',', $buscar)));
+        $tokens = array_values(array_filter(array_map('trim', explode(',', $buscar))));
         $globalParts = [];
         foreach ($tokens as $ti => $token) {
-            $k = ':buscar_' . $ti;
-            $params[$k] = '%' . $token . '%';
+            $pNombre  = ':bg_nombre_'  . $ti;
+            $pTicket  = ':bg_ticket_'  . $ti;
+            $pMemb    = ':bg_memb_'    . $ti;
+            $pCliente = ':bg_cliente_' . $ti;
+            $pCajero  = ':bg_cajero_'  . $ti;
+            $pPago    = ':bg_pago_'    . $ti;
+            $pPagoEx  = ':bg_pagoex_'  . $ti;
+
+            $params[$pNombre]  = '%' . $token . '%';
+            $params[$pTicket]  = '%' . $token . '%';
+            $params[$pMemb]    = '%' . $token . '%';
+            $params[$pCliente] = '%' . $token . '%';
+            $params[$pCajero]  = '%' . $token . '%';
+            $params[$pPago]    = '%' . $token . '%';
+            $params[$pPagoEx]  = '%' . $token . '%';
+
             $globalParts[] = "(
-                l.nombre_producto_snapshot LIKE $k
-                OR CAST(v.id AS CHAR) LIKE $k
-                OR v.id_cliente_club LIKE $k
-                OR COALESCE(v.nombre_cliente_general, CONCAT(cc.nombre, ' ', cc.apellido)) LIKE $k
-                OR CONCAT(o.Nombre, ' ', o.Apellido) LIKE $k
+                l.nombre_producto_snapshot LIKE $pNombre
+                OR CAST(v.id AS CHAR) LIKE $pTicket
+                OR v.id_cliente_club LIKE $pMemb
+                OR COALESCE(v.nombre_cliente_general, CONCAT(cc.nombre, ' ', cc.apellido)) LIKE $pCliente
+                OR CONCAT(o.Nombre, ' ', o.Apellido) LIKE $pCajero
                 OR EXISTS (
-                    SELECT 1 FROM pos_ventas_factura_pagos pg
-                    WHERE pg.id_factura = v.id AND pg.monto_cordoba > 0
-                      AND pg.metodo LIKE $k
+                    SELECT 1 FROM pos_ventas_factura_pagos bg_pg
+                    WHERE bg_pg.id_factura = v.id AND bg_pg.monto_cordoba > 0
+                      AND bg_pg.metodo LIKE $pPago
                 )
             )";
         }
@@ -47,13 +63,13 @@ try {
 
     // Filtro: nombre de producto
     if (!empty($filtros['nombre_producto']) && !is_array($filtros['nombre_producto'])) {
-        $where[]                      = 'l.nombre_producto_snapshot LIKE :np';
-        $params[':np']                = '%' . trim($filtros['nombre_producto']) . '%';
+        $where[]       = 'l.nombre_producto_snapshot LIKE :np';
+        $params[':np'] = '%' . trim($filtros['nombre_producto']) . '%';
     }
 
     // Filtro: ticket (id de factura)
     if (!empty($filtros['id'])) {
-        $where[]       = 'v.id LIKE :id';
+        $where[]       = 'CAST(v.id AS CHAR) LIKE :id';
         $params[':id'] = '%' . trim($filtros['id']) . '%';
     }
 
@@ -65,8 +81,8 @@ try {
 
     // Filtro: nombre de cliente (general o club)
     if (!empty($filtros['cliente']) && !is_array($filtros['cliente'])) {
-        $where[]             = "(COALESCE(v.nombre_cliente_general, CONCAT(cc.nombre, ' ', cc.apellido)) LIKE :cliente)";
-        $params[':cliente']  = '%' . trim($filtros['cliente']) . '%';
+        $where[]            = "(COALESCE(v.nombre_cliente_general, CONCAT(cc.nombre, ' ', cc.apellido)) LIKE :cliente)";
+        $params[':cliente'] = '%' . trim($filtros['cliente']) . '%';
     }
 
     // Filtro: tipo_cliente (lista)

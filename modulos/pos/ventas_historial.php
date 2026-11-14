@@ -171,42 +171,61 @@ try {
             gap: 0;
         }
 
-        /* ── Vista switch (Por Pedido / Por Producto) ── */
+        /* ── Vista switch — igual que historial_despachos ── */
         .vista-switch {
             display: inline-flex;
-            background: #f1f5f9;
+            background: rgba(14, 84, 76, 0.08);
+            border: 1px solid rgba(14, 84, 76, 0.15);
             border-radius: 10px;
-            padding: 4px;
-            gap: 4px;
+            padding: 3px;
+            gap: 2px;
         }
 
         .vista-pill {
-            padding: 7px 20px;
-            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
             border: none;
-            background: transparent;
-            color: #64748b;
-            font-size: .875rem;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: .18s;
+            background: transparent;
+            color: #0E544C;
+            transition: all 0.2s;
+            white-space: nowrap;
             font-family: inherit;
         }
 
         .vista-pill.active {
-            background: #fff;
-            color: #0E544C;
-            box-shadow: 0 1px 4px rgba(0,0,0,.12);
+            background: #0E544C;
+            color: white;
+            box-shadow: 0 2px 6px rgba(14, 84, 76, 0.25);
         }
 
-        .vista-pill:hover:not(.active) {
-            background: #e2e8f0;
-            color: #1e293b;
+        .vista-pill:not(.active):hover {
+            background: rgba(14, 84, 76, 0.12);
         }
 
-        /* ── Buscador global ── */
+        /* ── Buscador global — igual que historial_despachos ── */
         .sticky-search-container {
-            margin-bottom: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background-color: var(--surface, #f8fafc);
+            padding-top: 12px;
+            padding-bottom: 12px;
+            margin-left: -12px;
+            margin-right: -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        #buscarGlobal:focus {
+            border-color: #0E544C !important;
+            box-shadow: 0 0 0 0.25rem rgba(14, 84, 76, 0.25) !important;
+            outline: none;
         }
 
         /* ── Badge combo ── */
@@ -264,13 +283,13 @@ try {
                     </div>
                 </div>
 
-                <!-- Buscador Global (solo visible en vista Por Producto) -->
-                <div class="sticky-search-container" id="contenedorBuscadorGlobal" style="display:none;">
+                <!-- Buscador Global (ambas pestañas) -->
+                <div class="sticky-search-container" id="contenedorBuscadorGlobal">
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute"
                            style="left:16px; top:50%; transform:translateY(-50%); z-index:10; color:#6c757d; font-size:16px;"></i>
                         <input type="text" id="buscarGlobal" class="form-control w-100"
-                               placeholder="Buscar por producto, ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)"
+                               placeholder="Buscar por ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)"
                                style="padding-left:44px; padding-right:44px; height:46px !important; font-size:14px !important; border-radius:12px !important;">
                         <div id="buscarGlobalSpinner" class="position-absolute"
                              style="right:16px; top:50%; transform:translateY(-50%); z-index:10; display:none; color:#6c757d;">

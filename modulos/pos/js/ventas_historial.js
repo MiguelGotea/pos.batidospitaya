@@ -20,6 +20,11 @@ let debounceTimerBuscar  = null;
 
 $(document).ready(function () {
     modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalle'));
+
+    // Buscador siempre visible; ajustar placeholder según vista inicial (pedido)
+    $('#buscarGlobal').attr('placeholder',
+        'Buscar por ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)');
+
     cargarDatos();
 
     $(document).on('click', function (e) {
@@ -69,12 +74,16 @@ function cambiarVista(vista) {
         $('#btnVistaPedido').addClass('active');
         $('#container-pedido').show();
         $('#container-producto').hide();
-        $('#contenedorBuscadorGlobal').hide();
+        // Placeholder para Por Pedido (sin "producto")
+        $('#buscarGlobal').attr('placeholder',
+            'Buscar por ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)');
     } else {
         $('#btnVistaProducto').addClass('active');
         $('#container-pedido').hide();
         $('#container-producto').show();
-        $('#contenedorBuscadorGlobal').show();
+        // Placeholder para Por Producto (incluye producto)
+        $('#buscarGlobal').attr('placeholder',
+            'Buscar por producto, ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)');
     }
 
     // Limpiar estado al cambiar de pestaña

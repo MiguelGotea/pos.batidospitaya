@@ -6,14 +6,50 @@ require_once '../../../core/database/conexion.php';
 header('Content-Type: application/json');
 
 try {
-    $pagina            = isset($_POST['pagina'])              ? max(1, (int)$_POST['pagina'])              : 1;
+    $pagina             = isset($_POST['pagina'])               ? max(1, (int)$_POST['pagina'])               : 1;
     $registrosPorPagina = isset($_POST['registros_por_pagina']) ? max(1, (int)$_POST['registros_por_pagina']) : 25;
-    $filtros           = isset($_POST['filtros'])             ? json_decode($_POST['filtros'], true)       : [];
-    $orden             = isset($_POST['orden'])               ? json_decode($_POST['orden'], true)         : ['columna' => null, 'direccion' => 'asc'];
-    $offset            = ($pagina - 1) * $registrosPorPagina;
+    $filtros            = isset($_POST['filtros'])              ? json_decode($_POST['filtros'], true)         : [];
+    $orden              = isset($_POST['orden'])                ? json_decode($_POST['orden'], true)           : ['columna' => null, 'direccion' => 'asc'];
+    $buscar             = isset($_POST['buscar'])               ? trim($_POST['buscar'])                       : '';
+    $offset             = ($pagina - 1) * $registrosPorPagina;
 
     $where  = [];
     $params = [];
+
+    // ── Búsqueda global (multi-token separado por comas) ──────────────────────
+    // Genera nombres únicos por campo × token para evitar HY093 en PDO
+    if ($buscar !== '') {
+        $tokens = array_values(array_filter(array_map('trim', explode(',', $buscar))));
+        $globalParts = [];
+        foreach ($tokens as $ti => $token) {
+            $pTicket  = ':bg_ticket_'  . $ti;
+            $pMemb    = ':bg_memb_'    . $ti;
+            $pCliente = ':bg_cliente_' . $ti;
+            $pCajero  = ':bg_cajero_'  . $ti;
+            $pPago    = ':bg_pago_'    . $ti;
+
+            $params[$pTicket]  = '%' . $token . '%';
+            $params[$pMemb]    = '%' . $token . '%';
+            $params[$pCliente] = '%' . $token . '%';
+            $params[$pCajero]  = '%' . $token . '%';
+            $params[$pPago]    = '%' . $token . '%';
+
+            $globalParts[] = "(
+                CAST(v.id AS CHAR) LIKE $pTicket
+                OR v.id_cliente_club LIKE $pMemb
+                OR COALESCE(v.nombre_cliente_general, CONCAT(c.nombre, ' ', c.apellido)) LIKE $pCliente
+                OR CONCAT(o.Nombre, ' ', o.Apellido) LIKE $pCajero
+                OR EXISTS (
+                    SELECT 1 FROM pos_ventas_factura_pagos bg_pg
+                    WHERE bg_pg.id_factura = v.id AND bg_pg.monto_cordoba > 0
+                      AND bg_pg.metodo LIKE $pPago
+                )
+            )";
+        }
+        if (!empty($globalParts)) {
+            $where[] = '(' . implode(' AND ', $globalParts) . ')';
+        }
+    }
 
     // Filtro: # venta
     if (!empty($filtros['id'])) {
