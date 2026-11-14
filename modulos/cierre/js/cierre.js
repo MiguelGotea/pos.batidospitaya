@@ -87,11 +87,13 @@ $(function () {
         $('#totalEfectivoContado').text(fmtNIO(totales.totalGlobal));
     });
 
-    $(document).on('focus', '.qty-input', function(){
-        if ($(this).val() == '0') $(this).val('');
+    // Al hacer foco: seleccionar todo el contenido (si es 0, queda seleccionado y se reemplaza al escribir)
+    $(document).on('focus', '.qty-input, .cierre-input-num', function(){
+        $(this).select();
     });
-    $(document).on('blur', '.qty-input', function(){
-        if ($(this).val() === '') $(this).val(0);
+    // Al perder foco: restaurar 0 si quedó vacío
+    $(document).on('blur', '.qty-input, .cierre-input-num', function(){
+        if ($(this).val() === '' || $(this).val() === null) $(this).val(0);
     });
 
     /* ─────────────────────────────────────────────────────────────
