@@ -37,6 +37,13 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub' => []
         ],
         [
+            'id' => 'pedido-diario',
+            'titulo' => 'Pedido Diario',
+            'icon' => 'bi ceipttered',
+            'url' => '/',
+            'sub' => []
+        ],
+        [
             'id' => 'compras',
             'titulo' => 'Compras',
             'icon' => 'fas fa-shopping-basket',
