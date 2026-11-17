@@ -1087,9 +1087,6 @@ function actualizarTablaDetalle() {
                     <button type="button" class="btn-eliminar-fila-mini" onclick="_eliminarItemMembresia(${idx})" title="Eliminar membresía">
                         <i class="bi bi-trash"></i>
                     </button>
-                    <span class="badge ms-1" style="background:#0E544C;font-size:.7rem;">
-                        <i class="bi bi-lock-fill me-1"></i>Membresía
-                    </span>
                 </div>
             </td>
             <td class="text-center" style="width:105px;">
