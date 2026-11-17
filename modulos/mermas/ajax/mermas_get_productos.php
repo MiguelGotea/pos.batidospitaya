@@ -25,7 +25,8 @@ try {
           $extraWhere
         ORDER BY pp.Nombre
         LIMIT 60");
-    foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+    foreach ($params as $k => $v)
+        $stmt->bindValue($k, $v);
     $stmt->execute();
 
     echo json_encode(['success' => true, 'productos' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);

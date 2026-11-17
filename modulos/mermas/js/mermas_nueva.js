@@ -29,7 +29,7 @@ function cargarTipos() {
             const cobro = t.es_cobro == 1 ? ' ⚠ Cobro' : '';
             sel.append(`<option value="${t.id}"
                 data-categoria="${escH(t.categoria_merma)}"
-                data-descripcion="${escH(t.descripcion||'')}"
+                data-descripcion="${escH(t.descripcion || '')}"
                 data-cobro="${t.es_cobro}"
                 data-aprobacion="${t.necesita_aprobacion}"
                 >${escH(t.nombre)}${cobro}</option>`);
@@ -40,8 +40,8 @@ function cargarTipos() {
 function mostrarInfoTipo(opt) {
     const info = $('#infoTipo');
     if (!opt.val()) { info.hide(); return; }
-    const desc  = opt.data('descripcion') || '';
-    const cat   = opt.data('categoria') || '';
+    const desc = opt.data('descripcion') || '';
+    const cat = opt.data('categoria') || '';
     const cobro = opt.data('cobro') == 1;
     const aprov = opt.data('aprobacion') == 1;
 
@@ -73,7 +73,7 @@ function cargarProductos(q) {
                         ${p.presentacion ? `<span class="prod-presentacion">${escH(p.presentacion)}</span>` : ''}
                     </div>
                     <button class="btn-agregar-prod"
-                            onclick="agregarProducto(${p.id}, '${escHJs(p.Nombre)}', '${escHJs(p.presentacion||'')}')">
+                            onclick="agregarProducto(${p.id}, '${escHJs(p.Nombre)}', '${escHJs(p.presentacion || '')}')">
                         <i class="bi bi-plus"></i> Agregar
                     </button>
                 </div>`);
@@ -104,7 +104,7 @@ function renderizarDetalle() {
     lineasDetalle.forEach((l, idx) => {
         tbody.append(`
             <tr id="fila-${l.id_presentacion}">
-                <td>${idx+1}</td>
+                <td>${idx + 1}</td>
                 <td>
                     <strong>${escH(l.nombre)}</strong>
                     ${l.presentacion ? `<small class="d-block text-muted">${escH(l.presentacion)}</small>` : ''}
@@ -136,7 +136,7 @@ function eliminarLinea(id) {
 
 /* ---- Guardar ---- */
 function guardarMerma() {
-    const idTipo    = parseInt($('#idTipoIncidencia').val(), 10);
+    const idTipo = parseInt($('#idTipoIncidencia').val(), 10);
     const observacion = $('#observacion').val().trim();
 
     if (!idTipo) { Swal.fire('Atención', 'Debe seleccionar un tipo de incidencia.', 'warning'); return; }
@@ -186,9 +186,9 @@ function guardarMerma() {
 /* ---- Helpers ---- */
 function escH(str) {
     if (str === null || str === undefined) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 function escHJs(str) {
     if (str === null || str === undefined) return '';
-    return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
