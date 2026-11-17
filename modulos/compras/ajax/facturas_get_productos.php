@@ -10,15 +10,13 @@ try {
 
     $sql = "SELECT pp.id,
                    pp.Nombre          AS nombre_presentacion,
-                   pm.Nombre          AS nombre_maestro,
-                   up.nombre          AS nombre_unidad,
+                   pp.presentacion    AS presentacion,
                    pp.costo_unitario  AS costo_unitario_ref
             FROM producto_presentacion pp
             INNER JOIN producto_maestro pm ON pp.id_producto_maestro = pm.id
-            LEFT  JOIN unidad_producto  up ON pp.id_unidad_producto  = up.id
             WHERE pp.vigente = 1
               AND pm.vigente = 1
-              " . ($busqueda !== '' ? "AND (pp.Nombre LIKE :q OR pm.Nombre LIKE :q)" : "") . "
+              " . ($busqueda !== '' ? "AND (pp.Nombre LIKE :q OR pp.presentacion LIKE :q)" : "") . "
             ORDER BY pm.Nombre ASC, pp.Nombre ASC
             LIMIT 80";
 

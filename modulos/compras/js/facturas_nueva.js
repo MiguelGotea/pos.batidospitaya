@@ -2,7 +2,7 @@
    facturas_nueva.js — Formulario Nueva Factura de Compra
    ============================================================ */
 
-let lineasDetalle = [];   // { id_presentacion, nombre, unidad, cantidad, costo_con_iva }
+let lineasDetalle = [];   // { id_presentacion, nombre, presentacion, cantidad, costo_con_iva }
 let busquedaTimer = null;
 
 $(document).ready(function () {
@@ -57,9 +57,9 @@ function cargarProductos(q) {
                 <div class="producto-card-elegible">
                     <div class="prod-info">
                         <span class="prod-nombre">${escH(p.nombre_presentacion)}</span>
-                        <span class="prod-presentacion">${escH(p.nombre_maestro || '')}${p.nombre_unidad ? ' · ' + escH(p.nombre_unidad) : ''}</span>
+                        ${p.presentacion ? `<span class="prod-presentacion">${escH(p.presentacion)}</span>` : ''}
                     </div>
-                    <button class="btn-agregar-prod" onclick="agregarProducto(${p.id}, '${escHJs(p.nombre_presentacion)}', '${escHJs(p.nombre_unidad || '')}', ${parseFloat(p.costo_unitario_ref || 0)})">
+                    <button class="btn-agregar-prod" onclick="agregarProducto(${p.id}, '${escHJs(p.nombre_presentacion)}', '${escHJs(p.presentacion || '')}', ${parseFloat(p.costo_unitario_ref || 0)})">
                         <i class="bi bi-plus"></i> Agregar
                     </button>
                 </div>`);
@@ -68,7 +68,7 @@ function cargarProductos(q) {
 }
 
 /* ---- Agregar línea al detalle ---- */
-function agregarProducto(id, nombre, unidad, costoRef) {
+function agregarProducto(id, nombre, presentacion, costoRef) {
     // Si ya existe, solo enfoca la cantidad
     const existe = lineasDetalle.findIndex(l => l.id_presentacion === id);
     if (existe >= 0) {
@@ -80,7 +80,7 @@ function agregarProducto(id, nombre, unidad, costoRef) {
     // Costo con IVA = costo_ref * 1.15, redondeado a 2 decimales
     const costoIva = costoRef > 0 ? parseFloat((costoRef * 1.15).toFixed(2)) : 0;
 
-    lineasDetalle.push({ id_presentacion: id, nombre, unidad, cantidad: 1, costo_con_iva: costoIva });
+    lineasDetalle.push({ id_presentacion: id, nombre, presentacion, cantidad: 1, costo_con_iva: costoIva });
     renderizarDetalle();
 }
 
@@ -102,7 +102,7 @@ function renderizarDetalle() {
                 <td>${idx + 1}</td>
                 <td>
                     <strong>${escH(l.nombre)}</strong>
-                    ${l.unidad ? `<small class="d-block text-muted">${escH(l.unidad)}</small>` : ''}
+                    ${l.presentacion ? `<small class="d-block text-muted">${escH(l.presentacion)}</small>` : ''}
                 </td>
                 <td style="width:110px;">
                     <input type="number" id="qty-${l.id_presentacion}" class="input-tabla" min="0.01" step="0.01"

@@ -12,12 +12,12 @@ try {
     $extraWhere = '';
 
     if ($q !== '') {
-        $extraWhere = "AND (pp.Nombre LIKE :q OR pp.SKU LIKE :q)";
+        $extraWhere = "AND (pp.Nombre LIKE :q OR pp.presentacion LIKE :q)";
         $params[':q'] = '%' . $q . '%';
     }
 
     $stmt = $conn->prepare("
-        SELECT pp.id, pp.SKU, pp.Nombre
+        SELECT pp.id, pp.Nombre, pp.presentacion
         FROM producto_presentacion pp
         INNER JOIN producto_maestro pm ON pp.id_producto_maestro = pm.id
         WHERE pp.vigente = 1

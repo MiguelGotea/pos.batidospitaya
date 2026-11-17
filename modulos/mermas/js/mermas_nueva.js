@@ -2,7 +2,7 @@
    mermas_nueva.js — Formulario Nueva Merma POS
    ============================================================ */
 
-let lineasDetalle = [];   // { id_presentacion, nombre, SKU, cantidad }
+let lineasDetalle = [];   // { id_presentacion, nombre, presentacion, cantidad }
 let busquedaTimer = null;
 
 $(document).ready(function () {
@@ -70,9 +70,10 @@ function cargarProductos(q) {
                 <div class="producto-card-elegible">
                     <div class="prod-info">
                         <span class="prod-nombre">${escH(p.Nombre)}</span>
+                        ${p.presentacion ? `<span class="prod-presentacion">${escH(p.presentacion)}</span>` : ''}
                     </div>
                     <button class="btn-agregar-prod"
-                            onclick="agregarProducto(${p.id}, '${escHJs(p.Nombre)}', '${escHJs(p.SKU||'')}')">
+                            onclick="agregarProducto(${p.id}, '${escHJs(p.Nombre)}', '${escHJs(p.presentacion||'')}')">
                         <i class="bi bi-plus"></i> Agregar
                     </button>
                 </div>`);
@@ -81,14 +82,14 @@ function cargarProductos(q) {
 }
 
 /* ---- Agregar línea ---- */
-function agregarProducto(id, nombre, sku) {
+function agregarProducto(id, nombre, presentacion) {
     const existe = lineasDetalle.findIndex(l => l.id_presentacion === id);
     if (existe >= 0) {
         $(`#qty-${id}`).focus().select();
         Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'El producto ya fue agregado.', showConfirmButton: false, timer: 1800 });
         return;
     }
-    lineasDetalle.push({ id_presentacion: id, nombre, SKU: sku, cantidad: 1 });
+    lineasDetalle.push({ id_presentacion: id, nombre, presentacion, cantidad: 1 });
     renderizarDetalle();
 }
 
@@ -106,7 +107,7 @@ function renderizarDetalle() {
                 <td>${idx+1}</td>
                 <td>
                     <strong>${escH(l.nombre)}</strong>
-                    ${l.SKU ? `<small class="d-block text-muted">${escH(l.SKU)}</small>` : ''}
+                    ${l.presentacion ? `<small class="d-block text-muted">${escH(l.presentacion)}</small>` : ''}
                 </td>
                 <td style="width:120px;">
                     <input type="number" id="qty-${l.id_presentacion}" class="input-tabla"
