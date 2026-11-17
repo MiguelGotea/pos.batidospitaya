@@ -16,6 +16,13 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub' => []
         ],
         [
+            'id' => 'marcacion',
+            'titulo' => 'Marcacion',
+            'icon' => 'faregistered-home',
+            'url' => '/',
+            'sub' => []
+        ],
+        [
             'id' => 'caja',
             'titulo' => 'Caja Inicial',
             'icon' => 'fas fa-vault',
