@@ -26,20 +26,15 @@ function renderPOSSidebar($activeModule = 'inicio')
             'id'    => 'compras',
             'titulo' => 'Compras',
             'icon'  => 'fas fa-shopping-basket',
-            'url'   => '#',
-            'sub'   => [
-                ['titulo' => 'Nueva Factura de Compra', 'url' => '/modulos/compras/facturas_nueva_compra.php'],
-                ['titulo' => 'Historial de Compras',    'url' => '/modulos/compras/facturas_historial.php'],
-            ]
+            'url'   => '/modulos/compras/facturas_historial.php',
+            'sub'   => []
         ],
         [
             'id'    => 'caja',
             'titulo' => 'Caja',
             'icon'  => 'fas fa-vault',
-            'url'   => '#',
-            'sub'   => [
-                ['titulo' => 'Caja Inicial', 'url' => '/modulos/inicial/'],
-            ]
+            'url'   => '/modulos/inicial/',
+            'sub'   => []
         ],
         [
             'id'    => 'aligeramiento',
@@ -52,11 +47,8 @@ function renderPOSSidebar($activeModule = 'inicio')
             'id'     => 'mermas',
             'titulo' => 'Mermas',
             'icon'   => 'fas fa-box-open',
-            'url'    => '#',
-            'sub'    => [
-                ['titulo' => 'Historial de Mermas', 'url' => '/modulos/mermas/mermas_historial.php'],
-                ['titulo' => 'Nueva Merma',          'url' => '/modulos/mermas/mermas_nueva.php'],
-            ]
+            'url'    => '/modulos/mermas/mermas_historial.php',
+            'sub'    => []
         ],
         [
             'id'    => 'cierre',
