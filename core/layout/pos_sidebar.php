@@ -49,6 +49,16 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub'   => []
         ],
         [
+            'id'     => 'mermas',
+            'titulo' => 'Mermas',
+            'icon'   => 'fas fa-box-open',
+            'url'    => '#',
+            'sub'    => [
+                ['titulo' => 'Historial de Mermas', 'url' => '/modulos/mermas/mermas_historial.php'],
+                ['titulo' => 'Nueva Merma',          'url' => '/modulos/mermas/mermas_nueva.php'],
+            ]
+        ],
+        [
             'id'    => 'cierre',
             'titulo' => 'Cierre de Turno',
             'icon'  => 'fas fa-lock',
