@@ -159,11 +159,22 @@
 }
 .btn-cancelar-merma:hover { background: #e2e8f0; color: #1e293b; border-color: #94a3b8; }
 .btn-merma-nueva {
-    background: #51B8AC; color: #fff; border: none; border-radius: 8px;
-    padding: .4rem 1rem; font-weight: 600; font-size: .86rem;
-    text-decoration: none; transition: background .2s;
+    background: #51B8AC;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .55rem 1.4rem;
+    font-weight: 700;
+    font-size: .92rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    cursor: pointer;
+    transition: opacity .2s, transform .12s;
+    white-space: nowrap;
+    text-decoration: none;
 }
-.btn-merma-nueva:hover { background: #0E544C; color: #fff; }
+.btn-merma-nueva:hover { opacity: .88; transform: translateY(-1px); color: #fff; }
 
 /* ---- Tabla historial ---- */
 .mermas-table { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }

@@ -80,21 +80,23 @@
 
 /* ── Botones ── */
 .cierre-btn-primary {
+    background: #51B8AC;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .55rem 1.4rem;
+    font-weight: 700;
+    font-size: .92rem;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: 10px;
-    border: none;
-    background: var(--cierre-teal);
-    color: #06110f;
-    font-weight: 700;
-    font-size: .93rem;
+    gap: .45rem;
     cursor: pointer;
-    transition: background .2s, transform .1s;
+    transition: opacity .2s, transform .12s;
+    white-space: nowrap;
 }
 .cierre-btn-primary:hover {
-    background: var(--cierre-teal-dark);
+    opacity: .88;
+    transform: translateY(-1px);
     color: #fff;
 }
 .cierre-btn-primary:disabled {

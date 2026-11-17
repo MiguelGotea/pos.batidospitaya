@@ -29,8 +29,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 
                 <!-- Barra superior -->
                 <div class="d-flex justify-content-end align-items-center mb-3 flex-wrap gap-2">
-                    <a href="mermas_nueva.php" class="btn btn-merma-nueva d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i> Nueva Merma
+                    <a href="mermas_nueva.php" class="btn-merma-nueva">
+                        <i class="bi bi-plus-circle-fill"></i> Nueva Merma
                     </a>
                 </div>
 

@@ -29,8 +29,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/core/layout/pos_header.php';
 
                 <!-- Barra superior -->
                 <div class="d-flex justify-content-end align-items-center mb-3 flex-wrap gap-2">
-                    <a href="facturas_nueva_compra.php" class="btn btn-success d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i> Nueva Factura de Compra
+                    <a href="facturas_nueva_compra.php" class="btn-factura-nueva d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle-fill"></i> Nueva Factura de Compra
                     </a>
                 </div>
 
