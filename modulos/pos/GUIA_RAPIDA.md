@@ -1,21 +1,37 @@
-﻿# Guia Rapida — POS Pitaya
+# Guia Rapida — POS Pitaya
 
 > Documento vivo. Se ira alimentando con cada herramienta habilitada.
+> **Última actualización: 2026-11-17**
 
 ---
 
 ## Nueva Venta (`/modulos/pos/facturas_nueva.php`)
 
 ### 1. Tipo de cliente
-Al ingresar a Nueva Venta, lo primero es seleccionar el tipo de cliente:
-- **Cliente General:** Se escribe el nombre del cliente. No requiere número de membresía.
+Al ingresar a Nueva Venta, lo primero es seleccionar el tipo de cliente en el header del panel derecho:
+- **Cliente General:** Se escribe el nombre del cliente (placeholder: "Escriba nombre del cliente general..."). No requiere número de membresía.
 - **Club Pitaya:** Se ingresa el número de membresía del cliente y se busca su perfil. El sistema mostrará su saldo de puntos acumulados, los puntos que generará esta compra y el total proyectado.
 
 ### 2. Selección de productos (Menú)
 En el panel izquierdo se encuentra el catálogo de productos organizado por grupos. Se puede navegar por las pestanas de categorías o usar el buscador para encontrar un producto por nombre. Al seleccionar un producto, se abrirá una ventana para elegir la presentación (tamaño) y personalizar ingredientes si aplica. Al confirmar, el producto se agrega a la factura.
 
-### 3. Membresía Club Pitaya (venta de membresía)
-Debajo del catálogo aparece un acceso rápido para agregar la venta de una membresía Club Pitaya directamente a la factura, en caso de que el cliente desee adquirirla en la misma compra.
+### 3. Venta de Membresía Club Pitaya
+
+El botón **+ Nueva Membresía** está en el header del panel "Tipo de Cliente" (esquina superior derecha del panel de cliente). Al pulsarlo:
+
+1. Se abre un modal de registro rápido con dos campos:
+   - **N° MEMBRESÍA** — número de la tarjeta física (se verifica que no esté registrado)
+   - **CELULAR** — 8 dígitos exactos (sin código de país)
+2. Al registrar:
+   - El socio queda en BD (`clientesclub`) con datos básicos
+   - Se agrega automáticamente al carrito una línea **Membresía Club Pitaya** con badge verde `#NUMERO`
+   - El campo N° MEMBRESÍA se autocompleta y el modo de cliente cambia a Club Pitaya
+   - El cliente recibe un WhatsApp con el link para completar su perfil (foto de cédula)
+3. La línea de membresía en el carrito:
+   - Cantidad fija = 1 (no editable)
+   - Sin botones de editar ni copiar — solo eliminar (🗑️)
+   - Eliminar activa confirmación SweetAlert y hace rollback del socio en BD (solo si aún no completó el preregistro)
+   - No acumula puntos
 
 ### 4. Promociones
 El sistema evalúa automáticamente si el pedido actual cumple con alguna promoción activa. Las promociones se muestran en dos bloques:
@@ -56,3 +72,27 @@ Al cambiar de variante, el sistema transfiere automaticamente tu personalizacion
 #### Cancelar vs Aplicar:
 - **Cancelar**: el carrito no cambia, se descarta cualquier modificacion.
 - **Aplicar**: el producto en el carrito se actualiza con la nueva variante y/o personalizacion. El precio se recalcula automaticamente (precio base de la nueva variante + extras).
+
+---
+
+## Portal de Preregistro Club Pitaya (`club.batidospitaya.com/preregistro/`)
+
+El socio recibe por WhatsApp un enlace único (`?t=TOKEN`) para completar su perfil.
+
+### Qué hace el portal:
+1. Valida el token HMAC firmado (sin consultar BD) — si es inválido muestra error 403
+2. Si el socio ya completó el perfil → muestra pantalla "ya completado"
+3. Si no: muestra formulario con subida de foto de cédula
+4. Al pulsar **"Subir Cédula"**, Gemini Vision analiza la imagen y extrae automáticamente:
+   - Nombre completo (todos los nombres)
+   - Apellido completo (todos los apellidos)
+   - Número de cédula (formato `NNN-DDMMAA-NNNNL`)
+   - Fecha de nacimiento (YYYY-MM-DD desde los dígitos de la cédula)
+5. Los campos extraídos son de **solo lectura** — solo el correo es editable manualmente
+6. Al guardar: `UPDATE clientesclub SET nombre, apellido, cedula, fecha_nacimiento, correo`
+
+### Token de acceso (seguridad):
+- Firmado con HMAC-SHA256 sobre el número de membresía
+- Stateless: no requiere columna adicional en `clientesclub`
+- El mismo link es permanente (misma membresía = mismo token siempre)
+- Archivo de secreto: `core/config/club_token_secret.php` (replicado por PitayaCore)

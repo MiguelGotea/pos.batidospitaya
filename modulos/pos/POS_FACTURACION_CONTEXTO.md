@@ -1,4 +1,4 @@
-﻿# Contexto Técnico: Módulo de Facturación / POS
+# Contexto Técnico: Módulo de Facturación / POS
 ## Batidos Pitaya ERP — `u839374897_erp`
 **Versión del documento:** 1.2 | **Fecha:** 2026-05-05
 
@@ -574,4 +574,46 @@ ombre, precio_unitario_base, precio_unitario y costo_total_iva del item.
 Productos sin id_catalogo_menu_pos (ej. membresías, productos simples sin variantes) siguen el flujo original: el selector de tabs se oculta y el modal abre directamente la receta del producto.
 
 ---
-*Documento actualizado el 2026-11-04*
+
+## Membresía Club Pitaya — Venta desde POS (2026-11-17)
+
+### Archivos nuevos
+| Archivo | Rol |
+|---|---|
+| `modulos/pos/js/membresia_club.js` | Funciones JS: `_abrirModalNuevaMembresia`, `_verificarMembresia`, `_registrarNuevaMembresia`, `_agregarItemMembresia`, `_eliminarItemMembresia` |
+| `modulos/pos/css/membresia_club.css` | Estilos: `.btn-nueva-membresia-header`, `.badge-membresia-linea`, `.fila-membresia-club` |
+| `modulos/pos/ajax/registrar_membresia_club.php` | Backend AJAX 4 acciones: verificar, registrar, eliminar, notificar_wsp |
+| `core/config/club_token_secret.php` | Clave HMAC + funciones `clubTokenGenerar()` / `clubTokenVerificar()` |
+
+### Columna BD nueva
+```sql
+-- pos_ventas_factura_lineas
+ALTER TABLE pos_ventas_factura_lineas
+ADD COLUMN membresia_venta INT(11) NULL DEFAULT NULL
+COMMENT 'Número de membresía cuando la línea es una venta de Membresía Club Pitaya';
+-- ✅ Ya ejecutado en producción 2026-11-17
+```
+
+### Producto en BD
+- `catalogo_menu_pos.id = 13` → catálogo "Membresia"
+- `producto_presentacion.id = 126` → "Tarjeta de membresia unid"
+- Precio: `pos_menu_precios WHERE id_catalogo_menu_pos = 13` (fallback C$99)
+
+### Token de preregistro — HMAC stateless
+No se agregó ninguna columna a `clientesclub`. El token se genera on-the-fly:
+```
+Token = base64url( "MEMBRESIA:hmac_sha256(MEMBRESIA, CLUB_TOKEN_SECRET)" )
+```
+- Mismo número de membresía → mismo token siempre
+- Verificación sin BD: `clubTokenVerificar($token)` recalcula el HMAC y compara
+
+### Portal de preregistro
+`club.batidospitaya.com/preregistro/?t=TOKEN`
+- Acceso público, sin sesión
+- Gemini Vision (`gemini-2.0-flash`) extrae de la foto de cédula:
+  - Nombre completo (1er y 2do nombre), Apellido completo (1er y 2do apellido), N° Cédula, Fecha nacimiento
+- Solo el campo correo es editable manualmente
+- `UPDATE clientesclub SET nombre, apellido, cedula, fecha_nacimiento, correo WHERE nombre IS NULL`
+
+---
+*Documento actualizado el 2026-11-17*
