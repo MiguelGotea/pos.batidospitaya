@@ -187,7 +187,7 @@ class AIService
             ];
         } else {
             // Payload estándar compatible con OpenAI (Groq, DeepSeek, Cerebras, OpenAI)
-            
+
             $userContent = $userPrompt;
 
             // Si hay partes extra (como imágenes base64), convertimos el content en un arreglo (Vision API)
@@ -357,7 +357,7 @@ class AIService
         // Buscar el primer '{' o '[' y el último '}' o ']'
         $startBrace = strpos($content, '{');
         $startBracket = strpos($content, '[');
-        
+
         $start = false;
         if ($startBrace !== false && $startBracket !== false) {
             $start = min($startBrace, $startBracket);
@@ -418,14 +418,17 @@ class AIService
                 $enString = !$enString;
             }
             if (!$enString) {
-                if ($char === '{' || $char === '[') $abiertos[] = $char;
-                if ($char === '}' || $char === ']') array_pop($abiertos);
+                if ($char === '{' || $char === '[')
+                    $abiertos[] = $char;
+                if ($char === '}' || $char === ']')
+                    array_pop($abiertos);
             }
             $escape = ($char === '\\' && !$escape);
         }
 
         // Si terminó dentro de un string, cerrarlo
-        if ($enString) $json .= '"';
+        if ($enString)
+            $json .= '"';
 
         // Cerrar en orden inverso
         while (!empty($abiertos)) {
