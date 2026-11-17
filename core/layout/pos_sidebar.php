@@ -65,6 +65,13 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub' => []
         ],
         [
+            'id' => 'despacho',
+            'titulo' => 'Despachos',
+            'icon' => 'bi-trucktered',
+            'url' => '/',
+            'sub' => []
+        ],
+        [
             'id' => 'cierre',
             'titulo' => 'Cierre de Turno',
             'icon' => 'fas fa-lock',
