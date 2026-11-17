@@ -189,11 +189,11 @@ try {
                  (id_linea_padre, id_slot_combo, upcharge_combo,
                   id_factura, id_producto_presentacion, nombre_producto_snapshot, cantidad,
                   precio_unitario_snap, precio_extras_total, precio_unitario_final, precio_linea_total,
-                  es_canje_puntos, bloquea_puntos, notas)
+                  es_canje_puntos, bloquea_puntos, notas, membresia_venta)
                  VALUES (:id_padre, :id_slot, :upcharge,
                          :id_fac, :id_pres, :nombre_snap, :cant,
                          :precio_snap, :precio_extras, :precio_final, :precio_total,
-                         :es_canje, :bloquea_puntos, :notas)";
+                         :es_canje, :bloquea_puntos, :notas, :membresia_venta)";
     $stmtLinea = $conn->prepare($sqlLinea);
 
     // Función auxiliar para construir el resumen de personalización
@@ -249,20 +249,21 @@ try {
 
         // ── Insertar línea padre (regular o combo) ──────────────────────────
         $stmtLinea->execute([
-            ':id_padre'      => null,                   // siempre null para la raíz
-            ':id_slot'       => null,                   // null en padre
-            ':upcharge'      => 0.00,
-            ':id_fac'        => $idFactura,
-            ':id_pres'       => $esCombo ? null : (int)$item['id_presentacion'],
-            ':nombre_snap'   => $nombreSnap,
-            ':cant'          => $cantidad,
-            ':precio_snap'   => $precioBase,
-            ':precio_extras' => $montoExtras,
-            ':precio_final'  => $precioUnitario,
-            ':precio_total'  => $costoTotalIva,
-            ':es_canje'      => $esCanjeado,
-            ':bloquea_puntos'=> $esCombo ? 1 : 0,      // combos siempre bloquean puntos
-            ':notas'         => $notasFinal
+            ':id_padre'       => null,                   // siempre null para la raíz
+            ':id_slot'        => null,                   // null en padre
+            ':upcharge'       => 0.00,
+            ':id_fac'         => $idFactura,
+            ':id_pres'        => $esCombo ? null : (int)$item['id_presentacion'],
+            ':nombre_snap'    => $nombreSnap,
+            ':cant'           => $cantidad,
+            ':precio_snap'    => $precioBase,
+            ':precio_extras'  => $montoExtras,
+            ':precio_final'   => $precioUnitario,
+            ':precio_total'   => $costoTotalIva,
+            ':es_canje'       => $esCanjeado,
+            ':bloquea_puntos' => $esCombo ? 1 : 0,      // combos siempre bloquean puntos
+            ':notas'          => $notasFinal,
+            ':membresia_venta'=> !empty($item['membresia_venta']) ? (int)$item['membresia_venta'] : null,
         ]);
         $idLineaPadre = (int)$conn->lastInsertId();
 
@@ -281,20 +282,21 @@ try {
                 if ($notasHijoFin === "") $notasHijoFin = null;
 
                 $stmtLinea->execute([
-                    ':id_padre'      => $idLineaPadre,
-                    ':id_slot'       => $idSlot,
-                    ':upcharge'      => $upcharge,
-                    ':id_fac'        => $idFactura,
-                    ':id_pres'       => $idPresHijo,
-                    ':nombre_snap'   => $nombreHijo,
-                    ':cant'          => $cantidad,          // misma cantidad que el padre
-                    ':precio_snap'   => 0.00,               // precio 0 en hijos (precio real va en el padre)
-                    ':precio_extras' => 0.00,
-                    ':precio_final'  => 0.00,
-                    ':precio_total'  => 0.00,
-                    ':es_canje'      => 0,
-                    ':bloquea_puntos'=> 1,                  // hijos de combo nunca acumulan puntos
-                    ':notas'         => $notasHijoFin
+                    ':id_padre'       => $idLineaPadre,
+                    ':id_slot'        => $idSlot,
+                    ':upcharge'       => $upcharge,
+                    ':id_fac'         => $idFactura,
+                    ':id_pres'        => $idPresHijo,
+                    ':nombre_snap'    => $nombreHijo,
+                    ':cant'           => $cantidad,          // misma cantidad que el padre
+                    ':precio_snap'    => 0.00,               // precio 0 en hijos (precio real va en el padre)
+                    ':precio_extras'  => 0.00,
+                    ':precio_final'   => 0.00,
+                    ':precio_total'   => 0.00,
+                    ':es_canje'       => 0,
+                    ':bloquea_puntos' => 1,                  // hijos de combo nunca acumulan puntos
+                    ':notas'          => $notasHijoFin,
+                    ':membresia_venta'=> null,
                 ]);
             }
         }

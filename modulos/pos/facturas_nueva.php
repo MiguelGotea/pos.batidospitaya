@@ -71,6 +71,7 @@ try {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/facturas.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/membresia_club.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/promociones.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/ticket_termico_80mm.css?v=<?php echo time(); ?>">
 </head>
@@ -131,21 +132,7 @@ try {
 
                         </div><!-- /panel-catalogo-productos -->
 
-                        <!-- Banner de Quick Add para Membresía Club Pitaya -->
-                        <div class="banner-club-pitaya-pos" id="bannerClubPitaya">
-                            <div class="banner-club-info">
-                                <div class="banner-club-icon">
-                                    <i class="bi bi-star-fill"></i>
-                                </div>
-                                <div class="banner-club-text">
-                                    <h6 class="banner-club-titulo mb-0">Vender Membresía Club Pitaya</h6>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-quick-add-membresia" id="btnQuickAddMembresia"
-                                title="Agregar membresía a la orden">
-                                Agregar <i class="bi bi-plus-lg ms-1"></i>
-                            </button>
-                        </div>
+
 
                         <!-- Sección de Promociones Dinámicas (carga desde BD) -->
                         <div class="card-factura seccion-promociones-pos" id="seccionPromociones">
@@ -199,6 +186,10 @@ try {
                             <div class="card-header-factura">
                                 <i class="bi bi-person-fill"></i>
                                 Tipo de Cliente
+                                <button type="button" class="btn-nueva-membresia-header ms-auto" id="btnNuevaMembresia"
+                                    title="Registrar nueva membresía Club Pitaya">
+                                    <i class="bi bi-person-plus-fill me-1"></i> Nueva Membresía
+                                </button>
                             </div>
                             <div class="card-body-factura py-2">
                                 <form id="formFactura" class="form-cabecera m-0">
@@ -241,7 +232,7 @@ try {
                                                 </span>
                                             </label>
                                             <input type="text" class="form-control form-control-pos" id="nombreCliente"
-                                                name="nombre_cliente" placeholder="Escriba nombre del cliente casual..."
+                                                name="nombre_cliente" placeholder="Escriba nombre del cliente general..."
                                                 style="background-color: #fff;">
                                             <input type="hidden" id="idClienteClub" name="id_cliente_club" value="">
                                             <input type="hidden" id="fechaFactura" name="fecha"
@@ -574,6 +565,55 @@ try {
     </div>
     <!-- ===== FIN MODAL COMBO ===== -->
 
+    <!-- ===== MODAL: Nueva Membresía Club Pitaya ===== -->
+    <div class="modal fade" id="modalNuevaMembresia" tabindex="-1" aria-labelledby="modalNuevaMembresiaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+            <div class="modal-content border-0 shadow-lg modal-pos-custom">
+                <div class="modal-header modal-header-pos">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-icon-badge">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" id="modalNuevaMembresiaLabel">Nueva Membresía</h5>
+                            <span class="modal-subtitle-pos">Registrar socio en Club Pitaya</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Membresía -->
+                    <div class="mb-3">
+                        <label class="form-label-pos">N° MEMBRESÍA</label>
+                        <div class="input-group input-group-pos">
+                            <input type="number" class="form-control form-control-pos" id="nmMembresia"
+                                placeholder="Ej: 9872" autocomplete="off" min="1" max="99999999999">
+                            <button class="btn btn-pos-search" type="button" id="btnVerificarMembresia"
+                                title="Verificar disponibilidad">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <div id="nmMembresiaFeedback" class="mt-1 small" style="min-height:1.3em;"></div>
+                    </div>
+                    <!-- Celular (solo 8 dígitos Nicaragua) -->
+                    <div class="mb-2">
+                        <label class="form-label-pos">CELULAR</label>
+                        <input type="tel" class="form-control form-control-pos" id="nmCelular"
+                            placeholder="Ej: 87654321" autocomplete="off" maxlength="8" pattern="[0-9]{8}">
+                        <div class="form-text text-muted">8 dígitos (sin código de país)</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-2 px-3 d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn-cancelar-factura px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn-guardar-factura px-4" id="btnRegistrarMembresia" disabled>
+                        <i class="bi bi-check2-circle me-1"></i> Registrar y Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FIN MODAL NUEVA MEMBRESÍA ===== -->
+
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -589,6 +629,7 @@ try {
     <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/facturas_nueva.js?v=<?php echo time(); ?>"></script>
     <script src="js/pos_combos.js?v=<?php echo time(); ?>"></script>
+    <script src="js/membresia_club.js?v=<?php echo time(); ?>"></script>
 </body>
 
 </html>

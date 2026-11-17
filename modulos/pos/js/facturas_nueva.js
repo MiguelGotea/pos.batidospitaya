@@ -140,7 +140,7 @@ function cambiarTipoCliente(tipo) {
         $('#colIndicadoresPuntos').hide();
         $('#clienteCheckVerificado').hide();
         $('#colNombreCliente').removeClass('col-sm-7 col-7').addClass('col-12');
-        $('#nombreCliente').prop('readonly', false).val('').attr('placeholder', 'Escriba nombre del cliente casual...').css('background-color', '#fff');
+        $('#nombreCliente').prop('readonly', false).val('').attr('placeholder', 'Escriba nombre del cliente general...').css('background-color', '#fff');
         $('#idClienteClub').val('');
         clienteActual = null;
         // Revertir canjes activos si se pasa a Cliente General
@@ -1073,6 +1073,40 @@ function actualizarTablaDetalle() {
         const _pFmtFin = _pFin.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const canjeCls = item.es_canjeado ? 'fila-canjeada' : '';
+
+        // FILA 1: Nombre | Lápiz | Tacho de basura | Puntos | Tag amarillo condición | Cantidad | Precio | (Canjeado si club activo)
+        // — Comportamiento especial para ítem MEMBRESÍA —
+        if (item.es_membresia) {
+            const numMembresia = item.membresia_venta || item.notas || '';
+            html += `
+        <tr id="fila-${item._rowKey}" class="fila-producto-principal fila-membresia-club" data-idx="${idx}">
+            <td>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                    <strong class="item-nombre" style="font-size:.88rem; color:#1e293b;">${escHtml(item.nombre)}</strong>
+                    <span class="badge bg-success ms-1 badge-membresia-linea">#${escHtml(String(numMembresia))}</span>
+                    <button type="button" class="btn-eliminar-fila-mini" onclick="_eliminarItemMembresia(${idx})" title="Eliminar membresía">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <span class="badge ms-1" style="background:#0E544C;font-size:.7rem;">
+                        <i class="bi bi-lock-fill me-1"></i>Membresía
+                    </span>
+                </div>
+            </td>
+            <td class="text-center" style="width:105px;">
+                <div class="qty-control">
+                    <button type="button" class="qty-btn" disabled title="Cantidad fija"><i class="bi bi-dash-lg"></i></button>
+                    <input type="number" class="qty-input input-cantidad" value="1" min="1" step="1" disabled
+                           style="background:#f8f9fa; color:#6c757d;">
+                    <button type="button" class="qty-btn" disabled title="Cantidad fija"><i class="bi bi-plus-lg"></i></button>
+                </div>
+            </td>
+            <td class="text-end" style="width:100px; white-space:nowrap;">
+                <strong class="text-dark" style="font-size:.92rem; font-variant-numeric: tabular-nums;">C$ ${(item.costo_total_iva || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            </td>
+            ${esClubValido ? `<td class="text-center" style="width:70px;"></td>` : ''}
+        </tr>`;
+            return; // Saltar el renderizado normal para este ítem
+        }
 
         // FILA 1: Nombre | Lápiz | Tacho de basura | Puntos | Tag amarillo condición | Cantidad | Precio | (Canjeado si club activo)
         html += `

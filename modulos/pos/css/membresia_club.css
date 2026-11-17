@@ -1,0 +1,48 @@
+/* ============================================================
+   MEMBRESÍA CLUB PITAYA — Estilos POS
+   ============================================================ */
+
+/* Botón "Nueva Membresía" en header del panel Tipo de Cliente */
+.btn-nueva-membresia-header {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.40);
+    color: #fff;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+.btn-nueva-membresia-header:hover {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.60);
+    color: #fff;
+}
+.btn-nueva-membresia-header:active {
+    background: rgba(255, 255, 255, 0.38);
+}
+
+/* Fila especial membresía en tabla de detalle */
+.fila-membresia-club {
+    background: #f0fdf4 !important;
+}
+.fila-membresia-club:hover {
+    background: #dcfce7 !important;
+}
+
+/* Badge número de membresía junto al nombre */
+.badge-membresia-linea {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    vertical-align: middle;
+}
+
+/* Nombre del producto membresía */
+.nombre-membresia-club {
+    font-weight: 600;
+    color: #0E544C;
+}
