@@ -18,7 +18,7 @@ function renderPOSSidebar($activeModule = 'inicio')
         [
             'id' => 'marcacion',
             'titulo' => 'Marcacion',
-            'icon' => 'faregistered-home',
+            'icon' => 'bi bi-registered',
             'url' => '/',
             'sub' => []
         ],
