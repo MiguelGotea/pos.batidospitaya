@@ -16,6 +16,13 @@ function renderPOSSidebar($activeModule = 'inicio')
             'sub' => []
         ],
         [
+            'id' => 'caja',
+            'titulo' => 'Caja Inicial',
+            'icon' => 'fas fa-vault',
+            'url' => '/modulos/inicial/',
+            'sub' => []
+        ],
+        [
             'id' => 'ventas',
             'titulo' => 'Ventas',
             'icon' => 'fas fa-cash-register',
@@ -27,13 +34,6 @@ function renderPOSSidebar($activeModule = 'inicio')
             'titulo' => 'Compras',
             'icon' => 'fas fa-shopping-basket',
             'url' => '/modulos/compras/facturas_historial.php',
-            'sub' => []
-        ],
-        [
-            'id' => 'caja',
-            'titulo' => 'Caja Inicial',
-            'icon' => 'fas fa-vault',
-            'url' => '/modulos/inicial/',
             'sub' => []
         ],
         [
