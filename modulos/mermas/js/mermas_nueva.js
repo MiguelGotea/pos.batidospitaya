@@ -70,7 +70,6 @@ function cargarProductos(q) {
                 <div class="producto-card-elegible">
                     <div class="prod-info">
                         <span class="prod-nombre">${escH(p.Nombre)}</span>
-                        <span class="prod-sku">${escH(p.SKU || '')}</span>
                     </div>
                     <button class="btn-agregar-prod"
                             onclick="agregarProducto(${p.id}, '${escHJs(p.Nombre)}', '${escHJs(p.SKU||'')}')">

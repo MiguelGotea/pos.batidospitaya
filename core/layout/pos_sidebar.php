@@ -9,66 +9,66 @@ function renderPOSSidebar($activeModule = 'inicio')
 {
     $menu = [
         [
-            'id'    => 'inicio',
+            'id' => 'inicio',
             'titulo' => 'Inicio',
-            'icon'  => 'fas fa-home',
-            'url'   => '/index.php',
-            'sub'   => []
+            'icon' => 'fas fa-home',
+            'url' => '/index.php',
+            'sub' => []
         ],
         [
-            'id'    => 'ventas',
+            'id' => 'ventas',
             'titulo' => 'Ventas',
-            'icon'  => 'fas fa-cash-register',
-            'url'   => '/modulos/pos/ventas_historial.php',
-            'sub'   => []
+            'icon' => 'fas fa-cash-register',
+            'url' => '/modulos/pos/ventas_historial.php',
+            'sub' => []
         ],
         [
-            'id'    => 'compras',
+            'id' => 'compras',
             'titulo' => 'Compras',
-            'icon'  => 'fas fa-shopping-basket',
-            'url'   => '/modulos/compras/facturas_historial.php',
-            'sub'   => []
+            'icon' => 'fas fa-shopping-basket',
+            'url' => '/modulos/compras/facturas_historial.php',
+            'sub' => []
         ],
         [
-            'id'    => 'caja',
-            'titulo' => 'Caja',
-            'icon'  => 'fas fa-vault',
-            'url'   => '/modulos/inicial/',
-            'sub'   => []
+            'id' => 'caja',
+            'titulo' => 'Caja Inicial',
+            'icon' => 'fas fa-vault',
+            'url' => '/modulos/inicial/',
+            'sub' => []
         ],
         [
-            'id'    => 'aligeramiento',
+            'id' => 'aligeramiento',
             'titulo' => 'Aligeramientos',
-            'icon'  => 'fas fa-money-bill-transfer',
-            'url'   => '/modulos/aligeramiento/',
-            'sub'   => []
+            'icon' => 'fas fa-money-bill-transfer',
+            'url' => '/modulos/aligeramiento/',
+            'sub' => []
         ],
         [
-            'id'     => 'mermas',
+            'id' => 'mermas',
             'titulo' => 'Mermas',
-            'icon'   => 'fas fa-box-open',
-            'url'    => '/modulos/mermas/mermas_historial.php',
-            'sub'    => []
+            'icon' => 'fas fa-box-open',
+            'url' => '/modulos/mermas/mermas_historial.php',
+            'sub' => []
         ],
         [
-            'id'    => 'cierre',
+            'id' => 'cierre',
             'titulo' => 'Cierre de Turno',
-            'icon'  => 'fas fa-lock',
-            'url'   => '/modulos/cierre/',
-            'sub'   => []
+            'icon' => 'fas fa-lock',
+            'url' => '/modulos/cierre/',
+            'sub' => []
         ],
         [
-            'id'    => 'logout',
+            'id' => 'logout',
             'titulo' => 'Cerrar Sesión',
-            'icon'  => 'fas fa-sign-out-alt',
-            'url'   => '/logout.php?type=colaborador',
-            'sub'   => []
+            'icon' => 'fas fa-sign-out-alt',
+            'url' => '/logout.php?type=colaborador',
+            'sub' => []
         ]
     ];
 
 
     ob_start();
-?>
+    ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
@@ -284,10 +284,10 @@ function renderPOSSidebar($activeModule = 'inicio')
             <?php foreach ($menu as $item):
                 $hasSub = !empty($item['sub']);
                 $isActive = ($activeModule === $item['id']);
-            ?>
-                <div class="pos-menu-item <?= $isActive ? 'active' : '' ?> <?= $hasSub ? 'has-sub' : '' ?>" id="menu-<?= $item['id'] ?>">
-                    <a href="<?= $hasSub ? 'javascript:void(0)' : $item['url'] ?>"
-                        class="pos-menu-link"
+                ?>
+                <div class="pos-menu-item <?= $isActive ? 'active' : '' ?> <?= $hasSub ? 'has-sub' : '' ?>"
+                    id="menu-<?= $item['id'] ?>">
+                    <a href="<?= $hasSub ? 'javascript:void(0)' : $item['url'] ?>" class="pos-menu-link"
                         onclick="<?= $hasSub ? "toggleSubmenu('menu-" . $item['id'] . "')" : "" ?>">
                         <div class="pos-menu-icon"><i class="<?= $item['icon'] ?>"></i></div>
                         <span class="pos-menu-text"><?= $item['titulo'] ?></span>
@@ -331,12 +331,12 @@ function renderPOSSidebar($activeModule = 'inicio')
         }
 
         // Auto-colapsar cuando el mouse sale del sidebar
-        document.getElementById('posSidebar').addEventListener('mouseleave', function() {
+        document.getElementById('posSidebar').addEventListener('mouseleave', function () {
             document.querySelectorAll('.pos-menu-item.has-sub').forEach(el => {
                 el.classList.remove('open');
             });
         });
     </script>
-<?php
+    <?php
     return ob_get_clean();
 }

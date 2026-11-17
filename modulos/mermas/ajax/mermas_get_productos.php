@@ -19,8 +19,9 @@ try {
     $stmt = $conn->prepare("
         SELECT pp.id, pp.SKU, pp.Nombre
         FROM producto_presentacion pp
-        WHERE pp.presentacion_basica_inventario = 1
-          AND pp.Activo = 'SI'
+        INNER JOIN producto_maestro pm ON pp.id_producto_maestro = pm.id
+        WHERE pp.vigente = 1
+          AND pm.vigente = 1
           $extraWhere
         ORDER BY pp.Nombre
         LIMIT 60");
