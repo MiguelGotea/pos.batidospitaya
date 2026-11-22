@@ -110,6 +110,15 @@ try {
         }
     }
 
+    // Excluir ventas que ya pertenecen a un cierre cerrado
+    $where[] = "NOT EXISTS (
+        SELECT 1 FROM pos_cierres_turno ct
+        WHERE ct.cod_sucursal = v.cod_sucursal
+          AND ct.estado = 'cerrado'
+          AND v.fecha_hora >  ct.corte_anterior
+          AND v.fecha_hora <= ct.corte_actual
+    )";
+
     $whereClause = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
     // Columnas válidas para ordenar
