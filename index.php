@@ -64,6 +64,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         input.pwd-mask {
             -webkit-text-security: disc;
         }
+
         body {
             background-color: #F6F6F6 !important;
             color: #333333 !important;
@@ -187,18 +188,21 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
         <!-- ===== PIN PAD OVERLAY (Etapa 2) ===== -->
         <div class="pos-pin-overlay">
             <div class="logo-container">
-                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya" class="pos-logo">
+                <img src="/core/assets/img/Logo.svg" onerror="this.src='/core/assets/img/icon.png'" alt="Pitaya"
+                    class="pos-logo">
             </div>
             <div class="pos-pin-card">
                 <?php if (!$dispositivo['status']): ?>
                     <!-- DISPOSITIVO NO AUTORIZADO -->
                     <h2 style="color:#e05555">Terminal Bloqueada</h2>
-                    <p style="margin-bottom:20px">La autorización de este dispositivo ha expirado o no es válida. Por favor, contacta al personal de TI para reconfigurar la terminal.</p>
+                    <p style="margin-bottom:20px">La autorización de este dispositivo ha expirado o no es válida. Por favor,
+                        contacta al personal de TI para reconfigurar la terminal.</p>
 
                     <i class="fa fa-shield-halved" style="font-size:3rem;color:rgba(224,85,85,0.2);margin-bottom:20px"></i>
                 <?php else: ?>
                     <h2 style="color: var(--pitaya-teal)">Acceso Colaborador</h2>
-                    <p>Ingresa tu clave para operar &bull; <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong></p>
+                    <p>Ingresa tu clave para operar &bull;
+                        <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong></p>
 
                     <?php if ($pinError): ?>
                         <div class="pos-alert error show" id="pinAlert" style="margin-bottom:16px;">
@@ -210,7 +214,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                         <div class="pos-field">
                             <label class="pos-label" for="colaborador_clave">Contraseña de Colaborador</label>
                             <!-- type="text" + máscara CSS para evitar el gestor de contraseñas del navegador -->
-                            <input class="pos-input pwd-mask" type="text" name="colaborador_clave" id="colaborador_clave" placeholder="••••••••" required autocomplete="off" readonly style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
+                            <input class="pos-input pwd-mask" type="text" name="colaborador_clave" id="colaborador_clave"
+                                placeholder="••••••••" required autocomplete="off" readonly
+                                style="text-align:center; letter-spacing:8px; font-size:1.5rem; color: #000;">
                         </div>
                         <button type="submit" id="btnAcceder" class="pos-btn" style="margin-top:10px">
                             <i class="fa fa-right-to-bracket"></i> Acceder
@@ -220,7 +226,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
 
                 <div style="margin-top:26px;padding-top:10px;border-top:1px solid var(--border);">
                     <div style="color:var(--text-muted);font-size:.78rem;">
-                        <i class="fa fa-shop"></i> Terminal configurada para: <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>
+                        <i class="fa fa-shop"></i> Terminal configurada para:
+                        <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>
                     </div>
                 </div>
             </div>
@@ -228,7 +235,7 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
     <?php endif; ?>
 
     <?php if ($hayColaborador):
-    ?>
+        ?>
         <!-- Renderizar Menú Lateral -->
         <?= renderPOSSidebar('inicio') ?>
 
@@ -240,7 +247,8 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                 <div class="pos-welcome">
                     <div style="font-size:3.5rem;margin-bottom:20px;">🛒</div>
                     <h2>¡Bienvenid@, <?= htmlspecialchars(explode(' ', trim($colabNombre))[0] ?? 'Colaborador') ?>!</h2>
-                    <p>Estás operando en la sucursal <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
+                    <p>Estás operando en la sucursal
+                        <strong><?= htmlspecialchars($sucursalNombre ?: $sucursal) ?></strong>.<br>
                         Selecciona el tipo de pedido para comenzar.</p>
 
                     <div class="pos-actions" id="menuButtons">
@@ -337,9 +345,9 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                     colabInput.focus();
                 };
                 colabInput.addEventListener('touchend', activateClave, { once: true });
-                colabInput.addEventListener('keydown',  activateClave, { once: true });
-                colabInput.addEventListener('paste',    activateClave, { once: true });
-                colabInput.addEventListener('click',    activateClave, { once: true });
+                colabInput.addEventListener('keydown', activateClave, { once: true });
+                colabInput.addEventListener('paste', activateClave, { once: true });
+                colabInput.addEventListener('click', activateClave, { once: true });
 
                 // Al comenzar a escribir de nuevo, ocultar la alerta de inmediato
                 colabInput.addEventListener('input', () => {
@@ -373,30 +381,30 @@ $colabNombre = $_SESSION['pos_colaborador_nombre'] ?? '';
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data && data.ok) {
-                            window.location.href = data.redirect || '/index.php';
-                        } else {
-                            mostrarAlerta((data && data.msg) ? data.msg : 'Error al validar credenciales.');
-                            if (colabInput) {
-                                colabInput.value = '';
-                                colabInput.focus();
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.ok) {
+                                window.location.href = data.redirect || '/index.php';
+                            } else {
+                                mostrarAlerta((data && data.msg) ? data.msg : 'Error al validar credenciales.');
+                                if (colabInput) {
+                                    colabInput.value = '';
+                                    colabInput.focus();
+                                }
+                                if (btnAcceder) {
+                                    btnAcceder.disabled = false;
+                                    btnAcceder.innerHTML = '<i class="fa fa-right-to-bracket"></i> Acceder';
+                                }
                             }
+                        })
+                        .catch(err => {
+                            console.error('Error de autenticación:', err);
+                            mostrarAlerta('Error de conexión con el servidor. Intenta de nuevo.');
                             if (btnAcceder) {
                                 btnAcceder.disabled = false;
                                 btnAcceder.innerHTML = '<i class="fa fa-right-to-bracket"></i> Acceder';
                             }
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Error de autenticación:', err);
-                        mostrarAlerta('Error de conexión con el servidor. Intenta de nuevo.');
-                        if (btnAcceder) {
-                            btnAcceder.disabled = false;
-                            btnAcceder.innerHTML = '<i class="fa fa-right-to-bracket"></i> Acceder';
-                        }
-                    });
+                        });
                 });
             }
         });

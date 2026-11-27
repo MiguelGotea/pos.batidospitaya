@@ -26,8 +26,16 @@ if (!$data) {
 }
 
 // Validar campos obligatorios
-$campos = ['fecha', 'sucursal_id', 'tipo_cambio_usado', 'total_cordobas', 'total_dolares',
-           'total_dolares_en_cordobas', 'total_efectivo_global', 'detalles'];
+$campos = [
+    'fecha',
+    'sucursal_id',
+    'tipo_cambio_usado',
+    'total_cordobas',
+    'total_dolares',
+    'total_dolares_en_cordobas',
+    'total_efectivo_global',
+    'detalles'
+];
 foreach ($campos as $c) {
     if (!isset($data[$c]) || (empty($data[$c]) && $data[$c] !== 0)) {
         echo json_encode(['ok' => false, 'mensaje' => "Campo faltante o vacÃ­o: $c"]);
@@ -35,7 +43,7 @@ foreach ($campos as $c) {
     }
 }
 
-$fecha      = $data['fecha'];
+$fecha = $data['fecha'];
 $sucursalId = $data['sucursal_id'];
 
 // Obtener usuario de sesiÃ³n si estÃ¡ disponible
@@ -68,17 +76,17 @@ try {
              :total_usd_nio, :total_global, :cod_usuario)
     ");
     $stmtMaster->execute([
-        ':fecha'        => $fecha,
-        ':sucursal'     => $sucursalId,
-        ':tc'           => round((float)$data['tipo_cambio_usado'], 4),
-        ':total_nio'    => round((float)$data['total_cordobas'], 2),
-        ':total_usd'    => round((float)$data['total_dolares'], 2),
-        ':total_usd_nio'=> round((float)$data['total_dolares_en_cordobas'], 2),
-        ':total_global' => round((float)$data['total_efectivo_global'], 2),
-        ':cod_usuario'  => $codUsuario,
+        ':fecha' => $fecha,
+        ':sucursal' => $sucursalId,
+        ':tc' => round((float) $data['tipo_cambio_usado'], 4),
+        ':total_nio' => round((float) $data['total_cordobas'], 2),
+        ':total_usd' => round((float) $data['total_dolares'], 2),
+        ':total_usd_nio' => round((float) $data['total_dolares_en_cordobas'], 2),
+        ':total_global' => round((float) $data['total_efectivo_global'], 2),
+        ':cod_usuario' => $codUsuario,
     ]);
 
-    $cajaId = (int)$conn->lastInsertId();
+    $cajaId = (int) $conn->lastInsertId();
 
     // 2. Insertar detalles por denominaciÃ³n
     $stmtDetalle = $conn->prepare("
@@ -90,18 +98,18 @@ try {
 
     foreach ($data['detalles'] as $det) {
         $stmtDetalle->execute([
-            ':caja_id'  => $cajaId,
-            ':moneda'   => $det['moneda'],
-            ':denom'    => round((float)$det['denominacion'], 2),
-            ':cantidad' => (int)$det['cantidad'],
-            ':total'    => round((float)$det['total'], 2),
+            ':caja_id' => $cajaId,
+            ':moneda' => $det['moneda'],
+            ':denom' => round((float) $det['denominacion'], 2),
+            ':cantidad' => (int) $det['cantidad'],
+            ':total' => round((float) $det['total'], 2),
         ]);
     }
 
     // 3. Registrar al colaborador actual como cajero del turno ('abierto')
-    $codCajero    = (int)($_SESSION['pos_colaborador_id'] ?? ($codUsuario ?: 0));
+    $codCajero = (int) ($_SESSION['pos_colaborador_id'] ?? ($codUsuario ?: 0));
     $nombreCajero = $_SESSION['pos_colaborador_nombre'] ?? 'Cajero';
-    $horaInicio   = $_SESSION['pos_turno_hora_inicio'] ?? posAhora();
+    $horaInicio = $_SESSION['pos_turno_hora_inicio'] ?? posAhora();
 
     $stmtTurnoExiste = $conn->prepare(
         "SELECT id FROM pos_cierres_turno WHERE cod_sucursal = ? AND estado IN ('abierto', 'en_curso') LIMIT 1"
@@ -110,7 +118,7 @@ try {
     if (!$stmtTurnoExiste->fetch()) {
         $stmtCntTurno = $conn->prepare("SELECT COUNT(*) FROM pos_cierres_turno WHERE cod_sucursal = ? AND fecha = ?");
         $stmtCntTurno->execute([$sucursalId, $fecha]);
-        $numeroTurno = (int)$stmtCntTurno->fetchColumn() + 1;
+        $numeroTurno = (int) $stmtCntTurno->fetchColumn() + 1;
 
         $stmtTurno = $conn->prepare("
             INSERT INTO pos_cierres_turno
@@ -126,10 +134,10 @@ try {
             $fecha,
             $codCajero,
             $nombreCajero,
-            round((float)$data['tipo_cambio_usado'], 4),
+            round((float) $data['tipo_cambio_usado'], 4),
             $horaInicio,
             $cajaId,
-            round((float)$data['total_efectivo_global'], 2),
+            round((float) $data['total_efectivo_global'], 2),
             $horaInicio,
         ]);
     }
@@ -156,14 +164,14 @@ try {
             $totalCierreC = 0.0;
             foreach ($conteoFinalCierre as $f) {
                 if ($f['moneda'] === 'NIO') {
-                    $totalCierreC += (float)$f['monto'];
+                    $totalCierreC += (float) $f['monto'];
                 } elseif ($f['moneda'] === 'USD') {
-                    $totalCierreC += (float)$f['monto'] * (float)$data['tipo_cambio_usado'];
+                    $totalCierreC += (float) $f['monto'] * (float) $data['tipo_cambio_usado'];
                 }
             }
 
-            $totalCajaIniC = (float)$data['total_efectivo_global'];
-            $diferencia    = round($totalCajaIniC - $totalCierreC, 2);
+            $totalCajaIniC = (float) $data['total_efectivo_global'];
+            $diferencia = round($totalCajaIniC - $totalCierreC, 2);
 
             if (abs($diferencia) > 1) {
                 $stmtFlag = $conn->prepare(
@@ -174,18 +182,18 @@ try {
                 );
                 $stmtFlag->execute([
                     $cajaId,
-                    $ultimoCierre ? (int)$ultimoCierre['id'] : null,
+                    $ultimoCierre ? (int) $ultimoCierre['id'] : null,
                     $totalCajaIniC,
                     $totalCierreC,
                     $diferencia,
                     $codUsuario,
-                    $ultimoCierre ? (int)$ultimoCierre['cod_cajero'] : null,
+                    $ultimoCierre ? (int) $ultimoCierre['cod_cajero'] : null,
                 ]);
                 $flagDiscrepancia = [
                     'tiene_discrepancia' => true,
-                    'diferencia_c'       => $diferencia,
-                    'conteo_cierre_c'    => $totalCierreC,
-                    'conteo_caja_ini_c'  => $totalCajaIniC,
+                    'diferencia_c' => $diferencia,
+                    'conteo_cierre_c' => $totalCierreC,
+                    'conteo_caja_ini_c' => $totalCajaIniC,
                 ];
             }
         }
@@ -195,10 +203,10 @@ try {
     }
 
     echo json_encode([
-        'ok'                => true,
-        'caja_inicial_id'   => $cajaId,
+        'ok' => true,
+        'caja_inicial_id' => $cajaId,
         'flag_discrepancia' => $flagDiscrepancia,
-        'redirect'          => '/modulos/pos/ventas_historial.php',
+        'redirect' => '/modulos/pos/ventas_historial.php',
     ]);
 
 } catch (PDOException $e) {

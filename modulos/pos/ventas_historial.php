@@ -233,8 +233,7 @@ try {
                             </span>
                         <?php endif; ?>
                         <!-- Botón Cierre de Turno -->
-                        <a href="../cierre/" class="pos-action-btn dark"
-                           title="Iniciar cierre de turno">
+                        <a href="../cierre/" class="pos-action-btn dark" title="Iniciar cierre de turno">
                             <i class="fas fa-lock"></i> Cierre de Turno
                         </a>
                     </div>
@@ -254,12 +253,12 @@ try {
                 <div class="sticky-search-container" id="contenedorBuscadorGlobal">
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute"
-                           style="left:16px; top:50%; transform:translateY(-50%); z-index:10; color:#6c757d; font-size:16px;"></i>
+                            style="left:16px; top:50%; transform:translateY(-50%); z-index:10; color:#6c757d; font-size:16px;"></i>
                         <input type="text" id="buscarGlobal" class="form-control w-100"
-                               placeholder="Buscar por ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)"
-                               style="padding-left:44px; padding-right:44px; height:46px !important; font-size:14px !important; border-radius:12px !important;">
+                            placeholder="Buscar por ticket, membresía, nombre de cliente, cajero o método de pago (comas para varios filtros)"
+                            style="padding-left:44px; padding-right:44px; height:46px !important; font-size:14px !important; border-radius:12px !important;">
                         <div id="buscarGlobalSpinner" class="position-absolute"
-                             style="right:16px; top:50%; transform:translateY(-50%); z-index:10; display:none; color:#6c757d;">
+                            style="right:16px; top:50%; transform:translateY(-50%); z-index:10; display:none; color:#6c757d;">
                             <i class="bi bi-arrow-repeat" style="font-size:16px;"></i>
                         </div>
                     </div>
@@ -267,117 +266,118 @@ try {
 
                 <!-- Tabla Por Pedido -->
                 <div id="container-pedido">
-                <div class="table-responsive">
-                    <table class="table table-hover facturas-table" id="tablaVentas">
-                        <thead>
-                            <tr>
-                                <th data-column="id" data-type="text">
-                                    Ticket
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="fecha" data-type="daterange">
-                                    Fecha
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="hora" data-type="text">
-                                    Hora
-                                </th>
-                                <th data-column="cliente" data-type="text">
-                                    Cliente
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="tipo_cliente" data-type="list">
-                                    Tipo
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th class="text-end" data-column="total" data-type="number">
-                                    Total
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="metodos_pago" data-type="text">
-                                    Método de Pago
-                                </th>
-                                <th data-column="estado" data-type="list">
-                                    Estado
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="cajero" data-type="text">
-                                    Cajero
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th style="width:110px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaVentasBody">
-                            <tr>
-                                <td colspan="10" class="text-center text-muted py-4">
-                                    <div class="spinner-border spinner-border-sm me-2"></div>
-                                    Cargando…
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover facturas-table" id="tablaVentas">
+                            <thead>
+                                <tr>
+                                    <th data-column="id" data-type="text">
+                                        Ticket
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="fecha" data-type="daterange">
+                                        Fecha
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="hora" data-type="text">
+                                        Hora
+                                    </th>
+                                    <th data-column="cliente" data-type="text">
+                                        Cliente
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="tipo_cliente" data-type="list">
+                                        Tipo
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th class="text-end" data-column="total" data-type="number">
+                                        Total
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="metodos_pago" data-type="text">
+                                        Método de Pago
+                                    </th>
+                                    <th data-column="estado" data-type="list">
+                                        Estado
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="cajero" data-type="text">
+                                        Cajero
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th style="width:110px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaVentasBody">
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>
+                                        Cargando…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div><!-- /container-pedido -->
 
                 <!-- Tabla Por Producto -->
                 <div id="container-producto" style="display:none;">
-                <div class="table-responsive">
-                    <table class="table table-hover facturas-table" id="tablaProductos">
-                        <thead>
-                            <tr>
-                                <th data-column="nombre_producto" data-type="text" data-vista="producto">
-                                    Producto
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="id" data-type="text" data-vista="producto">
-                                    Ticket
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="fecha" data-type="daterange" data-vista="producto">
-                                    Fecha
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="hora" data-type="text" data-vista="producto">
-                                    Hora
-                                </th>
-                                <th data-column="cliente" data-type="text" data-vista="producto">
-                                    Cliente
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="tipo_cliente" data-type="list" data-vista="producto">
-                                    Tipo
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th class="text-end" data-column="total_linea" data-type="number" data-vista="producto">
-                                    Total Línea
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="metodo_pago" data-type="list" data-vista="producto">
-                                    Método de Pago
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="estado" data-type="list" data-vista="producto">
-                                    Estado
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th data-column="cajero" data-type="text" data-vista="producto">
-                                    Cajero
-                                    <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
-                                </th>
-                                <th style="width:110px;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaProductosBody">
-                            <tr>
-                                <td colspan="11" class="text-center text-muted py-4">
-                                    <div class="spinner-border spinner-border-sm me-2"></div>
-                                    Cargando…
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover facturas-table" id="tablaProductos">
+                            <thead>
+                                <tr>
+                                    <th data-column="nombre_producto" data-type="text" data-vista="producto">
+                                        Producto
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="id" data-type="text" data-vista="producto">
+                                        Ticket
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="fecha" data-type="daterange" data-vista="producto">
+                                        Fecha
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="hora" data-type="text" data-vista="producto">
+                                        Hora
+                                    </th>
+                                    <th data-column="cliente" data-type="text" data-vista="producto">
+                                        Cliente
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="tipo_cliente" data-type="list" data-vista="producto">
+                                        Tipo
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th class="text-end" data-column="total_linea" data-type="number"
+                                        data-vista="producto">
+                                        Total Línea
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="metodo_pago" data-type="list" data-vista="producto">
+                                        Método de Pago
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="estado" data-type="list" data-vista="producto">
+                                        Estado
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th data-column="cajero" data-type="text" data-vista="producto">
+                                        Cajero
+                                        <i class="bi bi-funnel filter-icon" onclick="toggleFilter(this)"></i>
+                                    </th>
+                                    <th style="width:110px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaProductosBody">
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>
+                                        Cargando…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div><!-- /container-producto -->
 
                 <!-- Paginación + registros por página -->

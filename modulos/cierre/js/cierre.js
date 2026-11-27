@@ -7,31 +7,31 @@
 $(function () {
 
     /* ── Config ───────────────────────────────────────────────── */
-    const CFG        = window.CIERRE_CONFIG || {};
-    const TC         = parseFloat(CFG.TC || 36.6);
+    const CFG = window.CIERRE_CONFIG || {};
+    const TC = parseFloat(CFG.TC || 36.6);
     const TOLERANCIA = CFG.TOLERANCIA || 1;
     const MAX_RECONTEOS = CFG.MAX_RECONTEOS || 3;
-    const DENOMS_NIO = CFG.DENOMS_NIO || [0.5,1,5,10,20,50,100,200,500];
-    const DENOMS_USD = CFG.DENOMS_USD || [1,5,10,20,50,100];
+    const DENOMS_NIO = CFG.DENOMS_NIO || [0.5, 1, 5, 10, 20, 50, 100, 200, 500];
+    const DENOMS_USD = CFG.DENOMS_USD || [1, 5, 10, 20, 50, 100];
 
     /* ── Estado ───────────────────────────────────────────────── */
-    let cierreId     = null;
+    let cierreId = null;
     let conceptosData = {};     // resultados del servidor
     let conceptoEnReconteo = null;
 
     /* ── Helpers formato ──────────────────────────────────────── */
-    const fmtNIO = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
-    const fmtUSD = n => '$ '  + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const fmtNIO = n => 'C$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtUSD = n => '$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     /* ─────────────────────────────────────────────────────────────
        CONSTRUCCIÓN TABLAS DE DENOMINACIÓN
        ───────────────────────────────────────────────────────────── */
     function buildRowDenom(denom, moneda, prefijo) {
-        const cls    = moneda === 'NIO' ? '' : 'usd';
+        const cls = moneda === 'NIO' ? '' : 'usd';
         const labelF = moneda === 'NIO'
-            ? (denom < 1 ? denom.toFixed(2) : denom.toFixed(2).replace('.00',''))
+            ? (denom < 1 ? denom.toFixed(2) : denom.toFixed(2).replace('.00', ''))
             : denom;
-        const idKey = String(denom).replace('.','_');
+        const idKey = String(denom).replace('.', '_');
         return `
         <tr data-moneda="${moneda}" data-denom="${denom}">
             <td><span class="denom-label ${cls}"><span class="denom-tag">${labelF}</span></span></td>
@@ -55,29 +55,29 @@ $(function () {
     function recalcularEfectivo(prefijo) {
         let totalNIO = 0, totalUSD = 0;
         // Seleccionar únicamente los inputs cuyo id empiece con el prefijo dado
-        $(`input.qty-input[id^="${prefijo}_NIO_"]`).each(function(){
+        $(`input.qty-input[id^="${prefijo}_NIO_"]`).each(function () {
             const d = parseFloat($(this).data('denom'));
             const q = parseInt($(this).val()) || 0;
             const sub = d * q;
             totalNIO += sub;
-            const key = String(d).replace('.','_');
+            const key = String(d).replace('.', '_');
             $(`#${prefijo}_total_NIO_${key}`).text(fmtNIO(sub));
         });
-        $(`input.qty-input[id^="${prefijo}_USD_"]`).each(function(){
+        $(`input.qty-input[id^="${prefijo}_USD_"]`).each(function () {
             const d = parseFloat($(this).data('denom'));
             const q = parseInt($(this).val()) || 0;
             const sub = d * q;
             totalUSD += sub;
-            const key = String(d).replace('.','_');
+            const key = String(d).replace('.', '_');
             $(`#${prefijo}_total_USD_${key}`).text(fmtUSD(sub));
         });
-        return {totalNIO, totalUSD, totalGlobal: totalNIO + totalUSD * TC};
+        return { totalNIO, totalUSD, totalGlobal: totalNIO + totalUSD * TC };
     }
 
     // Tabla inicial (conteo ciego)
     construirTablasDenoms('ci', '#tablaNIOBody', '#tablaUSDBody');
 
-    $(document).on('input change', '#tablaNIOBody .qty-input, #tablaUSDBody .qty-input', function(){
+    $(document).on('input change', '#tablaNIOBody .qty-input, #tablaUSDBody .qty-input', function () {
         let v = parseInt($(this).val());
         if (isNaN(v) || v < 0) $(this).val(0);
         const totales = recalcularEfectivo('ci');
@@ -88,11 +88,11 @@ $(function () {
     });
 
     // Al hacer foco: seleccionar todo el contenido (si es 0, queda seleccionado y se reemplaza al escribir)
-    $(document).on('focus', '.qty-input, .cierre-input-num', function(){
+    $(document).on('focus', '.qty-input, .cierre-input-num', function () {
         $(this).select();
     });
     // Al perder foco: restaurar 0 si quedó vacío
-    $(document).on('blur', '.qty-input, .cierre-input-num', function(){
+    $(document).on('blur', '.qty-input, .cierre-input-num', function () {
         if ($(this).val() === '' || $(this).val() === null) $(this).val(0);
     });
 
@@ -102,12 +102,12 @@ $(function () {
     function ejecutarIniciarCierre() {
         const btn = $('#btnIniciarCierre').prop('disabled', true).text('Iniciando…');
         $.ajax({
-            url:         'ajax/cierre_iniciar.php',
-            method:      'POST',
+            url: 'ajax/cierre_iniciar.php',
+            method: 'POST',
             contentType: 'application/json',
-            data:        JSON.stringify({accion: 'iniciar'}),
-            dataType:    'json'
-        }).done(function(res){
+            data: JSON.stringify({ accion: 'iniciar' }),
+            dataType: 'json'
+        }).done(function (res) {
             if (!res.ok) {
                 if (res.error === 'sin_tc') {
                     Swal.fire('Sin Tipo de Cambio', res.mensaje, 'warning');
@@ -133,13 +133,13 @@ $(function () {
                     solicitarResultadosExistentes();
                 }
             }
-        }).fail(function(){
+        }).fail(function () {
             Swal.fire('Error de red', 'No se pudo conectar.', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Iniciar Cierre de Turno');
         });
     }
 
-    $('#btnIniciarCierre').on('click', function(){
+    $('#btnIniciarCierre').on('click', function () {
         Swal.fire({
             title: '¿Iniciar Cierre de Turno?',
             html: 'Se fijará la hora de corte actual. Una vez iniciado, <strong>no podrás realizar otras operaciones</strong> hasta completar el cierre.',
@@ -168,7 +168,7 @@ $(function () {
             if (!dt) return '—';
             if (typeof window.formatoFechaHoraPOS === 'function') return window.formatoFechaHoraPOS(dt);
             const d = new Date(dt.replace(' ', 'T'));
-            return d.toLocaleDateString('es-NI') + ' ' + d.toLocaleTimeString('es-NI', {hour:'2-digit',minute:'2-digit'});
+            return d.toLocaleDateString('es-NI') + ' ' + d.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
         };
         $('#infoTurno').html(`
             <strong>Turno #${cierre.numero_turno}</strong>
@@ -184,11 +184,11 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        BOTÓN VER FACTURAS PEDIDOSYA
        ───────────────────────────────────────────────────────────── */
-    $('#btnVerFacturasPY').on('click', function(){
+    $('#btnVerFacturasPY').on('click', function () {
         if (!cierreId) return;
         $('#modalPedidosYaBody').html('<div class="text-center py-4"><div class="spinner-border"></div></div>');
         $('#modalPedidosYa').modal('show');
-        $.get('ajax/cierre_get_pedidosya_facturas.php', {cierre_id: cierreId}, function(res){
+        $.get('ajax/cierre_get_pedidosya_facturas.php', { cierre_id: cierreId }, function (res) {
             if (!res.ok) {
                 $('#modalPedidosYaBody').html('<div class="alert alert-danger">' + res.mensaje + '</div>');
                 return;
@@ -207,7 +207,7 @@ $(function () {
                 : '<p class="text-center text-muted py-3">No hay tickets PedidosYa en este turno.</p>'
             );
             $('#totalEsperadoPY').text(fmtNIO(res.total_esperado));
-        }, 'json').fail(function(){
+        }, 'json').fail(function () {
             $('#modalPedidosYaBody').html('<div class="alert alert-danger">Error de red.</div>');
         });
     });
@@ -215,10 +215,10 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        GUARDAR CONTEO INICIAL (CIEGO)
        ───────────────────────────────────────────────────────────── */
-    $('#btnGuardarConteo').on('click', function(){
+    $('#btnGuardarConteo').on('click', function () {
         if (!cierreId) return;
 
-        const payload = construirPayloadConteo(0, ['efectivo','cupones','transferencia','tarjeta','pedidosya']);
+        const payload = construirPayloadConteo(0, ['efectivo', 'cupones', 'transferencia', 'tarjeta', 'pedidosya']);
 
         Swal.fire({
             title: '¿Guardar conteo?',
@@ -242,27 +242,27 @@ $(function () {
         if (conceptos.includes('efectivo')) {
             const pref = intento === 0 ? 'ci' : 'rc';
             DENOMS_NIO.forEach(d => {
-                const key = String(d).replace('.','_');
+                const key = String(d).replace('.', '_');
                 const qty = parseInt($(`#${pref}_NIO_${key}`).val()) || 0;
-                efectivoNIO.push({denominacion: d, cantidad: qty});
+                efectivoNIO.push({ denominacion: d, cantidad: qty });
             });
             DENOMS_USD.forEach(d => {
-                const key = String(d).replace('.','_');
+                const key = String(d).replace('.', '_');
                 const qty = parseInt($(`#${pref}_USD_${key}`).val()) || 0;
-                efectivoUSD.push({denominacion: d, cantidad: qty});
+                efectivoUSD.push({ denominacion: d, cantidad: qty });
             });
         }
 
         return {
-            cierre_id:            cierreId,
-            intento:              intento,
-            efectivo_nio:         efectivoNIO,
-            efectivo_usd:         efectivoUSD,
-            cupones_cantidad:     parseInt($('#cuponesQty').val())          || 0,
-            cupones_monto:        parseFloat($('#cuponesMonto').val())       || 0,
-            transferencia_monto:  parseFloat($('#transferenciaMonto').val()) || 0,
-            tarjeta_monto:        parseFloat($('#tarjetaMonto').val())       || 0,
-            pedidosya_monto:      parseFloat($('#pedidosyaMonto').val())     || 0,
+            cierre_id: cierreId,
+            intento: intento,
+            efectivo_nio: efectivoNIO,
+            efectivo_usd: efectivoUSD,
+            cupones_cantidad: parseInt($('#cuponesQty').val()) || 0,
+            cupones_monto: parseFloat($('#cuponesMonto').val()) || 0,
+            transferencia_monto: parseFloat($('#transferenciaMonto').val()) || 0,
+            tarjeta_monto: parseFloat($('#tarjetaMonto').val()) || 0,
+            pedidosya_monto: parseFloat($('#pedidosyaMonto').val()) || 0,
             conceptos_a_recontar: conceptos,
         };
     }
@@ -270,12 +270,12 @@ $(function () {
     function enviarConteo(payload) {
         const btn = $('#btnGuardarConteo').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Guardando…');
         $.ajax({
-            url:         'ajax/cierre_guardar_conteo.php',
-            method:      'POST',
+            url: 'ajax/cierre_guardar_conteo.php',
+            method: 'POST',
             contentType: 'application/json',
-            data:        JSON.stringify(payload),
-            dataType:    'json'
-        }).done(function(res){
+            data: JSON.stringify(payload),
+            dataType: 'json'
+        }).done(function (res) {
             if (!res.ok) {
                 Swal.fire('Error', res.mensaje || 'Error al guardar.', 'error');
                 btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Conteo');
@@ -283,7 +283,7 @@ $(function () {
             }
             conceptosData = res.conceptos;
             mostrarResultados(conceptosData);
-        }).fail(function(){
+        }).fail(function () {
             Swal.fire('Error de red', 'No se pudo conectar.', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Conteo');
         });
@@ -299,7 +299,7 @@ $(function () {
             efectivo_usd: [],
             cupones_cantidad: 0, cupones_monto: 0,
             transferencia_monto: 0, tarjeta_monto: 0, pedidosya_monto: 0,
-            conceptos_a_recontar: ['efectivo','cupones','transferencia','tarjeta','pedidosya'],
+            conceptos_a_recontar: ['efectivo', 'cupones', 'transferencia', 'tarjeta', 'pedidosya'],
         });
     }
 
@@ -312,9 +312,9 @@ $(function () {
 
         const nombres = {
             efectivo: 'Efectivo (C$ + USD)',
-            cupones:  'Cupones',
+            cupones: 'Cupones',
             transferencia: 'Transferencia Bancaria',
-            tarjeta:  'Tarjeta / POS Banco',
+            tarjeta: 'Tarjeta / POS Banco',
             pedidosya: 'PedidosYa',
         };
 
@@ -333,12 +333,12 @@ $(function () {
             </thead><tbody>`;
 
         Object.entries(conceptos).forEach(([conc, d]) => {
-            const ok     = d.dentro_tolerancia;
-            const cls    = ok ? 'res-ok' : 'res-fuera';
-            const badge  = ok
+            const ok = d.dentro_tolerancia;
+            const cls = ok ? 'res-ok' : 'res-fuera';
+            const badge = ok
                 ? '<span class="badge-cuadra">✓ Cuadra</span>'
                 : '<span class="badge-fuera-tol">✗ Fuera de tolerancia</span>';
-            const dif    = parseFloat(d.diferencia);
+            const dif = parseFloat(d.diferencia);
             const difCls = dif < 0 ? 'text-faltante' : (dif > 0 ? 'text-sobrante' : '');
             const difStr = (dif > 0 ? '+' : '') + fmtNIO(dif);
             const intentosUsados = parseInt(d.intento_actual) || 0;
@@ -354,7 +354,7 @@ $(function () {
             if (!ok) hayFueraTolerancia = true;
 
             const lupaBtn = `<button class="btn btn-sm btn-outline-secondary btn-lupa-concepto ms-1"
-                data-concepto="${conc}" data-nombre="${nombres[conc]||conc}"
+                data-concepto="${conc}" data-nombre="${nombres[conc] || conc}"
                 title="Ver detalle de ventas de este concepto">
                 <i class="bi bi-search"></i>
             </button>`;
@@ -368,14 +368,14 @@ $(function () {
                 <td class="text-center">
                     <div class="d-flex gap-1 justify-content-center align-items-center">
                         ${puedeRecontar
-                            ? `<button class="btn-recontar" data-concepto="${conc}" data-intento="${intentosUsados + 1}"
+                    ? `<button class="btn-recontar" data-concepto="${conc}" data-intento="${intentosUsados + 1}"
                                 title="${intentosRestantes} reconteo(s) restantes">
                                 <i class="bi bi-arrow-repeat"></i> Recontar (${intentosRestantes})
                                </button>`
-                            : (!ok
-                                ? '<span class="text-muted small">Sin reconteos</span>'
-                                : '')
-                        }
+                    : (!ok
+                        ? '<span class="text-muted small">Sin reconteos</span>'
+                        : '')
+                }
                         ${lupaBtn}
                     </div>
                 </td>
@@ -393,7 +393,7 @@ $(function () {
     }
 
     function actualizarPanelComentarios(conceptos) {
-        const fueraTol = Object.entries(conceptos).filter(([,d]) => !d.dentro_tolerancia);
+        const fueraTol = Object.entries(conceptos).filter(([, d]) => !d.dentro_tolerancia);
         if (fueraTol.length === 0) {
             $('#panelComentarios').hide();
             return;
@@ -420,7 +420,7 @@ $(function () {
     }
 
     function verificarPuedeConfirmar() {
-        const fueraTol = Object.entries(conceptosData).filter(([,d]) => !d.dentro_tolerancia);
+        const fueraTol = Object.entries(conceptosData).filter(([, d]) => !d.dentro_tolerancia);
         const todosComentados = fueraTol.every(([conc]) => {
             const val = $(`.comentario-concepto[data-concepto="${conc}"]`).val()?.trim();
             return val && val.length > 0;
@@ -432,8 +432,8 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        RECONTEO
        ───────────────────────────────────────────────────────────── */
-    $(document).on('click', '.btn-recontar', function(){
-        const conc    = $(this).data('concepto');
+    $(document).on('click', '.btn-recontar', function () {
+        const conc = $(this).data('concepto');
         const intento = parseInt($(this).data('intento'));
         conceptoEnReconteo = conc;
 
@@ -502,8 +502,8 @@ $(function () {
 
         if (conc === 'efectivo') {
             construirTablasDenoms('rc', '#rcNIOBody', '#rcUSDBody');
-            $(document).on('input change.rc', '#rcNIOBody .qty-input, #rcUSDBody .qty-input', function(){
-                let v = parseInt($(this).val()); if(isNaN(v)||v<0) $(this).val(0);
+            $(document).on('input change.rc', '#rcNIOBody .qty-input, #rcUSDBody .qty-input', function () {
+                let v = parseInt($(this).val()); if (isNaN(v) || v < 0) $(this).val(0);
                 const t = recalcularEfectivo('rc');
                 $('#rcSubNIO').text(fmtNIO(t.totalNIO));
                 $('#rcSubUSD').text(fmtUSD(t.totalUSD));
@@ -517,43 +517,43 @@ $(function () {
     });
 
     // Limpiar estado al cerrar el modal de reconteo
-    $('#modalReconteo').on('hidden.bs.modal', function(){
+    $('#modalReconteo').on('hidden.bs.modal', function () {
         $(document).off('input.rc change.rc');
         conceptoEnReconteo = null;
         $('#panelReconteoContenido').empty();
     });
 
-    $('#btnGuardarReconteo').on('click', function(){
+    $('#btnGuardarReconteo').on('click', function () {
         if (!conceptoEnReconteo || !cierreId) return;
 
-        const conc    = conceptoEnReconteo;
+        const conc = conceptoEnReconteo;
         const intento = parseInt($(`.btn-recontar[data-concepto="${conc}"]`).data('intento')) || 1;
 
         const payload = {
-            cierre_id:            cierreId,
-            intento:              intento,
-            efectivo_nio:         [],
-            efectivo_usd:         [],
-            cupones_cantidad:     0,
-            cupones_monto:        0,
-            transferencia_monto:  0,
-            tarjeta_monto:        0,
-            pedidosya_monto:      0,
+            cierre_id: cierreId,
+            intento: intento,
+            efectivo_nio: [],
+            efectivo_usd: [],
+            cupones_cantidad: 0,
+            cupones_monto: 0,
+            transferencia_monto: 0,
+            tarjeta_monto: 0,
+            pedidosya_monto: 0,
             conceptos_a_recontar: [conc],
         };
 
         if (conc === 'efectivo') {
             DENOMS_NIO.forEach(d => {
-                const key = String(d).replace('.','_');
-                payload.efectivo_nio.push({denominacion: d, cantidad: parseInt($(`#rc_NIO_${key}`).val())||0});
+                const key = String(d).replace('.', '_');
+                payload.efectivo_nio.push({ denominacion: d, cantidad: parseInt($(`#rc_NIO_${key}`).val()) || 0 });
             });
             DENOMS_USD.forEach(d => {
-                const key = String(d).replace('.','_');
-                payload.efectivo_usd.push({denominacion: d, cantidad: parseInt($(`#rc_USD_${key}`).val())||0});
+                const key = String(d).replace('.', '_');
+                payload.efectivo_usd.push({ denominacion: d, cantidad: parseInt($(`#rc_USD_${key}`).val()) || 0 });
             });
         } else if (conc === 'cupones') {
             payload.cupones_cantidad = parseInt($('#rcCuponesQty').val()) || 0;
-            payload.cupones_monto    = parseFloat($('#rcCuponesMonto').val()) || 0;
+            payload.cupones_monto = parseFloat($('#rcCuponesMonto').val()) || 0;
         } else {
             const val = parseFloat($('#rcMontoSimple').val()) || 0;
             payload[`${conc}_monto`] = val;
@@ -561,12 +561,12 @@ $(function () {
 
         const btn = $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Guardando…');
         $.ajax({
-            url:         'ajax/cierre_guardar_conteo.php',
-            method:      'POST',
+            url: 'ajax/cierre_guardar_conteo.php',
+            method: 'POST',
             contentType: 'application/json',
-            data:        JSON.stringify(payload),
-            dataType:    'json'
-        }).done(function(res){
+            data: JSON.stringify(payload),
+            dataType: 'json'
+        }).done(function (res) {
             if (!res.ok) {
                 Swal.fire('Error', res.mensaje || 'Error al guardar reconteo.', 'error');
                 btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Reconteo');
@@ -578,7 +578,7 @@ $(function () {
             conceptoEnReconteo = null;
             mostrarResultados(conceptosData);
             btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Reconteo');
-        }).fail(function(){
+        }).fail(function () {
             Swal.fire('Error de red', 'No se pudo conectar.', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-save2-fill"></i> Guardar Reconteo');
         });
@@ -587,9 +587,9 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        LUPA — VER VENTAS POR CONCEPTO
        ───────────────────────────────────────────────────────────── */
-    $(document).on('click', '.btn-lupa-concepto', function(){
+    $(document).on('click', '.btn-lupa-concepto', function () {
         if (!cierreId) return;
-        const conc   = $(this).data('concepto');
+        const conc = $(this).data('concepto');
         const nombre = $(this).data('nombre');
 
         $('#lblVentasConceptoModal').text(nombre);
@@ -597,18 +597,18 @@ $(function () {
         $('#totalVentasConceptoModal').text('C$ 0.00');
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVentasConcepto')).show();
 
-        $.get('ajax/cierre_get_ventas_concepto.php', {cierre_id: cierreId, concepto: conc}, function(res){
+        $.get('ajax/cierre_get_ventas_concepto.php', { cierre_id: cierreId, concepto: conc }, function (res) {
             if (!res.ok) {
                 $('#bodyVentasConcepto').html('<div class="alert alert-danger">' + (res.mensaje || 'Error al cargar.') + '</div>');
                 return;
             }
 
-            const fN = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
+            const fN = n => 'C$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const fT = dt => {
                 if (!dt) return '—';
                 if (typeof window.formatoHoraPOS === 'function') return window.formatoHoraPOS(dt);
-                const d = new Date(dt.replace(' ','T'));
-                return d.toLocaleTimeString('es-NI', {hour:'2-digit', minute:'2-digit'});
+                const d = new Date(dt.replace(' ', 'T'));
+                return d.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
             };
 
             if (!res.filas || !res.filas.length) {
@@ -618,11 +618,11 @@ $(function () {
             }
 
             const headers = {
-                efectivo:      '<th>Ticket</th><th>Hora</th><th>Moneda</th><th class="text-end">Orig.</th><th class="text-end">C$</th>',
-                cupones:       '<th>Ticket</th><th>Hora</th><th>Código</th><th class="text-end">C$</th>',
+                efectivo: '<th>Ticket</th><th>Hora</th><th>Moneda</th><th class="text-end">Orig.</th><th class="text-end">C$</th>',
+                cupones: '<th>Ticket</th><th>Hora</th><th>Código</th><th class="text-end">C$</th>',
                 transferencia: '<th>Ticket</th><th>Hora</th><th>Referencia</th><th class="text-end">C$</th>',
-                tarjeta:       '<th>Ticket</th><th>Hora</th><th class="text-end">C$</th>',
-                pedidosya:     '<th>Ticket</th><th>Hora</th><th class="text-end">Total C$</th>',
+                tarjeta: '<th>Ticket</th><th>Hora</th><th class="text-end">C$</th>',
+                pedidosya: '<th>Ticket</th><th>Hora</th><th class="text-end">Total C$</th>',
             };
 
             let html = `<table class="table table-sm table-hover">
@@ -634,8 +634,8 @@ $(function () {
                 html += `<td>${f.factura_id}</td><td>${fT(f.fecha_hora)}</td>`;
                 if (conc === 'efectivo') {
                     const sym = f.moneda === 'USD' ? '$ ' : 'C$ ';
-                    html += `<td><span class="badge ${f.moneda==='USD' ? 'bg-success' : 'bg-primary'}">${f.moneda}</span></td>`;
-                    html += `<td class="text-end">${sym}${parseFloat(f.monto_original||0).toLocaleString('es-NI',{minimumFractionDigits:2})}</td>`;
+                    html += `<td><span class="badge ${f.moneda === 'USD' ? 'bg-success' : 'bg-primary'}">${f.moneda}</span></td>`;
+                    html += `<td class="text-end">${sym}${parseFloat(f.monto_original || 0).toLocaleString('es-NI', { minimumFractionDigits: 2 })}</td>`;
                     html += `<td class="text-end ${esCambio ? 'text-danger fw-bold' : ''}">${fN(f.monto_cordoba)}</td>`;
                 } else if (conc === 'cupones') {
                     html += `<td><code>${f.codigo_cupon || '—'}</code></td>`;
@@ -657,7 +657,7 @@ $(function () {
 
             $('#bodyVentasConcepto').html(html);
             $('#totalVentasConceptoModal').text(fN(res.total));
-        }, 'json').fail(function(){
+        }, 'json').fail(function () {
             $('#bodyVentasConcepto').html('<div class="alert alert-danger">Error de red al cargar ventas.</div>');
         });
     });
@@ -665,16 +665,16 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        CONFIRMAR CIERRE
        ───────────────────────────────────────────────────────────── */
-    $('#btnConfirmarCierre').on('click', function(){
+    $('#btnConfirmarCierre').on('click', function () {
         const comentarios = {};
-        $('.comentario-concepto').each(function(){
+        $('.comentario-concepto').each(function () {
             const conc = $(this).data('concepto');
-            const val  = $(this).val().trim();
+            const val = $(this).val().trim();
             if (val) comentarios[conc] = val;
         });
 
         // Verificar comentarios obligatorios
-        const fueraTol = Object.entries(conceptosData).filter(([,d]) => !d.dentro_tolerancia);
+        const fueraTol = Object.entries(conceptosData).filter(([, d]) => !d.dentro_tolerancia);
         for (const [conc] of fueraTol) {
             if (!comentarios[conc]) {
                 Swal.fire('Comentario requerido', `El concepto "${conc}" requiere un comentario.`, 'warning');
@@ -698,12 +698,12 @@ $(function () {
                 .html('<i class="bi bi-hourglass-split"></i> Cerrando…');
 
             $.ajax({
-                url:         'ajax/cierre_confirmar.php',
-                method:      'POST',
+                url: 'ajax/cierre_confirmar.php',
+                method: 'POST',
                 contentType: 'application/json',
-                data:        JSON.stringify({cierre_id: cierreId, comentarios}),
-                dataType:    'json'
-            }).done(function(res){
+                data: JSON.stringify({ cierre_id: cierreId, comentarios }),
+                dataType: 'json'
+            }).done(function (res) {
                 if (!res.ok) {
                     Swal.fire('Error', res.mensaje || 'Error al confirmar.', 'error');
                     btn.prop('disabled', false).html('<i class="bi bi-check2-circle"></i> Confirmar y Cerrar Turno');
@@ -712,7 +712,7 @@ $(function () {
                 // Guardar snapshot en window para impresión
                 window.CIERRE_SNAPSHOT = res.snapshot;
                 mostrarCierreFinalizado(res.snapshot);
-            }).fail(function(){
+            }).fail(function () {
                 Swal.fire('Error de red', 'No se pudo conectar.', 'error');
                 btn.prop('disabled', false).html('<i class="bi bi-check2-circle"></i> Confirmar y Cerrar Turno');
             });
@@ -723,7 +723,7 @@ $(function () {
         $('#pasoResultados').hide();
         $('#pasoCerrado').show();
         const c = snapshot.cierre;
-        const horaCierre = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(new Date()) : new Date().toLocaleTimeString('es-NI',{hour:'2-digit',minute:'2-digit'});
+        const horaCierre = typeof window.formatoHoraPOS === 'function' ? window.formatoHoraPOS(new Date()) : new Date().toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
         $('#txtResumenCierre').html(
             `Turno #${c.numero_turno} · ${c.sucursal} · ${c.cajero}<br>` +
             `Cerrado a las ${horaCierre}`
@@ -740,7 +740,7 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        BOTONES FINALES
        ───────────────────────────────────────────────────────────── */
-    $('#btnImprimirCierre, #btnReimprimirModalCierre').on('click', function(){
+    $('#btnImprimirCierre, #btnReimprimirModalCierre').on('click', function () {
         const snap = window.CIERRE_SNAPSHOT;
         if (!snap) return;
         const html = window.renderizarTicketCierre ? window.renderizarTicketCierre(snap) : null;
@@ -750,7 +750,7 @@ $(function () {
         }
         // Usar función de impresión del pos_impresion_termica.js adaptada
         if (typeof _imprimirHtml === 'function') {
-            _imprimirHtml(html, () => {});
+            _imprimirHtml(html, () => { });
         } else {
             const iframe = document.createElement('iframe');
             iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:200mm;border:none;';
@@ -762,7 +762,7 @@ $(function () {
         }
     });
 
-    $('#btnCerrarSesionCierre, #btnAceptarCerrarSesion').on('click', function(){
+    $('#btnCerrarSesionCierre, #btnAceptarCerrarSesion').on('click', function () {
         window.location.href = '/logout.php?type=colaborador';
     });
 

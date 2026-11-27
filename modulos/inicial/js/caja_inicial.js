@@ -17,17 +17,17 @@ $(function () {
        HELPERS
     ------------------------------------------------------------------ */
     const fmtNIO = (n) => 'C$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fmtUSD = (n) => '$ '  + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtUSD = (n) => '$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     /* ------------------------------------------------------------------
        RENDERIZADO DE TABLAS
     ------------------------------------------------------------------ */
 
     function buildRow(denom, moneda) {
-        const tag    = moneda === 'NIO' ? 'NIO' : 'USD';
-        const cls    = moneda === 'NIO' ? ''     : 'usd';
+        const tag = moneda === 'NIO' ? 'NIO' : 'USD';
+        const cls = moneda === 'NIO' ? '' : 'usd';
         const labelF = moneda === 'NIO'
-            ? (denom < 1 ? denom.toFixed(2) : denom.toFixed(2).replace('.00',''))
+            ? (denom < 1 ? denom.toFixed(2) : denom.toFixed(2).replace('.00', ''))
             : denom;
 
         return `
@@ -43,10 +43,10 @@ $(function () {
                        min="0" step="1" value="0"
                        data-moneda="${moneda}"
                        data-denom="${denom}"
-                       id="qty_${moneda}_${String(denom).replace('.','_')}"
+                       id="qty_${moneda}_${String(denom).replace('.', '_')}"
                        autocomplete="off">
             </td>
-            <td class="text-end ci-row-total" id="total_${moneda}_${String(denom).replace('.','_')}">
+            <td class="text-end ci-row-total" id="total_${moneda}_${String(denom).replace('.', '_')}">
                 ${moneda === 'NIO' ? fmtNIO(0) : fmtUSD(0)}
             </td>
         </tr>`;
@@ -70,8 +70,8 @@ $(function () {
         // Sumar NIO
         $('[data-moneda="NIO"].qty-input').each(function () {
             const denom = parseFloat($(this).data('denom'));
-            const qty   = parseInt($(this).val()) || 0;
-            const sub   = denom * qty;
+            const qty = parseInt($(this).val()) || 0;
+            const sub = denom * qty;
             totalNIO += sub;
             const key = String(denom).replace('.', '_');
             $(`#total_NIO_${key}`).text(fmtNIO(sub));
@@ -80,15 +80,15 @@ $(function () {
         // Sumar USD
         $('[data-moneda="USD"].qty-input').each(function () {
             const denom = parseFloat($(this).data('denom'));
-            const qty   = parseInt($(this).val()) || 0;
-            const sub   = denom * qty;
+            const qty = parseInt($(this).val()) || 0;
+            const sub = denom * qty;
             totalUSD += sub;
             const key = String(denom).replace('.', '_');
             $(`#total_USD_${key}`).text(fmtUSD(sub));
         });
 
         const totalUSDenNIO = totalUSD * TC;
-        const totalGlobal   = totalNIO + totalUSDenNIO;
+        const totalGlobal = totalNIO + totalUSDenNIO;
 
         // Actualizar subtotales córdobas
         $('#subtotalNIO').text(fmtNIO(totalNIO));
@@ -116,13 +116,13 @@ $(function () {
     });
 
     // Mejorar UX: Limpiar 0 al enfocar, restaurar si queda vacío al desenfocar
-    $(document).on('focus', '.qty-input', function() {
+    $(document).on('focus', '.qty-input', function () {
         if ($(this).val() == '0') {
             $(this).val('');
         }
     });
 
-    $(document).on('blur', '.qty-input', function() {
+    $(document).on('blur', '.qty-input', function () {
         if ($(this).val() === '') {
             $(this).val(0);
             recalcular(); // Corregido: recalcular() en lugar de recalculate()
@@ -159,7 +159,7 @@ $(function () {
     $('#formCajaInicial').on('submit', function (e) {
         e.preventDefault();
 
-        const fecha      = $('#inputFecha').val();
+        const fecha = $('#inputFecha').val();
         const sucursalId = $('#inputSucursalId').val();
 
         if (!fecha) {
@@ -197,95 +197,95 @@ $(function () {
             $('.qty-input').each(function () {
                 const qty = parseInt($(this).val()) || 0;
                 detalles.push({
-                    moneda:      $(this).data('moneda'),
+                    moneda: $(this).data('moneda'),
                     denominacion: parseFloat($(this).data('denom')),
-                    cantidad:    qty,
-                    total:       parseFloat(($(this).data('denom') * qty).toFixed(2))
+                    cantidad: qty,
+                    total: parseFloat(($(this).data('denom') * qty).toFixed(2))
                 });
             });
 
             const payload = {
-                fecha:                   fecha,
-                sucursal_id:             sucursalId,
-                tipo_cambio_usado:       TC,
-                total_cordobas:          parseFloat($('#hidTotalNIO').val()),
-                total_dolares:           parseFloat($('#hidTotalUSD').val()),
+                fecha: fecha,
+                sucursal_id: sucursalId,
+                tipo_cambio_usado: TC,
+                total_cordobas: parseFloat($('#hidTotalNIO').val()),
+                total_dolares: parseFloat($('#hidTotalUSD').val()),
                 total_dolares_en_cordobas: parseFloat($('#hidTotalUSDenNIO').val()),
-                total_efectivo_global:   parseFloat($('#hidTotalGlobal').val()),
-                detalles:                detalles
+                total_efectivo_global: parseFloat($('#hidTotalGlobal').val()),
+                detalles: detalles
             };
 
             const btn = $('#btnGuardar');
             btn.prop('disabled', true).addClass('saving').html('<i class="bi bi-hourglass-split"></i> Guardando…');
 
             $.ajax({
-                url:         'ajax/guardar_caja_inicial.php',
-                method:      'POST',
+                url: 'ajax/guardar_caja_inicial.php',
+                method: 'POST',
                 contentType: 'application/json',
-                data:        JSON.stringify(payload),
-                dataType:    'json'
+                data: JSON.stringify(payload),
+                dataType: 'json'
             })
-            .done(function (res) {
-                if (res.ok) {
-                    const destino = res.redirect || '/modulos/pos/ventas_historial.php';
-                    // Alerta de discrepancia de traspaso (no bloqueante)
-                    if (res.flag_discrepancia && res.flag_discrepancia.tiene_discrepancia) {
-                        const dif = res.flag_discrepancia.diferencia_c;
-                        const cifStr = parseFloat(Math.abs(dif)).toLocaleString('es-NI', {minimumFractionDigits:2, maximumFractionDigits:2});
-                        const tipo  = dif > 0 ? 'sobrante' : 'faltante';
-                        Swal.fire({
-                            title: '⚠️ Alerta de discrepancia de traspaso',
-                            html: `La caja inicial difiere del conteo final del último cierre.<br><br>
+                .done(function (res) {
+                    if (res.ok) {
+                        const destino = res.redirect || '/modulos/pos/ventas_historial.php';
+                        // Alerta de discrepancia de traspaso (no bloqueante)
+                        if (res.flag_discrepancia && res.flag_discrepancia.tiene_discrepancia) {
+                            const dif = res.flag_discrepancia.diferencia_c;
+                            const cifStr = parseFloat(Math.abs(dif)).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            const tipo = dif > 0 ? 'sobrante' : 'faltante';
+                            Swal.fire({
+                                title: '⚠️ Alerta de discrepancia de traspaso',
+                                html: `La caja inicial difiere del conteo final del último cierre.<br><br>
                                 <b>Diferencia:</b> C$ ${cifStr} (${tipo})<br>
                                 <small class="text-muted">Esta alerta fue registrada para revisión del líder.</small>`,
-                            icon: 'warning',
-                            confirmButtonColor: '#51B8AC',
-                            confirmButtonText: 'Continuar a Ventas',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false
-                        }).then(() => {
-                            window.location.href = destino;
-                        });
-                    } else {
-                        Swal.fire({
-                            title: '¡Guardado!',
-                            html:  `Caja inicial registrada correctamente.<br>
+                                icon: 'warning',
+                                confirmButtonColor: '#51B8AC',
+                                confirmButtonText: 'Continuar a Ventas',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(() => {
+                                window.location.href = destino;
+                            });
+                        } else {
+                            Swal.fire({
+                                title: '¡Guardado!',
+                                html: `Caja inicial registrada correctamente.<br>
                                     <strong>Total Efectivo: ${fmtNIO(payload.total_efectivo_global)}</strong>`,
-                            icon: 'success',
-                            confirmButtonColor: '#51B8AC',
-                            confirmButtonText: 'Continuar a Ventas',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false
-                        }).then(() => {
-                            window.location.href = destino;
-                        });
+                                icon: 'success',
+                                confirmButtonColor: '#51B8AC',
+                                confirmButtonText: 'Continuar a Ventas',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then(() => {
+                                window.location.href = destino;
+                            });
+                        }
+                    } else {
+                        Swal.fire('Error', res.mensaje || 'Ocurrió un error al guardar.', 'error');
                     }
-                } else {
-                    Swal.fire('Error', res.mensaje || 'Ocurrió un error al guardar.', 'error');
-                }
-            })
-            .fail(function () {
-                Swal.fire('Error de red', 'No se pudo conectar con el servidor.', 'error');
-            })
-            .always(function () {
-                btn.prop('disabled', false).removeClass('saving').html('<i class="bi bi-save2-fill"></i> Guardar Caja Inicial');
-            });
+                })
+                .fail(function () {
+                    Swal.fire('Error de red', 'No se pudo conectar con el servidor.', 'error');
+                })
+                .always(function () {
+                    btn.prop('disabled', false).removeClass('saving').html('<i class="bi bi-save2-fill"></i> Guardar Caja Inicial');
+                });
         }
     });
 
     /* ------------------------------------------------------------------
        REFERENCIA ÚLTIMO CIERRE (solo lectura, carga al iniciar)
     ------------------------------------------------------------------ */
-    $.get('/modulos/cierre/ajax/cierre_get_referencia_cajaini.php', function(res) {
+    $.get('/modulos/cierre/ajax/cierre_get_referencia_cajaini.php', function (res) {
         if (!res.ok || !res.tiene_cierre) return;
-        const fmtC = n => 'C$ ' + parseFloat(n||0).toLocaleString('es-NI',{minimumFractionDigits:2,maximumFractionDigits:2});
-        const dt   = res.cerrado_en
+        const fmtC = n => 'C$ ' + parseFloat(n || 0).toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const dt = res.cerrado_en
             ? (typeof window.formatoFechaHoraPOS === 'function' ? window.formatoFechaHoraPOS(res.cerrado_en) : res.cerrado_en)
             : '';
-        const txt  = `<strong>Último cierre:</strong> ${dt} · Cajero: <strong>${res.cajero}</strong> · 
+        const txt = `<strong>Último cierre:</strong> ${dt} · Cajero: <strong>${res.cajero}</strong> · 
             Conteo final: <strong>${fmtC(res.total_c)}</strong> · TC del cierre: <strong>C$ ${parseFloat(res.tc_cierre).toFixed(2)}</strong>`;
         $('#refCierreTexto').html(txt);
         $('#refCierreAnterior').show();
-    }, 'json').fail(function(){/* silencioso si falla */});
+    }, 'json').fail(function () {/* silencioso si falla */ });
 
 });

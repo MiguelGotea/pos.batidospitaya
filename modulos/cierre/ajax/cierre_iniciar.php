@@ -25,10 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Sesión
-$codSucursal    = $_SESSION['pos_store_sucursal']        ?? null;
+$codSucursal = $_SESSION['pos_store_sucursal'] ?? null;
 $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? '';
-$codCajero      = $_SESSION['pos_colaborador_id']        ?? null;
-$nombreCajero   = $_SESSION['pos_colaborador_nombre']    ?? 'Cajero';
+$codCajero = $_SESSION['pos_colaborador_id'] ?? null;
+$nombreCajero = $_SESSION['pos_colaborador_nombre'] ?? 'Cajero';
 
 if (!$codSucursal || !$codCajero) {
     echo json_encode(['ok' => false, 'mensaje' => 'Sesión inválida.']);
@@ -38,7 +38,7 @@ if (!$codSucursal || !$codCajero) {
 // Zona horaria
 date_default_timezone_set(CIERRE_TIMEZONE);
 $ahora = date('Y-m-d H:i:s');
-$hoy   = date('Y-m-d');
+$hoy = date('Y-m-d');
 
 try {
     // ¿Existe cierre en_curso?
@@ -50,21 +50,21 @@ try {
              WHERE cierre_id = ? AND intento = 0"
         );
         $stmtConteoExiste->execute([$enCurso['id']]);
-        $tieneConteoInicial = (int)$stmtConteoExiste->fetchColumn() > 0;
+        $tieneConteoInicial = (int) $stmtConteoExiste->fetchColumn() > 0;
 
         echo json_encode([
-            'ok'                  => true,
-            'estado'              => 'retomado',
-            'tiene_conteo_inicial'=> $tieneConteoInicial,
-            'cierre'              => [
-                'id'              => (int)$enCurso['id'],
-                'numero_turno'    => (int)$enCurso['numero_turno_dia'],
-                'fecha'           => $enCurso['fecha'],
-                'corte_anterior'  => $enCurso['corte_anterior'],
-                'corte_actual'    => $enCurso['corte_actual'],
-                'tipo_cambio_dia' => (float)$enCurso['tipo_cambio_dia'],
-                'cajero'          => $enCurso['nombre_cajero_snap'],
-                'sucursal'        => $sucursalNombre,
+            'ok' => true,
+            'estado' => 'retomado',
+            'tiene_conteo_inicial' => $tieneConteoInicial,
+            'cierre' => [
+                'id' => (int) $enCurso['id'],
+                'numero_turno' => (int) $enCurso['numero_turno_dia'],
+                'fecha' => $enCurso['fecha'],
+                'corte_anterior' => $enCurso['corte_anterior'],
+                'corte_actual' => $enCurso['corte_actual'],
+                'tipo_cambio_dia' => (float) $enCurso['tipo_cambio_dia'],
+                'cajero' => $enCurso['nombre_cajero_snap'],
+                'sucursal' => $sucursalNombre,
             ],
         ]);
         exit;
@@ -74,7 +74,7 @@ try {
     $tc = cierre_obtenerTC($conn, $hoy);
     if ($tc === null) {
         echo json_encode([
-            'ok'    => false,
+            'ok' => false,
             'error' => 'sin_tc',
             'mensaje' => 'No hay tipo de cambio cargado para hoy. Cárgalo antes de iniciar el cierre.',
         ]);
@@ -94,8 +94,8 @@ try {
 
     if ($ultimoCierre) {
         $corteAnterior = $ultimoCierre['corte_actual'];
-        $cajaIniId     = null;
-        $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int)$ultimoCierre['id']);
+        $cajaIniId = null;
+        $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int) $ultimoCierre['id']);
     } else {
         // Primer turno del día: desde la caja inicial del día
         $stmtCajaIni = $conn->prepare(
@@ -105,8 +105,8 @@ try {
         );
         $stmtCajaIni->execute([$codSucursal, $hoy]);
         $cajaIni = $stmtCajaIni->fetch(PDO::FETCH_ASSOC);
-        $cajaIniId     = $cajaIni ? (int)$cajaIni['id'] : null;
-        $cajaIniEquivC = $cajaIni ? (float)$cajaIni['total_efectivo_global'] : 0.0;
+        $cajaIniId = $cajaIni ? (int) $cajaIni['id'] : null;
+        $cajaIniEquivC = $cajaIni ? (float) $cajaIni['total_efectivo_global'] : 0.0;
         $corteAnterior = ($cajaIni && !empty($cajaIni['fecha_hora_regsys']))
             ? $cajaIni['fecha_hora_regsys']
             : ($hoy . ' 00:00:00');
@@ -125,11 +125,11 @@ try {
 
     $conn->beginTransaction();
     if ($turnoAbierto) {
-        $cierreId      = (int)$turnoAbierto['id'];
-        $numeroTurno   = (int)$turnoAbierto['numero_turno_dia'];
+        $cierreId = (int) $turnoAbierto['id'];
+        $numeroTurno = (int) $turnoAbierto['numero_turno_dia'];
         $corteAnterior = $turnoAbierto['corte_anterior'] ?: $corteAnterior;
         // Para Turno 1 preservamos su caja_inicial_equiv_c; para Turno 2+ usamos el efectivo del cierre anterior
-        $equivC = $ultimoCierre ? $cajaIniEquivC : (float)$turnoAbierto['caja_inicial_equiv_c'];
+        $equivC = $ultimoCierre ? $cajaIniEquivC : (float) $turnoAbierto['caja_inicial_equiv_c'];
 
         $stmtUpd = $conn->prepare(
             "UPDATE pos_cierres_turno
@@ -141,11 +141,11 @@ try {
              WHERE id = :id"
         );
         $stmtUpd->execute([
-            ':tc'       => $tc,
+            ':tc' => $tc,
             ':anterior' => $corteAnterior,
-            ':actual'   => $corteActual,
+            ':actual' => $corteActual,
             ':ci_equiv' => $equivC,
-            ':id'       => $cierreId,
+            ':id' => $cierreId,
         ]);
     } else {
         $numeroTurno = cierre_numeroTurnoDia($conn, $codSucursal, $hoy);
@@ -160,40 +160,41 @@ try {
                  :ci_id, :ci_equiv, :iniciado_en)"
         );
         $stmtIns->execute([
-            ':suc'           => $codSucursal,
-            ':turno'         => $numeroTurno,
-            ':fecha'         => $hoy,
-            ':cajero'        => $codCajero,
+            ':suc' => $codSucursal,
+            ':turno' => $numeroTurno,
+            ':fecha' => $hoy,
+            ':cajero' => $codCajero,
             ':nombre_cajero' => $nombreCajero,
-            ':tc'            => $tc,
-            ':anterior'      => $corteAnterior,
-            ':actual'        => $corteActual,
-            ':ci_id'         => $cajaIniId,
-            ':ci_equiv'      => $cajaIniEquivC,
-            ':iniciado_en'   => $ahora,
+            ':tc' => $tc,
+            ':anterior' => $corteAnterior,
+            ':actual' => $corteActual,
+            ':ci_id' => $cajaIniId,
+            ':ci_equiv' => $cajaIniEquivC,
+            ':iniciado_en' => $ahora,
         ]);
-        $cierreId = (int)$conn->lastInsertId();
+        $cierreId = (int) $conn->lastInsertId();
     }
     $conn->commit();
 
     echo json_encode([
-        'ok'                   => true,
-        'estado'               => 'iniciado',
+        'ok' => true,
+        'estado' => 'iniciado',
         'tiene_conteo_inicial' => false,
-        'cierre'               => [
-            'id'              => $cierreId,
-            'numero_turno'    => $numeroTurno,
-            'fecha'           => $hoy,
-            'corte_anterior'  => $corteAnterior,
-            'corte_actual'    => $corteActual,
+        'cierre' => [
+            'id' => $cierreId,
+            'numero_turno' => $numeroTurno,
+            'fecha' => $hoy,
+            'corte_anterior' => $corteAnterior,
+            'corte_actual' => $corteActual,
             'tipo_cambio_dia' => $tc,
-            'cajero'          => $nombreCajero,
-            'sucursal'        => $sucursalNombre,
+            'cajero' => $nombreCajero,
+            'sucursal' => $sucursalNombre,
         ],
     ]);
 
 } catch (PDOException $e) {
-    if ($conn->inTransaction()) $conn->rollBack();
+    if ($conn->inTransaction())
+        $conn->rollBack();
     // No exponer detalles de BD al cliente
     error_log('[cierre_iniciar] ' . $e->getMessage());
     echo json_encode(['ok' => false, 'mensaje' => 'Error al iniciar el cierre. Intente nuevamente.']);

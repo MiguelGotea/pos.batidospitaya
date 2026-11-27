@@ -15,7 +15,7 @@ $hoy = date('Y-m-d');
 
 
 // Obtener la sucursal activa desde la sesión del dispositivo/tienda (seteada en auth_pos.php)
-$sucursalId     = $_SESSION['pos_store_sucursal']        ?? null;
+$sucursalId = $_SESSION['pos_store_sucursal'] ?? null;
 $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sin Sucursal';
 
 // Si por alguna razón no viene en sesión, intentar desde la BD con el colaborador logueado
@@ -33,7 +33,7 @@ if (!$sucursalId && !empty($_SESSION['pos_colaborador_id'])) {
         $stmtS->execute([$_SESSION['pos_colaborador_id']]);
         $sRow = $stmtS->fetch();
         if ($sRow) {
-            $sucursalId     = $sRow['codigo'];
+            $sucursalId = $sRow['codigo'];
             $sucursalNombre = $sRow['nombre'];
         }
     } catch (Exception $e) {
@@ -46,7 +46,7 @@ $tipoCambio = 36.6; // valor por defecto
 try {
     $tcRow = $conn->query("SELECT tasa FROM tipo_cambio ORDER BY id DESC LIMIT 1")->fetch();
     if ($tcRow && isset($tcRow['tasa'])) {
-        $tipoCambio = (float)$tcRow['tasa'];
+        $tipoCambio = (float) $tcRow['tasa'];
     }
 } catch (Exception $e) {
     // Usamos el valor por defecto
@@ -59,7 +59,8 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja Inicial — POS</title>
-    <meta name="description" content="Conteo de caja inicial: denominaciones en córdobas y dólares con cálculo automático de totales">
+    <meta name="description"
+        content="Conteo de caja inicial: denominaciones en córdobas y dólares con cálculo automático de totales">
     <link rel="icon" href="../../assets/img/icon12.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -67,7 +68,9 @@ try {
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
     <style>
-        .pos-main-container { margin-left: 0 !important; }
+        .pos-main-container {
+            margin-left: 0 !important;
+        }
     </style>
 </head>
 
@@ -82,7 +85,8 @@ try {
                 <form id="formCajaInicial">
 
                     <!-- Referencia del último cierre (solo lectura) -->
-                    <div id="refCierreAnterior" style="display:none;" class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3">
+                    <div id="refCierreAnterior" style="display:none;"
+                        class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3">
                         <i class="bi bi-info-circle-fill mt-1"></i>
                         <div id="refCierreTexto" style="font-size:.85rem;"></div>
                     </div>
@@ -90,12 +94,8 @@ try {
                     <div class="ci-header-card">
                         <div class="ci-header-field">
                             <label for="inputFecha"><i class="bi bi-calendar3 me-1"></i> Fecha del Conteo</label>
-                            <input type="date"
-                                class="form-control"
-                                id="inputFecha"
-                                name="fecha"
-                                value="<?php echo $hoy; ?>"
-                                readonly
+                            <input type="date" class="form-control" id="inputFecha" name="fecha"
+                                value="<?php echo $hoy; ?>" readonly
                                 style="background-color: #f8fafc; cursor: default;">
                         </div>
 
@@ -114,7 +114,8 @@ try {
                                 <i class="bi bi-geo-alt-fill"></i>
                                 <span id="sucursalDisplay"><?php echo $sucursalNombre; ?></span>
                             </div>
-                            <input type="hidden" id="inputSucursalId" name="sucursal_id" value="<?php echo $sucursalId; ?>">
+                            <input type="hidden" id="inputSucursalId" name="sucursal_id"
+                                value="<?php echo $sucursalId; ?>">
                         </div>
 
                         <div class="ci-header-field ms-auto">
@@ -200,9 +201,11 @@ try {
                                             <td colspan="2" class="subtotal-label">
                                                 <i class="bi bi-arrow-left-right me-1"></i>
                                                 Dólares en Córdobas
-                                                <small style="opacity:.7;">(TC: <?php echo number_format($tipoCambio, 2); ?>)</small>
+                                                <small style="opacity:.7;">(TC:
+                                                    <?php echo number_format($tipoCambio, 2); ?>)</small>
                                             </td>
-                                            <td class="subtotal-value cordobizado-val" id="subtotalUSDenNIO">C$ 0.00</td>
+                                            <td class="subtotal-value cordobizado-val" id="subtotalUSDenNIO">C$ 0.00
+                                            </td>
                                         </tr>
                                     </tfoot>
                                 </table>

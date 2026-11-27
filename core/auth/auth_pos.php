@@ -57,18 +57,18 @@ function posVerificarDispositivo()
                 error_log("POS DEV - Error obteniendo nombre de sucursal: " . $e->getMessage());
             }
 
-            $_SESSION['pos_device_sucursal']       = POS_DEV_SUCURSAL_COD;
-            $_SESSION['pos_store_sucursal']         = POS_DEV_SUCURSAL_COD;
-            $_SESSION['pos_store_sucursal_nombre']  = $devNombre;
-            $_SESSION['pos_store_usuario']          = 'DEV-Terminal';
-            $_SESSION['pos_store_id']               = 0;
-            $_SESSION['usuario_id']                 = 0;
-            $_SESSION['usuario_rol']                = 'sucursal';
-            $_SESSION['cargo_cod']                  = 27;
+            $_SESSION['pos_device_sucursal'] = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal'] = POS_DEV_SUCURSAL_COD;
+            $_SESSION['pos_store_sucursal_nombre'] = $devNombre;
+            $_SESSION['pos_store_usuario'] = 'DEV-Terminal';
+            $_SESSION['pos_store_id'] = 0;
+            $_SESSION['usuario_id'] = 0;
+            $_SESSION['usuario_rol'] = 'sucursal';
+            $_SESSION['cargo_cod'] = 27;
         }
         return [
-            'status'          => true,
-            'msg'             => '',
+            'status' => true,
+            'msg' => '',
             'sucursal_codigo' => POS_DEV_SUCURSAL_COD,
             'sucursal_nombre' => $_SESSION['pos_store_sucursal_nombre'] ?? ('Sucursal ' . POS_DEV_SUCURSAL_COD),
         ];
@@ -189,7 +189,7 @@ function posRequiereColaborador()
     $_SESSION['last_activity'] = time();
 
     $sucursal = $_SESSION['pos_store_sucursal'] ?? null;
-    $codColab = (int)($_SESSION['pos_colaborador_id'] ?? 0);
+    $codColab = (int) ($_SESSION['pos_colaborador_id'] ?? 0);
     if (!$sucursal || !$codColab) {
         posCerrarSesionColaborador();
         header('Location: /index.php');
@@ -197,12 +197,12 @@ function posRequiereColaborador()
     }
 
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $enCierre  = (strpos($script, '/modulos/cierre/') !== false);
+    $enCierre = (strpos($script, '/modulos/cierre/') !== false);
     $enInicial = (strpos($script, '/modulos/inicial/') !== false);
 
     $turnoActivo = posObtenerTurnoActivo($sucursal);
     if ($turnoActivo) {
-        if ((int)$turnoActivo['cod_cajero'] !== $codColab) {
+        if ((int) $turnoActivo['cod_cajero'] !== $codColab) {
             posCerrarSesionColaborador();
             header('Location: /index.php');
             exit();
@@ -322,7 +322,7 @@ function posObtenerEfectivoCierreAnterior(int $cierreId): float
         ");
         $stmt->execute([$cierreId]);
         $val = $stmt->fetchColumn();
-        return $val !== false ? (float)$val : 0.0;
+        return $val !== false ? (float) $val : 0.0;
     } catch (Exception $e) {
         return 0.0;
     }
@@ -592,17 +592,17 @@ function posValidarYAbrirTurnoColaborador(array $encontrado, int $cargoPrincipal
 {
     global $conn;
 
-    $sucursal = (string)($_SESSION['pos_store_sucursal'] ?? '');
-    $hoy      = posFechaHoy();
+    $sucursal = (string) ($_SESSION['pos_store_sucursal'] ?? '');
+    $hoy = posFechaHoy();
     $ahoraStr = posAhora();
-    $codOp    = (int)$encontrado['CodOperario'];
+    $codOp = (int) $encontrado['CodOperario'];
     $nombreOp = obtenerNombreCompletoOperario($encontrado);
 
     $turnoActivo = posObtenerTurnoActivo($sucursal);
     $redirect = '/modulos/pos/ventas_historial.php';
 
     if ($turnoActivo) {
-        if ((int)$turnoActivo['cod_cajero'] !== $codOp) {
+        if ((int) $turnoActivo['cod_cajero'] !== $codOp) {
             return [
                 'status' => false,
                 'msg' => 'Existe una caja aperturada a nombre de ' . ($turnoActivo['nombre_cajero_snap'] ?: 'otro cajero') . '. No puede iniciar otro cajero hasta cerrar esa caja primero.',
@@ -624,26 +624,26 @@ function posValidarYAbrirTurnoColaborador(array $encontrado, int $cargoPrincipal
 
             if (!$ultimoCierre) {
                 // Existe caja inicial hoy sin ningún cierre: solo el usuario que la registró puede entrar
-                if (!empty($cajaIni['cod_usuario']) && (int)$cajaIni['cod_usuario'] !== $codOp) {
+                if (!empty($cajaIni['cod_usuario']) && (int) $cajaIni['cod_usuario'] !== $codOp) {
                     return [
                         'status' => false,
                         'msg' => 'Existe una caja inicial aperturada hoy por otro colaborador. No puede iniciar otro cajero hasta cerrar esa caja primero.',
                     ];
                 }
                 $corteAnterior = $cajaIni['fecha_hora_regsys'] ?? $ahoraStr;
-                $cajaIniId     = (int)$cajaIni['id'];
-                $cajaIniEquivC = (float)$cajaIni['total_efectivo_global'];
+                $cajaIniId = (int) $cajaIni['id'];
+                $cajaIniEquivC = (float) $cajaIni['total_efectivo_global'];
             } else {
                 // Turno 2+ del día: la caja inicial en balance es el efectivo dejado en el último cierre
                 $corteAnterior = $ultimoCierre['corte_actual'];
-                $cajaIniId     = null;
-                $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int)$ultimoCierre['id']);
+                $cajaIniId = null;
+                $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int) $ultimoCierre['id']);
             }
 
             try {
                 $stmtCnt = $conn->prepare("SELECT COUNT(*) FROM pos_cierres_turno WHERE cod_sucursal = ? AND fecha = ?");
                 $stmtCnt->execute([$sucursal, $hoy]);
-                $numeroTurno = (int)$stmtCnt->fetchColumn() + 1;
+                $numeroTurno = (int) $stmtCnt->fetchColumn() + 1;
 
                 $stmtIns = $conn->prepare("
                     INSERT INTO pos_cierres_turno
@@ -732,7 +732,7 @@ function posRequiereColaboradorAjax()
     $sucursal = $_SESSION['pos_store_sucursal'] ?? null;
     if ($sucursal) {
         $script = $_SERVER['SCRIPT_NAME'] ?? '';
-        $enCierre  = (strpos($script, '/modulos/cierre/') !== false);
+        $enCierre = (strpos($script, '/modulos/cierre/') !== false);
         $enInicial = (strpos($script, '/modulos/inicial/') !== false);
 
         $turnoActivo = posObtenerTurnoActivo($sucursal);
