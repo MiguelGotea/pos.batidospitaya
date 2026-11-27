@@ -139,8 +139,6 @@ $(function () {
             <span>Inicio del rango: <strong>${fmtDT(cierre.corte_anterior)}</strong></span>
             &nbsp;|&nbsp;
             <span>Fin del rango (corte): <strong>${fmtDT(cierre.corte_actual)}</strong></span>
-            &nbsp;|&nbsp;
-            <span>TC del día: <strong>C$ ${parseFloat(cierre.tipo_cambio_dia).toFixed(2)}/USD</strong></span>
         `);
     }
 

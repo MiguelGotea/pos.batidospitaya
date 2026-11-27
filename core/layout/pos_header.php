@@ -18,6 +18,21 @@ function renderPOSHeader($titulo = '') {
         $usuario = $_SESSION['pos_usuario_completo'] ?? null;
     }
 
+    // Tipo de cambio del día
+    $tcHeader = null;
+    try {
+        global $conn;
+        if (isset($conn)) {
+            $stmtTc = $conn->query("SELECT tasa FROM pos_ventas_tipo_cambio WHERE fecha_desde <= CURDATE() ORDER BY fecha_desde DESC LIMIT 1");
+            $rowTc = $stmtTc ? $stmtTc->fetch(PDO::FETCH_ASSOC) : null;
+            if ($rowTc && isset($rowTc['tasa'])) {
+                $tcHeader = (float)$rowTc['tasa'];
+            }
+        }
+    } catch (Exception $e) {
+        $tcHeader = null;
+    }
+
     $fotoUrl = '';
     if ($usuario && !empty($usuario['foto_perfil'])) {
         // Las fotos están en el dominio del ERP.
@@ -58,6 +73,30 @@ function renderPOSHeader($titulo = '') {
             font-size: 1.15rem;
             font-weight: 700;
             margin: 0;
+        }
+
+        .pos-header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pos-tc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #F0FDF9;
+            border: 1px solid #CCFBF1;
+            border-radius: 999px;
+            color: #0E544C;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .pos-tc-badge i {
+            color: #51B8AC;
         }
 
         .pos-header-right {
@@ -133,6 +172,17 @@ function renderPOSHeader($titulo = '') {
     <header class="pos-main-header">
         <div class="pos-header-left">
             <h1 class="pos-header-title"><?= htmlspecialchars($titulo ?: 'Panel de Control') ?></h1>
+        </div>
+
+        <div class="pos-header-center">
+            <span class="pos-tc-badge" title="Tipo de cambio del día">
+                <i class="fas fa-exchange-alt"></i>
+                <?php if ($tcHeader !== null): ?>
+                    TC del día: <strong>C$ <?= number_format($tcHeader, 2) ?> / USD</strong>
+                <?php else: ?>
+                    TC del día: <strong>Sin registrar</strong>
+                <?php endif; ?>
+            </span>
         </div>
         
         <div class="pos-header-right">

@@ -17,7 +17,6 @@ date_default_timezone_set(CIERRE_TIMEZONE);
 $sucursalId = $_SESSION['pos_store_sucursal'] ?? null;
 $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sin Sucursal';
 $codCajero = $_SESSION['pos_colaborador_id'] ?? null;
-$nombreCajero = $_SESSION['pos_colaborador_nombre'] ?? 'Cajero';
 
 $hoy = date('Y-m-d');
 
@@ -84,21 +83,6 @@ $jsConfig = json_encode([
                         <p class="text-muted">Por favor, carga el tipo de cambio del día antes de continuar.</p>
                     </div>
                 <?php else: ?>
-
-                    <!-- ── HEADER INFORMATIVO ── -->
-                    <div class="cierre-header-bar">
-                        <div class="cierre-header-info">
-                            <span class="cierre-badge-sucursal">
-                                <i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($sucursalNombre) ?>
-                            </span>
-                            <span class="cierre-badge-tc">
-                                <i class="bi bi-currency-exchange"></i> TC: C$ <?= $tcFormateado ?>/USD
-                            </span>
-                            <span class="cierre-badge-cajero">
-                                <i class="bi bi-person-fill"></i> <?= htmlspecialchars($nombreCajero) ?>
-                            </span>
-                        </div>
-                    </div>
 
                     <!-- ── PANEL PRINCIPAL (oculto hasta iniciar) ── -->
                     <div id="panelCierre" style="display:none;">

@@ -99,24 +99,8 @@ try {
                                 style="background-color: #f8fafc; cursor: default;">
                         </div>
 
-                        <div class="ci-header-field">
-                            <label><i class="bi bi-currency-exchange me-1"></i> Tipo de Cambio Actual</label>
-                            <div class="ci-tc-badge">
-                                <i class="bi bi-arrow-left-right"></i>
-                                C$ <span id="tcDisplay"><?php echo number_format($tipoCambio, 2); ?></span>
-                                / USD
-                            </div>
-                        </div>
-
-                        <div class="ci-header-field">
-                            <label><i class="bi bi-shop me-1"></i> Sucursal</label>
-                            <div class="ci-tc-badge" style="background:#fef9c3; border-color:#fef08a; color:#854d0e;">
-                                <i class="bi bi-geo-alt-fill"></i>
-                                <span id="sucursalDisplay"><?php echo $sucursalNombre; ?></span>
-                            </div>
-                            <input type="hidden" id="inputSucursalId" name="sucursal_id"
-                                value="<?php echo $sucursalId; ?>">
-                        </div>
+                        <input type="hidden" id="inputSucursalId" name="sucursal_id"
+                            value="<?php echo $sucursalId; ?>">
 
                         <div class="ci-header-field ms-auto">
                             <label>&nbsp;</label>

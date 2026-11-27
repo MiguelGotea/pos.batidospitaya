@@ -58,9 +58,6 @@ try {
                     <div class="alig-title">
                         <i class="bi bi-cash-stack"></i>
                         Historial de Aligeramientos
-                        <span class="badge ms-2" style="background:#E6F4F1; color:#0E544C; font-size:.75rem; font-weight:700;">
-                            <i class="bi bi-geo-alt-fill me-1"></i><?php echo htmlspecialchars($sucursalNombre); ?>
-                        </span>
                     </div>
                     <button class="btn-nuevo-alig" onclick="abrirModalRegistro()">
                         <i class="bi bi-plus-circle-fill"></i> Nuevo Aligeramiento
