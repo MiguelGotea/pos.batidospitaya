@@ -6,7 +6,7 @@
 
 function renderPOSHeader($titulo = '') {
     $colaboradorNombre = $_SESSION['pos_colaborador_nombre'] ?? 'Operador';
-    $sucursalNombre = $_SESSION['pos_store_name'] ?? 'Sucursal';
+    $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? 'Sucursal';
     $colaboradorId = $_SESSION['pos_colaborador_id'] ?? null;
     $cargoNombre = $_SESSION['pos_colaborador_cargo'] ?? 'Colaborador';
     
