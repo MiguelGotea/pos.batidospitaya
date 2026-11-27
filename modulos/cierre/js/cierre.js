@@ -97,10 +97,9 @@ $(function () {
     });
 
     /* ─────────────────────────────────────────────────────────────
-       INICIAR CIERRE
+       CARGAR CIERRE INICIADO AL ABRIR LA PÁGINA
        ───────────────────────────────────────────────────────────── */
-    function ejecutarIniciarCierre() {
-        const btn = $('#btnIniciarCierre').prop('disabled', true).text('Iniciando…');
+    function cargarCierreIniciado() {
         $.ajax({
             url: 'ajax/cierre_iniciar.php',
             method: 'POST',
@@ -109,60 +108,24 @@ $(function () {
             dataType: 'json'
         }).done(function (res) {
             if (!res.ok) {
-                if (res.error === 'sin_tc') {
-                    Swal.fire('Sin Tipo de Cambio', res.mensaje, 'warning');
-                } else {
-                    Swal.fire('Error', res.mensaje || 'Error al iniciar.', 'error');
-                }
-                btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Iniciar Cierre de Turno');
+                Swal.fire('Error', res.mensaje || 'No se pudo cargar el cierre.', 'error').then(() => {
+                    window.location.href = '/modulos/pos/ventas_historial.php';
+                });
                 return;
             }
             cierreId = res.cierre.id;
             mostrarPanelCierre(res.cierre);
-            if (res.estado === 'retomado') {
-                Swal.fire({
-                    title: 'Cierre retomado',
-                    text: 'Se retomó el cierre en curso para este turno.',
-                    icon: 'info',
-                    confirmButtonColor: '#51B8AC',
-                    timer: 2500,
-                    showConfirmButton: false
-                });
-                if (res.tiene_conteo_inicial) {
-                    // Ya existe conteo → pedir resultados directamente
-                    solicitarResultadosExistentes();
-                }
+            if (res.tiene_conteo_inicial) {
+                solicitarResultadosExistentes();
             }
         }).fail(function () {
-            Swal.fire('Error de red', 'No se pudo conectar.', 'error');
-            btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Iniciar Cierre de Turno');
+            Swal.fire('Error de red', 'No se pudo conectar para cargar el cierre.', 'error');
         });
     }
 
-    $('#btnIniciarCierre').on('click', function () {
-        Swal.fire({
-            title: '¿Iniciar Cierre de Turno?',
-            html: 'Se fijará la hora de corte actual. Una vez iniciado, <strong>no podrás realizar otras operaciones</strong> hasta completar el cierre.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#0E544C',
-            cancelButtonColor: '#94a3b8',
-            confirmButtonText: 'Sí, iniciar cierre',
-            cancelButtonText: 'Cancelar'
-        }).then(result => {
-            if (result.isConfirmed) {
-                ejecutarIniciarCierre();
-            }
-        });
-    });
-
-    // Si ya existe un cierre en_curso en servidor, retomarlo automáticamente
-    if (CFG.EN_CURSO) {
-        ejecutarIniciarCierre();
-    }
+    cargarCierreIniciado();
 
     function mostrarPanelCierre(cierre) {
-        $('#btnIniciarCierre').parent().hide();
         $('#panelCierre').show();
         const fmtDT = dt => {
             if (!dt) return '—';

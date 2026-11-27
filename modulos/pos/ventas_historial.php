@@ -233,9 +233,9 @@ try {
                             </span>
                         <?php endif; ?>
                         <!-- Botón Cierre de Turno -->
-                        <a href="../cierre/" class="pos-action-btn dark" title="Iniciar cierre de turno">
+                        <button type="button" id="btnIniciarCierreTurno" class="pos-action-btn dark" title="Iniciar cierre de turno">
                             <i class="fas fa-lock"></i> Cierre de Turno
-                        </a>
+                        </button>
                     </div>
 
                     <!-- Vista switch -->
@@ -461,6 +461,47 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/pos_impresion_termica.js?v=<?php echo time(); ?>"></script>
     <script src="js/ventas_historial.js?v=<?php echo time(); ?>"></script>
+    <script>
+        $(function () {
+            $('#btnIniciarCierreTurno').on('click', function () {
+                const btn = $(this);
+                Swal.fire({
+                    title: '¿Iniciar Cierre de Turno?',
+                    html: 'Se fijará la hora de corte actual. Una vez iniciado, <strong>no podrás realizar otras operaciones</strong> hasta completar el cierre.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0E544C',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Sí, iniciar cierre',
+                    cancelButtonText: 'Cancelar'
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Iniciando…');
+                    $.ajax({
+                        url: '../cierre/ajax/cierre_iniciar.php',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ accion: 'iniciar' }),
+                        dataType: 'json'
+                    }).done(function (res) {
+                        if (!res.ok) {
+                            if (res.error === 'sin_tc') {
+                                Swal.fire('Sin Tipo de Cambio', res.mensaje, 'warning');
+                            } else {
+                                Swal.fire('Error', res.mensaje || 'Error al iniciar el cierre.', 'error');
+                            }
+                            btn.prop('disabled', false).html('<i class="fas fa-lock"></i> Cierre de Turno');
+                            return;
+                        }
+                        window.location.href = '../cierre/';
+                    }).fail(function () {
+                        Swal.fire('Error de red', 'No se pudo conectar para iniciar el cierre.', 'error');
+                        btn.prop('disabled', false).html('<i class="fas fa-lock"></i> Cierre de Turno');
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

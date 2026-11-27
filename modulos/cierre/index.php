@@ -21,6 +21,13 @@ $nombreCajero = $_SESSION['pos_colaborador_nombre'] ?? 'Cajero';
 
 $hoy = date('Y-m-d');
 
+// Solo se permite entrar a Cierre de Turno si ya fue iniciado desde Historial de Ventas
+$cierreEnCurso = $sucursalId ? cierre_obtenerEnCurso($conn, $sucursalId) : null;
+if (!$cierreEnCurso) {
+    header('Location: /modulos/pos/ventas_historial.php');
+    exit();
+}
+
 // TC del día
 $tc = cierre_obtenerTC($conn, $hoy);
 $tcFormateado = $tc ? number_format($tc, 2) : null;
@@ -30,7 +37,6 @@ $denomsNIO = json_encode(CIERRE_DENOMS_NIO);
 $denomsUSD = json_encode(CIERRE_DENOMS_USD);
 
 // Constantes para JS
-$cierreEnCurso = $sucursalId ? cierre_obtenerEnCurso($conn, $sucursalId) : null;
 $jsConfig = json_encode([
     'TOLERANCIA' => CIERRE_TOLERANCIA_CONCEPTO,
     'MAX_RECONTEOS' => CIERRE_MAX_RECONTEOS,
@@ -38,7 +44,7 @@ $jsConfig = json_encode([
     'DENOMS_USD' => CIERRE_DENOMS_USD,
     'TC' => $tc,
     'SUCURSAL_NOMBRE' => $sucursalNombre,
-    'EN_CURSO' => (bool) $cierreEnCurso,
+    'EN_CURSO' => true,
 ]);
 ?>
 <!DOCTYPE html>
@@ -91,11 +97,6 @@ $jsConfig = json_encode([
                             <span class="cierre-badge-cajero">
                                 <i class="bi bi-person-fill"></i> <?= htmlspecialchars($nombreCajero) ?>
                             </span>
-                        </div>
-                        <div class="cierre-header-actions">
-                            <button id="btnIniciarCierre" class="cierre-btn-primary">
-                                <i class="bi bi-lock-fill"></i> Iniciar Cierre de Turno
-                            </button>
                         </div>
                     </div>
 
