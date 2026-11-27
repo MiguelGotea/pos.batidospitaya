@@ -176,7 +176,8 @@ function posRequiereAutenticacionTienda()
 }
 
 /**
- * Middleware: redirige si el colaborador no está autenticado.
+ * Middleware: redirige si el colaborador no está autenticado
+ * y aplica las reglas de flujo de turno (Caja Inicial / Cierre en curso).
  */
 function posRequiereColaborador()
 {
@@ -186,6 +187,158 @@ function posRequiereColaborador()
         exit();
     }
     $_SESSION['last_activity'] = time();
+
+    $sucursal = $_SESSION['pos_store_sucursal'] ?? null;
+    $codColab = (int)($_SESSION['pos_colaborador_id'] ?? 0);
+    if (!$sucursal || !$codColab) {
+        posCerrarSesionColaborador();
+        header('Location: /index.php');
+        exit();
+    }
+
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $enCierre  = (strpos($script, '/modulos/cierre/') !== false);
+    $enInicial = (strpos($script, '/modulos/inicial/') !== false);
+
+    $turnoActivo = posObtenerTurnoActivo($sucursal);
+    if ($turnoActivo) {
+        if ((int)$turnoActivo['cod_cajero'] !== $codColab) {
+            posCerrarSesionColaborador();
+            header('Location: /index.php');
+            exit();
+        }
+        if ($turnoActivo['estado'] === 'en_curso' && !$enCierre) {
+            header('Location: /modulos/cierre/');
+            exit();
+        }
+    }
+
+    $hoy = posFechaHoy();
+    $cajaIni = posObtenerCajaInicialHoy($sucursal, $hoy);
+
+    if (!$cajaIni) {
+        if (!$enInicial) {
+            header('Location: /modulos/inicial/');
+            exit();
+        }
+    } else {
+        if ($enInicial) {
+            header('Location: /modulos/pos/ventas_historial.php');
+            exit();
+        }
+        // Si no hay turno activo pero ya existe caja inicial hoy, evitar operar sin turno abierto
+        if (!$turnoActivo && !$enCierre) {
+            posCerrarSesionColaborador();
+            header('Location: /index.php');
+            exit();
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// HELPERS DE CONTROL DE TURNO Y CAJA
+// ---------------------------------------------------------------------------
+
+function posFechaHoy(): string
+{
+    $tzPrev = date_default_timezone_get();
+    date_default_timezone_set('America/Managua');
+    $hoy = date('Y-m-d');
+    date_default_timezone_set($tzPrev);
+    return $hoy;
+}
+
+function posAhora(): string
+{
+    $tzPrev = date_default_timezone_get();
+    date_default_timezone_set('America/Managua');
+    $ahora = date('Y-m-d H:i:s');
+    date_default_timezone_set($tzPrev);
+    return $ahora;
+}
+
+function posObtenerTurnoActivo(string $sucursal): ?array
+{
+    global $conn;
+    try {
+        $stmt = $conn->prepare("
+            SELECT * FROM pos_cierres_turno
+            WHERE cod_sucursal = ? AND estado IN ('abierto', 'en_curso')
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt->execute([$sucursal]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    } catch (Exception $e) {
+        error_log("POS - Error posObtenerTurnoActivo: " . $e->getMessage());
+        return null;
+    }
+}
+
+function posObtenerCajaInicialHoy(string $sucursal, string $hoy): ?array
+{
+    global $conn;
+    try {
+        $stmt = $conn->prepare("
+            SELECT * FROM pos_caja_inicial
+            WHERE sucursal_id = ? AND fecha = ?
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt->execute([$sucursal, $hoy]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    } catch (Exception $e) {
+        error_log("POS - Error posObtenerCajaInicialHoy: " . $e->getMessage());
+        return null;
+    }
+}
+
+function posObtenerUltimoCierreHoy(string $sucursal, string $hoy): ?array
+{
+    global $conn;
+    try {
+        $stmt = $conn->prepare("
+            SELECT * FROM pos_cierres_turno
+            WHERE cod_sucursal = ? AND fecha = ? AND estado = 'cerrado'
+            ORDER BY cerrado_en DESC, id DESC LIMIT 1
+        ");
+        $stmt->execute([$sucursal, $hoy]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    } catch (Exception $e) {
+        error_log("POS - Error posObtenerUltimoCierreHoy: " . $e->getMessage());
+        return null;
+    }
+}
+
+function posObtenerEfectivoCierreAnterior(int $cierreId): float
+{
+    global $conn;
+    try {
+        $stmt = $conn->prepare("
+            SELECT contado_final FROM pos_cierres_concepto
+            WHERE cierre_id = ? AND concepto = 'efectivo'
+            LIMIT 1
+        ");
+        $stmt->execute([$cierreId]);
+        $val = $stmt->fetchColumn();
+        return $val !== false ? (float)$val : 0.0;
+    } catch (Exception $e) {
+        return 0.0;
+    }
+}
+
+function posRutaDestinoSegunEstado(string $sucursal): string
+{
+    $turnoActivo = posObtenerTurnoActivo($sucursal);
+    if ($turnoActivo && $turnoActivo['estado'] === 'en_curso') {
+        return '/modulos/cierre/';
+    }
+    $cajaIni = posObtenerCajaInicialHoy($sucursal, posFechaHoy());
+    if (!$cajaIni) {
+        return '/modulos/inicial/';
+    }
+    return '/modulos/pos/ventas_historial.php';
 }
 
 // ---------------------------------------------------------------------------
@@ -326,17 +479,9 @@ function posValidarColaborador($clave)
             return ['status' => false, 'msg' => 'Clave incorrecta.'];
         }
 
-        // Poblar sesión igual que en producción, sin validar turno ni sucursal
-        $ahora = time();
-        $_SESSION['pos_colaborador_id'] = $encontradoDev['CodOperario'];
-        $_SESSION['pos_colaborador_nombre'] = obtenerNombreCompletoOperario($encontradoDev);
-        $_SESSION['usuario_id'] = $encontradoDev['CodOperario'];
-        $_SESSION['usuario_nombre'] = $_SESSION['pos_colaborador_nombre'];
-        $_SESSION['login_time'] = $ahora;
-        $_SESSION['login_date'] = date('Y-m-d');
-        $_SESSION['last_activity'] = $ahora;
-        $_SESSION['cargo_cod'] = 2; // operario por defecto en DEV
-        return ['status' => true];
+        // Validar turno activo / apertura de caja por tienda antes de iniciar sesión
+        $resTurno = posValidarYAbrirTurnoColaborador($encontradoDev, 2);
+        return $resTurno;
     }
     // ===========================================================
 
@@ -436,22 +581,112 @@ function posValidarColaborador($clave)
         }
     }
 
-    // Sesión de colaborador y metadatos de sesión (8h ventana deslizante)
-    $ahora = time();
-    $fechaActual = date('Y-m-d');
+    return posValidarYAbrirTurnoColaborador($encontrado, $cargoPrincipal);
+}
 
-    $_SESSION['pos_colaborador_id'] = $encontrado['CodOperario'];
-    $_SESSION['pos_colaborador_nombre'] = obtenerNombreCompletoOperario($encontrado);
+/**
+ * Valida el estado de turno de la sucursal para el colaborador autenticado,
+ * bloquea si hay otra caja abierta y abre turno si corresponde.
+ */
+function posValidarYAbrirTurnoColaborador(array $encontrado, int $cargoPrincipal): array
+{
+    global $conn;
+
+    $sucursal = (string)($_SESSION['pos_store_sucursal'] ?? '');
+    $hoy      = posFechaHoy();
+    $ahoraStr = posAhora();
+    $codOp    = (int)$encontrado['CodOperario'];
+    $nombreOp = obtenerNombreCompletoOperario($encontrado);
+
+    $turnoActivo = posObtenerTurnoActivo($sucursal);
+    $redirect = '/modulos/pos/ventas_historial.php';
+
+    if ($turnoActivo) {
+        if ((int)$turnoActivo['cod_cajero'] !== $codOp) {
+            return [
+                'status' => false,
+                'msg' => 'Existe una caja aperturada a nombre de ' . ($turnoActivo['nombre_cajero_snap'] ?: 'otro cajero') . '. No puede iniciar otro cajero hasta cerrar esa caja primero.',
+            ];
+        }
+        $redirect = ($turnoActivo['estado'] === 'en_curso')
+            ? '/modulos/cierre/'
+            : '/modulos/pos/ventas_historial.php';
+    } else {
+        $cajaIni = posObtenerCajaInicialHoy($sucursal, $hoy);
+
+        if (!$cajaIni) {
+            // Primer cajero del día: aún no se crea el turno hasta que guarde Caja Inicial
+            $_SESSION['pos_turno_hora_inicio'] = $ahoraStr;
+            $redirect = '/modulos/inicial/';
+        } else {
+            // Ya existe Caja Inicial hoy: verificar si hubo cierre previo hoy
+            $ultimoCierre = posObtenerUltimoCierreHoy($sucursal, $hoy);
+
+            if (!$ultimoCierre) {
+                // Existe caja inicial hoy sin ningún cierre: solo el usuario que la registró puede entrar
+                if (!empty($cajaIni['cod_usuario']) && (int)$cajaIni['cod_usuario'] !== $codOp) {
+                    return [
+                        'status' => false,
+                        'msg' => 'Existe una caja inicial aperturada hoy por otro colaborador. No puede iniciar otro cajero hasta cerrar esa caja primero.',
+                    ];
+                }
+                $corteAnterior = $cajaIni['fecha_hora_regsys'] ?? $ahoraStr;
+                $cajaIniId     = (int)$cajaIni['id'];
+                $cajaIniEquivC = (float)$cajaIni['total_efectivo_global'];
+            } else {
+                // Turno 2+ del día: la caja inicial en balance es el efectivo dejado en el último cierre
+                $corteAnterior = $ultimoCierre['corte_actual'];
+                $cajaIniId     = null;
+                $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int)$ultimoCierre['id']);
+            }
+
+            try {
+                $stmtCnt = $conn->prepare("SELECT COUNT(*) FROM pos_cierres_turno WHERE cod_sucursal = ? AND fecha = ?");
+                $stmtCnt->execute([$sucursal, $hoy]);
+                $numeroTurno = (int)$stmtCnt->fetchColumn() + 1;
+
+                $stmtIns = $conn->prepare("
+                    INSERT INTO pos_cierres_turno
+                        (cod_sucursal, numero_turno_dia, fecha, cod_cajero, nombre_cajero_snap,
+                         estado, tipo_cambio_dia, corte_anterior, corte_actual,
+                         caja_inicial_id, caja_inicial_equiv_c, iniciado_en)
+                    VALUES
+                        (?, ?, ?, ?, ?, 'abierto', NULL, ?, NULL, ?, ?, ?)
+                ");
+                $stmtIns->execute([
+                    $sucursal,
+                    $numeroTurno,
+                    $hoy,
+                    $codOp,
+                    $nombreOp,
+                    $corteAnterior,
+                    $cajaIniId,
+                    $cajaIniEquivC,
+                    $ahoraStr,
+                ]);
+            } catch (Exception $e) {
+                error_log("POS - Error creando turno abierto: " . $e->getMessage());
+                return ['status' => false, 'msg' => 'Error al registrar la apertura del turno.'];
+            }
+
+            $redirect = '/modulos/pos/ventas_historial.php';
+        }
+    }
+
+    // Poblar sesión de colaborador y metadatos (8h ventana deslizante)
+    $ahora = time();
+    $_SESSION['pos_colaborador_id'] = $codOp;
+    $_SESSION['pos_colaborador_nombre'] = $nombreOp;
 
     // --- COMPATIBILIDAD LEGACY ---
-    $_SESSION['usuario_id'] = $encontrado['CodOperario'];
-    $_SESSION['usuario_nombre'] = $_SESSION['pos_colaborador_nombre'];
+    $_SESSION['usuario_id'] = $codOp;
+    $_SESSION['usuario_nombre'] = $nombreOp;
     $_SESSION['login_time'] = $ahora;
-    $_SESSION['login_date'] = $fechaActual;
+    $_SESSION['login_date'] = $hoy;
     $_SESSION['last_activity'] = $ahora;
     $_SESSION['cargo_cod'] = $cargoPrincipal;
 
-    return ['status' => true];
+    return ['status' => true, 'redirect' => $redirect];
 }
 
 // ---------------------------------------------------------------------------
@@ -466,7 +701,10 @@ function posCerrarSesionColaborador()
     unset(
         $_SESSION['pos_colaborador_id'],
         $_SESSION['pos_colaborador_nombre'],
-        $_SESSION['pos_usuario_completo']   // limpiar datos del colaborador anterior
+        $_SESSION['pos_usuario_completo'],
+        $_SESSION['pos_turno_hora_inicio'],
+        $_SESSION['usuario_id'],
+        $_SESSION['usuario_nombre']
     );
 }
 
@@ -489,8 +727,45 @@ function posRequiereColaboradorAjax()
         echo json_encode(['ok' => false, 'mensaje' => 'Sesión expirada o no autorizada.', 'relogin' => true]);
         exit();
     }
-    // Renovar ventana de actividad activa
     $_SESSION['last_activity'] = time();
+
+    $sucursal = $_SESSION['pos_store_sucursal'] ?? null;
+    if ($sucursal) {
+        $script = $_SERVER['SCRIPT_NAME'] ?? '';
+        $enCierre  = (strpos($script, '/modulos/cierre/') !== false);
+        $enInicial = (strpos($script, '/modulos/inicial/') !== false);
+
+        $turnoActivo = posObtenerTurnoActivo($sucursal);
+        if ($turnoActivo && $turnoActivo['estado'] === 'en_curso' && !$enCierre) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'ok' => false,
+                'mensaje' => 'Tienes un cierre de turno en curso. Debes completarlo antes de realizar otra operación.',
+                'redirect' => '/modulos/cierre/'
+            ]);
+            exit();
+        }
+
+        $cajaIni = posObtenerCajaInicialHoy($sucursal, posFechaHoy());
+        if (!$cajaIni && !$enInicial) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'ok' => false,
+                'mensaje' => 'Debes registrar la Caja Inicial antes de operar.',
+                'redirect' => '/modulos/inicial/'
+            ]);
+            exit();
+        }
+        if ($cajaIni && $enInicial) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'ok' => false,
+                'mensaje' => 'La Caja Inicial de hoy ya fue registrada.',
+                'redirect' => '/modulos/pos/ventas_historial.php'
+            ]);
+            exit();
+        }
+    }
 }
 
 /**

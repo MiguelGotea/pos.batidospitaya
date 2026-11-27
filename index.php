@@ -19,12 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['colaborador_clave']))
     } else {
         $r = posValidarColaborador($_POST['colaborador_clave']);
         if ($r['status']) {
+            $destino = $r['redirect'] ?? '/modulos/pos/ventas_historial.php';
             if ($isAjax) {
                 header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(['ok' => true, 'redirect' => '/index.php']);
+                echo json_encode(['ok' => true, 'redirect' => $destino]);
                 exit();
             }
-            header('Location: /index.php');
+            header('Location: ' . $destino);
             exit();
         }
         $pinError = $r['msg'];
@@ -38,6 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['colaborador_clave']))
 }
 
 $hayColaborador = posColaboradorAutenticado();
+if ($hayColaborador) {
+    $sucursalActiva = $_SESSION['pos_store_sucursal'] ?? '';
+    header('Location: ' . posRutaDestinoSegunEstado($sucursalActiva));
+    exit();
+}
 $sucursal = $_SESSION['pos_store_sucursal'] ?? '—';
 $sucursalNombre = $_SESSION['pos_store_sucursal_nombre'] ?? '';
 $storeUsuario = $_SESSION['pos_store_usuario'] ?? '';

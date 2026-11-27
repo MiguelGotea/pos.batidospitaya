@@ -66,11 +66,12 @@ try {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/caja_inicial.css?v=<?php echo time(); ?>">
+    <style>
+        .pos-main-container { margin-left: 0 !important; }
+    </style>
 </head>
 
 <body>
-    <?= renderPOSSidebar('caja') ?>
-
     <div class="pos-main-container">
         <?= renderPOSHeader('Caja Inicial') ?>
 

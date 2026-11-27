@@ -81,75 +81,99 @@ try {
         exit;
     }
 
-    // Determinar corte_anterior: último corte_actual del día para esta sucursal, o caja inicial del día
+    // Determinar corte_anterior y caja_inicial_equiv_c:
+    // Si ya hubo un cierre 'cerrado' hoy (Turno 2+), el balance inicial es el efectivo
+    // contado al final del cierre anterior del mismo día.
     $stmtUltimo = $conn->prepare(
-        "SELECT corte_actual FROM pos_cierres_turno
+        "SELECT id, corte_actual FROM pos_cierres_turno
          WHERE cod_sucursal = ? AND fecha = ? AND estado = 'cerrado'
-         ORDER BY cerrado_en DESC LIMIT 1"
+         ORDER BY cerrado_en DESC, id DESC LIMIT 1"
     );
     $stmtUltimo->execute([$codSucursal, $hoy]);
-    $ultimoCorte = $stmtUltimo->fetchColumn();
+    $ultimoCierre = $stmtUltimo->fetch(PDO::FETCH_ASSOC);
 
-    if ($ultimoCorte) {
-        $corteAnterior = $ultimoCorte;
+    if ($ultimoCierre) {
+        $corteAnterior = $ultimoCierre['corte_actual'];
+        $cajaIniId     = null;
+        $cajaIniEquivC = posObtenerEfectivoCierreAnterior((int)$ultimoCierre['id']);
     } else {
         // Primer turno del día: desde la caja inicial del día
-        $stmtCI = $conn->prepare(
-            "SELECT fecha_hora_regsys FROM pos_caja_inicial
+        $stmtCajaIni = $conn->prepare(
+            "SELECT id, total_efectivo_global, fecha_hora_regsys FROM pos_caja_inicial
              WHERE sucursal_id = ? AND fecha = ?
              ORDER BY id DESC LIMIT 1"
         );
-        $stmtCI->execute([$codSucursal, $hoy]);
-        $ciRow = $stmtCI->fetchColumn();
-        if ($ciRow) {
-            $corteAnterior = $ciRow;
-        } else {
-            // No hay caja inicial: usar inicio del día
-            $corteAnterior = $hoy . ' 00:00:00';
-        }
+        $stmtCajaIni->execute([$codSucursal, $hoy]);
+        $cajaIni = $stmtCajaIni->fetch(PDO::FETCH_ASSOC);
+        $cajaIniId     = $cajaIni ? (int)$cajaIni['id'] : null;
+        $cajaIniEquivC = $cajaIni ? (float)$cajaIni['total_efectivo_global'] : 0.0;
+        $corteAnterior = ($cajaIni && !empty($cajaIni['fecha_hora_regsys']))
+            ? $cajaIni['fecha_hora_regsys']
+            : ($hoy . ' 00:00:00');
     }
 
-    // Caja inicial del día (para calcular esperado de efectivo)
-    // pos_caja_inicial.sucursal_id es varchar(10) = cod_sucursal de sesión
-    $stmtCajaIni = $conn->prepare(
-        "SELECT id, total_efectivo_global FROM pos_caja_inicial
-         WHERE sucursal_id = ? AND fecha = ?
-         ORDER BY id DESC LIMIT 1"
-    );
-    $stmtCajaIni->execute([$codSucursal, $hoy]);
-    $cajaIni = $stmtCajaIni->fetch(PDO::FETCH_ASSOC);
-    $cajaIniId   = $cajaIni ? (int)$cajaIni['id']                       : null;
-    $cajaIniEquivC = $cajaIni ? (float)$cajaIni['total_efectivo_global'] : 0.0;
-
-    $numeroTurno = cierre_numeroTurnoDia($conn, $codSucursal, $hoy);
     $corteActual = $ahora;  // fijado en servidor al iniciar
 
-    // Crear cierre
-    $conn->beginTransaction();
-    $stmtIns = $conn->prepare(
-        "INSERT INTO pos_cierres_turno
-            (cod_sucursal, numero_turno_dia, fecha, cod_cajero, nombre_cajero_snap,
-             estado, tipo_cambio_dia, corte_anterior, corte_actual,
-             caja_inicial_id, caja_inicial_equiv_c, iniciado_en)
-         VALUES
-            (:suc, :turno, :fecha, :cajero, :nombre_cajero,
-             'en_curso', :tc, :anterior, :actual,
-             :ci_id, :ci_equiv, :iniciado_en)"
+    // ¿Existe turno 'abierto' para esta sucursal?
+    $stmtAbierto = $conn->prepare(
+        "SELECT * FROM pos_cierres_turno
+         WHERE cod_sucursal = ? AND estado = 'abierto'
+         ORDER BY id DESC LIMIT 1"
     );
-    $stmtIns->execute([
-        ':suc'          => $codSucursal,
-        ':turno'        => $numeroTurno,
-        ':fecha'        => $hoy,
-        ':cajero'       => $codCajero,
-        ':nombre_cajero'=> $nombreCajero,
-        ':tc'           => $tc,
-        ':anterior'     => $corteAnterior,
-        ':actual'       => $corteActual,
-        ':ci_id'        => $cajaIniId,
-        ':ci_equiv'     => $cajaIniEquivC,
-        ':iniciado_en'  => $ahora,
-    ]);
-    $cierreId = (int)$conn->lastInsertId();
+    $stmtAbierto->execute([$codSucursal]);
+    $turnoAbierto = $stmtAbierto->fetch(PDO::FETCH_ASSOC);
+
+    $conn->beginTransaction();
+    if ($turnoAbierto) {
+        $cierreId      = (int)$turnoAbierto['id'];
+        $numeroTurno   = (int)$turnoAbierto['numero_turno_dia'];
+        $corteAnterior = $turnoAbierto['corte_anterior'] ?: $corteAnterior;
+        // Para Turno 1 preservamos su caja_inicial_equiv_c; para Turno 2+ usamos el efectivo del cierre anterior
+        $equivC = $ultimoCierre ? $cajaIniEquivC : (float)$turnoAbierto['caja_inicial_equiv_c'];
+
+        $stmtUpd = $conn->prepare(
+            "UPDATE pos_cierres_turno
+             SET estado = 'en_curso',
+                 tipo_cambio_dia = :tc,
+                 corte_anterior = :anterior,
+                 corte_actual = :actual,
+                 caja_inicial_equiv_c = :ci_equiv
+             WHERE id = :id"
+        );
+        $stmtUpd->execute([
+            ':tc'       => $tc,
+            ':anterior' => $corteAnterior,
+            ':actual'   => $corteActual,
+            ':ci_equiv' => $equivC,
+            ':id'       => $cierreId,
+        ]);
+    } else {
+        $numeroTurno = cierre_numeroTurnoDia($conn, $codSucursal, $hoy);
+        $stmtIns = $conn->prepare(
+            "INSERT INTO pos_cierres_turno
+                (cod_sucursal, numero_turno_dia, fecha, cod_cajero, nombre_cajero_snap,
+                 estado, tipo_cambio_dia, corte_anterior, corte_actual,
+                 caja_inicial_id, caja_inicial_equiv_c, iniciado_en)
+             VALUES
+                (:suc, :turno, :fecha, :cajero, :nombre_cajero,
+                 'en_curso', :tc, :anterior, :actual,
+                 :ci_id, :ci_equiv, :iniciado_en)"
+        );
+        $stmtIns->execute([
+            ':suc'           => $codSucursal,
+            ':turno'         => $numeroTurno,
+            ':fecha'         => $hoy,
+            ':cajero'        => $codCajero,
+            ':nombre_cajero' => $nombreCajero,
+            ':tc'            => $tc,
+            ':anterior'      => $corteAnterior,
+            ':actual'        => $corteActual,
+            ':ci_id'         => $cajaIniId,
+            ':ci_equiv'      => $cajaIniEquivC,
+            ':iniciado_en'   => $ahora,
+        ]);
+        $cierreId = (int)$conn->lastInsertId();
+    }
     $conn->commit();
 
     echo json_encode([

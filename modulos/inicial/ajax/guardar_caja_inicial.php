@@ -98,7 +98,44 @@ try {
         ]);
     }
 
+    // 3. Registrar al colaborador actual como cajero del turno ('abierto')
+    $codCajero    = (int)($_SESSION['pos_colaborador_id'] ?? ($codUsuario ?: 0));
+    $nombreCajero = $_SESSION['pos_colaborador_nombre'] ?? 'Cajero';
+    $horaInicio   = $_SESSION['pos_turno_hora_inicio'] ?? posAhora();
+
+    $stmtTurnoExiste = $conn->prepare(
+        "SELECT id FROM pos_cierres_turno WHERE cod_sucursal = ? AND estado IN ('abierto', 'en_curso') LIMIT 1"
+    );
+    $stmtTurnoExiste->execute([$sucursalId]);
+    if (!$stmtTurnoExiste->fetch()) {
+        $stmtCntTurno = $conn->prepare("SELECT COUNT(*) FROM pos_cierres_turno WHERE cod_sucursal = ? AND fecha = ?");
+        $stmtCntTurno->execute([$sucursalId, $fecha]);
+        $numeroTurno = (int)$stmtCntTurno->fetchColumn() + 1;
+
+        $stmtTurno = $conn->prepare("
+            INSERT INTO pos_cierres_turno
+                (cod_sucursal, numero_turno_dia, fecha, cod_cajero, nombre_cajero_snap,
+                 estado, tipo_cambio_dia, corte_anterior, corte_actual,
+                 caja_inicial_id, caja_inicial_equiv_c, iniciado_en)
+            VALUES
+                (?, ?, ?, ?, ?, 'abierto', ?, ?, NULL, ?, ?, ?)
+        ");
+        $stmtTurno->execute([
+            $sucursalId,
+            $numeroTurno,
+            $fecha,
+            $codCajero,
+            $nombreCajero,
+            round((float)$data['tipo_cambio_usado'], 4),
+            $horaInicio,
+            $cajaId,
+            round((float)$data['total_efectivo_global'], 2),
+            $horaInicio,
+        ]);
+    }
+
     $conn->commit();
+    unset($_SESSION['pos_turno_hora_inicio']);
 
     // ── Verificar discrepancia de traspaso con último cierre ──────────────
     $flagDiscrepancia = null;
@@ -158,9 +195,10 @@ try {
     }
 
     echo json_encode([
-        'ok'              => true,
-        'caja_inicial_id' => $cajaId,
+        'ok'                => true,
+        'caja_inicial_id'   => $cajaId,
         'flag_discrepancia' => $flagDiscrepancia,
+        'redirect'          => '/modulos/pos/ventas_historial.php',
     ]);
 
 } catch (PDOException $e) {

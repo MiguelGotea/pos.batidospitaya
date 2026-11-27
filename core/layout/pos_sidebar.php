@@ -5,28 +5,14 @@
  * Modular layout with hover expansion and accordion categories
  */
 
-function renderPOSSidebar($activeModule = 'inicio')
+function renderPOSSidebar($activeModule = 'ventas')
 {
     $menu = [
-        [
-            'id' => 'inicio',
-            'titulo' => 'Inicio',
-            'icon' => 'fas fa-home',
-            'url' => '/index.php',
-            'sub' => []
-        ],
         [
             'id' => 'marcacion',
             'titulo' => 'Marcacion',
             'icon' => 'bi bi-fingerprint',
             'url' => '/',
-            'sub' => []
-        ],
-        [
-            'id' => 'caja',
-            'titulo' => 'Caja Inicial',
-            'icon' => 'fas fa-vault',
-            'url' => '/modulos/inicial/',
             'sub' => []
         ],
         [
@@ -69,13 +55,6 @@ function renderPOSSidebar($activeModule = 'inicio')
             'titulo' => 'Despachos',
             'icon' => 'bi bi-truck',
             'url' => '/',
-            'sub' => []
-        ],
-        [
-            'id' => 'cierre',
-            'titulo' => 'Cierre de Turno',
-            'icon' => 'fas fa-lock',
-            'url' => '/modulos/cierre/',
             'sub' => []
         ],
         [

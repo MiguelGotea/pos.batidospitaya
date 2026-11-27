@@ -99,8 +99,8 @@ $(function () {
     /* ─────────────────────────────────────────────────────────────
        INICIAR CIERRE
        ───────────────────────────────────────────────────────────── */
-    $('#btnIniciarCierre').on('click', function(){
-        const btn = $(this).prop('disabled', true).text('Iniciando…');
+    function ejecutarIniciarCierre() {
+        const btn = $('#btnIniciarCierre').prop('disabled', true).text('Iniciando…');
         $.ajax({
             url:         'ajax/cierre_iniciar.php',
             method:      'POST',
@@ -137,7 +137,29 @@ $(function () {
             Swal.fire('Error de red', 'No se pudo conectar.', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Iniciar Cierre de Turno');
         });
+    }
+
+    $('#btnIniciarCierre').on('click', function(){
+        Swal.fire({
+            title: '¿Iniciar Cierre de Turno?',
+            html: 'Se fijará la hora de corte actual. Una vez iniciado, <strong>no podrás realizar otras operaciones</strong> hasta completar el cierre.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0E544C',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Sí, iniciar cierre',
+            cancelButtonText: 'Cancelar'
+        }).then(result => {
+            if (result.isConfirmed) {
+                ejecutarIniciarCierre();
+            }
+        });
     });
+
+    // Si ya existe un cierre en_curso en servidor, retomarlo automáticamente
+    if (CFG.EN_CURSO) {
+        ejecutarIniciarCierre();
+    }
 
     function mostrarPanelCierre(cierre) {
         $('#btnIniciarCierre').parent().hide();
@@ -706,13 +728,19 @@ $(function () {
             `Turno #${c.numero_turno} · ${c.sucursal} · ${c.cajero}<br>` +
             `Cerrado a las ${horaCierre}`
         );
+        $('#txtModalCierreCompleto').html(
+            `<strong>Turno #${c.numero_turno} · ${c.cajero}</strong><br><br>` +
+            `Cierre completo. Se cerrará sesión para pasar al siguiente cajero.<br>` +
+            `<small class="text-muted">Asegúrate de haber terminado de imprimir todo antes de aceptar.</small>`
+        );
         $('#btnImprimirCierre').trigger('click');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCierreCompleto')).show();
     }
 
     /* ─────────────────────────────────────────────────────────────
        BOTONES FINALES
        ───────────────────────────────────────────────────────────── */
-    $('#btnImprimirCierre').on('click', function(){
+    $('#btnImprimirCierre, #btnReimprimirModalCierre').on('click', function(){
         const snap = window.CIERRE_SNAPSHOT;
         if (!snap) return;
         const html = window.renderizarTicketCierre ? window.renderizarTicketCierre(snap) : null;
@@ -734,9 +762,8 @@ $(function () {
         }
     });
 
-    $('#btnNuevoCierre').on('click', function(){
-        // Recargar para iniciar nuevo turno
-        window.location.reload();
+    $('#btnCerrarSesionCierre, #btnAceptarCerrarSesion').on('click', function(){
+        window.location.href = '/logout.php?type=colaborador';
     });
 
 });

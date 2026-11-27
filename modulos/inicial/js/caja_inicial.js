@@ -227,6 +227,7 @@ $(function () {
             })
             .done(function (res) {
                 if (res.ok) {
+                    const destino = res.redirect || '/modulos/pos/ventas_historial.php';
                     // Alerta de discrepancia de traspaso (no bloqueante)
                     if (res.flag_discrepancia && res.flag_discrepancia.tiene_discrepancia) {
                         const dif = res.flag_discrepancia.diferencia_c;
@@ -239,7 +240,11 @@ $(function () {
                                 <small class="text-muted">Esta alerta fue registrada para revisión del líder.</small>`,
                             icon: 'warning',
                             confirmButtonColor: '#51B8AC',
-                            confirmButtonText: 'Entendido'
+                            confirmButtonText: 'Continuar a Ventas',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false
+                        }).then(() => {
+                            window.location.href = destino;
                         });
                     } else {
                         Swal.fire({
@@ -247,16 +252,14 @@ $(function () {
                             html:  `Caja inicial registrada correctamente.<br>
                                     <strong>Total Efectivo: ${fmtNIO(payload.total_efectivo_global)}</strong>`,
                             icon: 'success',
-                            confirmButtonColor: '#51B8AC'
+                            confirmButtonColor: '#51B8AC',
+                            confirmButtonText: 'Continuar a Ventas',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false
                         }).then(() => {
-                            // Limpiar tras guardar
-                            $('.qty-input').val(0);
-                            recalcular();
+                            window.location.href = destino;
                         });
                     }
-                    // Limpiar en ambos casos
-                    $('.qty-input').val(0);
-                    recalcular();
                 } else {
                     Swal.fire('Error', res.mensaje || 'Ocurrió un error al guardar.', 'error');
                 }

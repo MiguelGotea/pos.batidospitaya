@@ -97,39 +97,6 @@ try {
             flex-wrap: wrap;
         }
 
-        .pos-action-btn {
-            padding: 14px 28px;
-            border-radius: 13px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text);
-            font-family: inherit;
-            font-size: .95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: .2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .pos-action-btn:hover {
-            background: var(--surface-hover);
-            border-color: #51B8AC;
-        }
-
-        .pos-action-btn.primary {
-            background: #51B8AC;
-            color: #06110f;
-            border-color: #51B8AC;
-        }
-
-        .pos-action-btn.primary:hover {
-            background: var(--pitaya-dark-teal);
-            color: #fff;
-        }
-
         /* Botones de acción en la tabla del historial */
         .btn-accion-hist {
             display: inline-flex;
@@ -266,7 +233,7 @@ try {
                             </span>
                         <?php endif; ?>
                         <!-- Botón Cierre de Turno -->
-                        <a href="../cierre/" class="pos-action-btn" style="border-color:#0E544C; color:#0E544C;"
+                        <a href="../cierre/" class="pos-action-btn dark"
                            title="Iniciar cierre de turno">
                             <i class="fas fa-lock"></i> Cierre de Turno
                         </a>

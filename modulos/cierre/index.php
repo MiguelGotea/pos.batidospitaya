@@ -30,13 +30,15 @@ $denomsNIO = json_encode(CIERRE_DENOMS_NIO);
 $denomsUSD = json_encode(CIERRE_DENOMS_USD);
 
 // Constantes para JS
+$cierreEnCurso = $sucursalId ? cierre_obtenerEnCurso($conn, $sucursalId) : null;
 $jsConfig = json_encode([
-    'TOLERANCIA'     => CIERRE_TOLERANCIA_CONCEPTO,
-    'MAX_RECONTEOS'  => CIERRE_MAX_RECONTEOS,
-    'DENOMS_NIO'     => CIERRE_DENOMS_NIO,
-    'DENOMS_USD'     => CIERRE_DENOMS_USD,
-    'TC'             => $tc,
-    'SUCURSAL_NOMBRE'=> $sucursalNombre,
+    'TOLERANCIA'      => CIERRE_TOLERANCIA_CONCEPTO,
+    'MAX_RECONTEOS'   => CIERRE_MAX_RECONTEOS,
+    'DENOMS_NIO'      => CIERRE_DENOMS_NIO,
+    'DENOMS_USD'      => CIERRE_DENOMS_USD,
+    'TC'              => $tc,
+    'SUCURSAL_NOMBRE' => $sucursalNombre,
+    'EN_CURSO'        => (bool)$cierreEnCurso,
 ]);
 ?>
 <!DOCTYPE html>
@@ -51,10 +53,11 @@ $jsConfig = json_encode([
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../../core/assets/css/global_tools.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="css/cierre.css?v=<?php echo time(); ?>">
+    <style>
+        .pos-main-container { margin-left: 0 !important; }
+    </style>
 </head>
 <body>
-    <?= renderPOSSidebar('cierre') ?>
-
     <div class="pos-main-container">
         <?= renderPOSHeader('Cierre de Turno') ?>
 
@@ -278,14 +281,14 @@ $jsConfig = json_encode([
                     <div id="pasoCerrado" style="display:none;">
                         <div class="cierre-exito-card">
                             <div class="cierre-exito-icon"><i class="bi bi-check-circle-fill"></i></div>
-                            <h4>Turno Cerrado</h4>
+                            <h4>Cierre Completo</h4>
                             <p class="text-muted" id="txtResumenCierre"></p>
                             <div class="d-flex gap-3 justify-content-center mt-3">
                                 <button id="btnImprimirCierre" class="cierre-btn-primary">
                                     <i class="bi bi-printer-fill"></i> Imprimir Cierre
                                 </button>
-                                <button id="btnNuevoCierre" class="btn btn-outline-secondary">
-                                    <i class="bi bi-plus-circle"></i> Nuevo Turno
+                                <button id="btnCerrarSesionCierre" class="pos-action-btn dark">
+                                    <i class="bi bi-box-arrow-right"></i> Aceptar y Cerrar Sesión
                                 </button>
                             </div>
                         </div>
@@ -354,6 +357,31 @@ $jsConfig = json_encode([
                 </div>
                 <div class="modal-footer">
                     <strong>Total esperado PedidosYa: <span id="totalEsperadoPY">C$ 0.00</span></strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ Modal Cierre Completo (Final) ═══════════════════════════════ -->
+    <div class="modal fade" id="modalCierreCompleto" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-3">
+                <div class="modal-body py-4">
+                    <div class="mb-3" style="font-size:3rem; color:#51B8AC;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Cierre Completo</h4>
+                    <p class="text-muted mb-3" id="txtModalCierreCompleto">
+                        Se cerrará sesión para pasar al siguiente cajero. Asegúrate de haber terminado de imprimir el comprobante.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                        <button type="button" id="btnReimprimirModalCierre" class="pos-action-btn secondary">
+                            <i class="bi bi-printer-fill"></i> Imprimir Comprobante
+                        </button>
+                        <button type="button" id="btnAceptarCerrarSesion" class="pos-action-btn dark">
+                            <i class="bi bi-box-arrow-right"></i> Aceptar y Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
