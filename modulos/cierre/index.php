@@ -99,7 +99,7 @@ $jsConfig = json_encode([
                                 <div>
                                     <h5 class="mb-0">Conteo de Caja <span class="badge bg-warning text-dark ms-2"
                                             style="font-size:.7rem;">CIEGO</span></h5>
-                                    <small class="text-muted">Ingresa los valores sin ver los esperados</small>
+
                                 </div>
                             </div>
 
